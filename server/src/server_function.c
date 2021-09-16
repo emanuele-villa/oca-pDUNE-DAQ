@@ -11,15 +11,46 @@
 #include <sched.h>
 #include <pthread.h>
 #include "server_function.h"
+#include "user_avalon_fifo_regs.h"
+#include "user_avalon_fifo_util.h"
+#include "hps_0.h"
+#include <sys/mman.h>
+#include <fcntl.h>
+#include "hwlib.h"
+#include "socal/socal.h"
+#include "socal/hps.h"
+#include "socal/alt_gpio.h"
+#include "user_register_array.h"
 
+#define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
+#define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
+#define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
 
 //metodi che leggono e scrivono registri da fare
+
+extern void *virtual_base;			// Indirizzo base dell'area di memoria virtuale (variabile globale).
+int error;							// Flag per la segnalazione di errori.
+int fd;								// File descriptor degli indirizzi fisici.							// Tipo di operazione che si vuole compiere sulla FIFO (lettura/scrittura).
+int num_el;							// Numero di scritture consecutive della FIFO che si vogliono compiere.
+int el;								// Indice del numero di scritture della FIFO.
+uint32_t new_value;					// Valore singolo con il quale verrà caricata la FIFO.
+uint32_t v_data_array[1021];		// Array di 1021 elementi di tipo uint32_t, da riempire in scrittura.
+uint32_t p_data_array[1021];		// Array di 1021 elementi di tipo uint32_t, da svuotare in lettura.
+uint32_t f_data_array[4093];		// Array di 4093 elementi di tipo uint32_t, da svuotare in lettura.
+uint32_t value_read;				// Valore in uscita dalla FIFO.
+uint32_t fifo_level;				// Livello di riempimento della FIFO.
+uint32_t fifo_full;					// bit di "full" della FIFO.
+uint32_t fifo_empty;				// bit di "empty" della FIFO.
+uint32_t fifo_almostfull;			// bit di "almostfull" della FIFO.
+uint32_t fifo_almostempty;			// bit di "almostempty" della FIFO.
+uint32_t almostfull_setting;		// livello di "almostfull" della FIFO.
+uint32_t almostempty_setting;		// livello di "almostempty" della FIFO.
 
 
 
 void *high_priority(void *socket){
 
-	srand(time(NULL));
+	/*srand(time(NULL));
 	int sock = *(int*) socket;
 	printf("alta priorità socket: %d\n", sock);
 	
@@ -36,6 +67,38 @@ void *high_priority(void *socket){
 	if(n < 0){
 
 		perror("errore scrittura:");
+	}*/
+	int n;
+	int sock = *(int *)socket;
+	uint32_t length;
+	error = StatusFifo(DATA_FIFO, &fifo_level, &fifo_full, &fifo_empty, &fifo_almostfull, &fifo_almostempty, &almostfull_setting, &almostempty_setting);
+	error = ReadFifo(DATA_FIFO, &value_read);
+	printf("start: %x\n", value_read);
+	if(value_read == 0xBABA1AFA){
+
+		error = ReadFifo(DATA_FIFO, &length);
+		printf("errore lettura: %d\n", error);
+		printf("lunghezza pacchetto: %d\n", length);
+	}
+
+	uint32_t packet[length + 1];
+	packet[0] = 0xBABA1AFA;
+	packet[1] = length;
+	error = ReadFifoBurst(DATA_FIFO, packet + 2, length - 1);
+	printf("lettura burst error: %d\n", error);
+	printf("ho inviato questi dati.\n");
+	for(int i = 0; i < length; i++){
+
+		printf("%x\n", packet[i]);
+	}
+	
+	n = write(sock, &packet, sizeof(packet));
+	if(n < 0){
+
+		perror("errore scrittura");
+	}else{
+
+		printf("ho inviato: %d\n", n);
 	}
 
 	pthread_exit(NULL);
@@ -51,6 +114,17 @@ void Init(int socket){
 	}else{
 
 		printf("[SERVER] comando inviato. %s\n", msg);
+	}
+
+	uint32_t data = 0xAAAAAAAA;
+	int ret = write_register(5, &data);
+
+	uint32_t output_hk[8];
+	sleep(1);
+	ret = ReadFifoBurst(HK_FIFO, output_hk, 8);
+	for(int i = 0; i < 8; i++){
+
+		printf("%x\n", output_hk[i]);
 	}
 }
 

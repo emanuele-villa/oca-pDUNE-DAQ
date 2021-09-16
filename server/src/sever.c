@@ -15,6 +15,15 @@
 #include <time.h>
 #include <sys/ioctl.h>
 #include "server_function.h" //funzioni dei comandi che rispondono al client 
+#include <sys/mman.h>
+#include "hwlib.h"
+#include "socal/socal.h"
+#include "socal/hps.h"
+#include "socal/alt_gpio.h"
+
+#define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
+#define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
+#define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
 
 #define TRUE             1
 #define FALSE            0
@@ -267,6 +276,23 @@ void *receiver_comandi(void *args){
 
 
 int main(int argc, char *argv[]){
+
+	//MAPPING
+	extern void *virtual_base;
+	int fd;
+	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
+		printf( "ERROR: could not open \"/dev/mem\"...\n" );
+		return( 1 );
+	}
+
+	virtual_base = mmap( NULL, HW_REGS_SPAN, ( PROT_READ | PROT_WRITE ), MAP_SHARED, fd, HW_REGS_BASE );
+
+	if( virtual_base == MAP_FAILED ) {
+		printf( "ERROR: mmap() failed...\n" );
+		close( fd );
+		return( 1 );
+	}
+
 
 	pthread_t threads;
 	pthread_create(&threads, NULL, receiver_comandi, argv[1]);

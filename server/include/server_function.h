@@ -17,5 +17,6 @@ void OverWriteDelay(int socket);
 void Calibrate(int socket);
 void WriteCalibPar(int socket);
 void SaveCalibrations(int socket);
+int mapping();
 
 #endif
