@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-int read_register(uint16_t reg, uint32_t *value);
+void ReadReg(int regAddr, uint32_t *data)
 
 int write_register(uint16_t reg, uint32_t *value);
 
