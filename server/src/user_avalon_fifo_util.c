@@ -19,7 +19,7 @@ int InitFifo(int FIFO_TYPE, uint32_t AE, uint32_t AF){		// (Selezione della FIFO
 	uint32_t *lw_fifo_event_reg_addr;
 	uint32_t *lw_fifo_almostfull_reg_addr;
 	uint32_t *lw_fifo_almostempty_reg_addr;
-	
+
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO)								// Se la FIFO selezionata è "CONFIG_FIFO", utilizza come offset per i registri di controllo il valore FIFO_HPS_TO_FPGA_IN_CSR_BASE.
 		FIFO_CSR_OFST = FIFO_HPS_TO_FPGA_IN_CSR_BASE;
@@ -30,17 +30,17 @@ int InitFifo(int FIFO_TYPE, uint32_t AE, uint32_t AF){		// (Selezione della FIFO
 	else														// Altrimenti restitusci error=1.
 		return (1);
 
-	
+
 	// Definizione dei puntatori.
 	lw_fifo_event_reg_addr		 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_EVENT_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	lw_fifo_almostfull_reg_addr	 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_ALMOSTFULL_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	lw_fifo_almostempty_reg_addr = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG ) & ( unsigned long )( HW_REGS_MASK ) );
-	
+
 	// Azione
 	*lw_fifo_event_reg_addr			 &= ALTERA_AVALON_FIFO_EVENT_ALL;	// Reset dell'Event Register della FIFO.
 	*lw_fifo_almostempty_reg_addr	 = AE;								// Configurazione dell'Almostempty della FIFO.
 	*lw_fifo_almostfull_reg_addr	 = AF;								// Configurazione dell'Almostfull della FIFO.
-	
+
 	return (0);
 }
 
@@ -52,7 +52,7 @@ int WriteFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntato
 	uint32_t fifo_level;
 	uint32_t *h2f_lw_fifo_level_reg_addr;
 	uint32_t *h2f_lw_fifo_input_addr;
-	
+
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO){								// Se la FIFO selezionata è "CONFIG_FIFO", utilizza gli offset FIFO_HPS_TO_FPGA_IN_BASE e FIFO_HPS_TO_FPGA_IN_CSR_BASE.
 		FIFO_DATA_OFST = FIFO_HPS_TO_FPGA_IN_BASE;
@@ -65,12 +65,12 @@ int WriteFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntato
 		return (1);
 	else
 		return (1);
-	
-	
+
+
 	// Definizione dei puntatori.
 	h2f_lw_fifo_level_reg_addr	 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_LEVEL_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	h2f_lw_fifo_input_addr		 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_DATA_OFST ) & ( unsigned long )( HW_REGS_MASK ) );
-	
+
 	// Azione
 	fifo_level = *h2f_lw_fifo_level_reg_addr;		// Lettura del livello di riempimento della FIFO.
 	if (fifo_level > FIFO_DEPTH - 4)				// Se il livello è > FIFO_DEPTH - 4, termina la funzione con un errore.
@@ -90,7 +90,7 @@ int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezi
 	uint32_t *h2f_lw_fifo_level_reg_addr;
 	uint32_t *h2f_lw_fifo_input_addr;
 	int i;
-	
+
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO){								// Se la FIFO selezionata è "CONFIG_FIFO", utilizza gli offset FIFO_HPS_TO_FPGA_IN_BASE e FIFO_HPS_TO_FPGA_IN_CSR_BASE.
 		FIFO_DATA_OFST = FIFO_HPS_TO_FPGA_IN_BASE;
@@ -103,12 +103,12 @@ int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezi
 		return (1);
 	else
 		return (1);
-	
-	
+
+
 	// Definizione dei puntatori.
 	h2f_lw_fifo_level_reg_addr	 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST  + ALTERA_AVALON_FIFO_LEVEL_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	h2f_lw_fifo_input_addr		 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_DATA_OFST ) & ( unsigned long )( HW_REGS_MASK ) );
-	
+
 	// Azione
 	fifo_level = *h2f_lw_fifo_level_reg_addr;					// Lettura del livello di riempimento della FIFO.
 	if ((FIFO_DEPTH - 3) - fifo_level < length_burst)			// Se lo spazio a disposizione è minore della lunghezza della raffica, termina la funzione con un errore.
@@ -117,10 +117,10 @@ int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezi
 		for (i=0; i<length_burst; i++){
 			*h2f_lw_fifo_input_addr = data[i];
 		}
-						
+
 		return (0);
 	}
-}	
+}
 
 
 // Funzione di lettura della FIFO.
@@ -130,7 +130,7 @@ int ReadFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntator
 	uint32_t fifo_empty;
 	uint32_t *f2h_lw_fifo_status_reg_addr;
 	uint32_t *f2h_lw_fifo_output_addr;
-	
+
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO)									// Se la FIFO selezionata è "CONFIG_FIFO", restitusci error=1.
 		return (1);
@@ -144,12 +144,12 @@ int ReadFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntator
 	}
 	else															// Altrimenti restitusci error=1.
 		return (1);
-	
-	
+
+
 	// Definizione dei puntatori.
 	f2h_lw_fifo_status_reg_addr		 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_STATUS_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	f2h_lw_fifo_output_addr			 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_DATA_OFST ) & ( unsigned long )( HW_REGS_MASK ) );
-	
+
 	// Azione
 	fifo_empty = ((*f2h_lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_E_MSK) && 1;	// Lettura del bit di "empty" della FIFO.
 	if (fifo_empty)
@@ -168,7 +168,7 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezio
 	uint32_t *f2h_lw_fifo_level_reg_addr;
 	uint32_t *f2h_lw_fifo_output_addr;
 	int i;
-	
+
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO)									// Se la FIFO selezionata è "CONFIG_FIFO", restitusci error=1.
 		return (1);
@@ -182,12 +182,12 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezio
 	}
 	else															// Altrimenti restitusci error=1.
 		return (1);
-	
-	
+
+
 	// Definizione dei puntatori.
 	f2h_lw_fifo_level_reg_addr	 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST  + ALTERA_AVALON_FIFO_LEVEL_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	f2h_lw_fifo_output_addr		 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_DATA_OFST ) & ( unsigned long )( HW_REGS_MASK ) );
-	
+
 	// Azione
 	fifo_level = *f2h_lw_fifo_level_reg_addr;		// Lettura del livello di riempimento della FIFO.
 	if (fifo_level < length_burst)					// Se il livello è minore della lunghezza della raffica, termina la funzione con un errore.
@@ -196,7 +196,7 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezio
 		for (i=0; i<length_burst; i++){
 			data[i] = *f2h_lw_fifo_output_addr;
 		}
-						
+
 		return (0);
 	}
 }
@@ -208,7 +208,7 @@ int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_
 	uint32_t *lw_fifo_status_reg_addr;
 	uint32_t *lw_fifo_almostfull_reg_addr;
 	uint32_t *lw_fifo_almostempty_reg_addr;
-	
+
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO)							// Se la FIFO selezionata è "CONFIG_FIFO", utilizza l'offset FIFO_HPS_TO_FPGA_IN_CSR_BASE.
 		FIFO_CSR_OFST = FIFO_HPS_TO_FPGA_IN_CSR_BASE;
@@ -218,14 +218,14 @@ int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_
 		FIFO_CSR_OFST = FAST_FIFO_FPGA_TO_HPS_OUT_CSR_BASE;
 	else													// Altrimenti restitusci error=1.
 		return (1);
-	
-	
+
+
 	// Definizione dei puntatori.
 	lw_fifo_level_reg_addr		 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_LEVEL_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	lw_fifo_status_reg_addr		 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_STATUS_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	lw_fifo_almostfull_reg_addr	 = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_ALMOSTFULL_REG ) & ( unsigned long )( HW_REGS_MASK ) );
 	lw_fifo_almostempty_reg_addr = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG ) & ( unsigned long )( HW_REGS_MASK ) );
-	
+
 	// Azione (caricamento dei valori richiesti come argomento)
 	*fifo_level = *lw_fifo_level_reg_addr;
 	*fifo_full = ((*lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_F_MSK) && 1;
@@ -234,7 +234,7 @@ int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_
 	*fifo_almostempty = ((*lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_AE_MSK) && 1;
 	*almostfull_setting = *lw_fifo_almostfull_reg_addr;
 	*almostempty_setting = *lw_fifo_almostempty_reg_addr;
-	
+
 	return (0);
 }
 
@@ -250,7 +250,7 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 	uint32_t fifo_almostempty;
 	uint32_t almostfull_setting;
 	uint32_t almostempty_setting;
-	
+
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO){							// Se la FIFO selezionata è "CONFIG_FIFO", utilizza la stringa "HPS --> FPGA" per indicare la direzione ed utilizza FIFO_HPS_TO_FPGA_IN_CSR_FIFO_DEPTH per il calcolo della profondità.
 		strcpy(DIRECTION_FIFO_STRING,"HPS --> FPGA");
@@ -266,10 +266,10 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 	}
 	else													// Altrimenti, utilizza la stringa "no fifo sel " per indicare la direzione.
 		strcpy(DIRECTION_FIFO_STRING,"no fifo sel ");
-	
-	
+
+
 	error = StatusFifo(FIFO_TYPE, &fifo_level, &fifo_full, &fifo_empty, &fifo_almostfull, &fifo_almostempty, &almostfull_setting, &almostempty_setting);		// Estrai lo stato della FIFO.
-	
+
 	if (error)
 		return (1);				// Se l'estrazione dello stato non è avvenuta con usccesso, restitusici un errore.
 	else {
@@ -289,7 +289,7 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 		printf("Almostfull  :   %d\n",fifo_almostfull);
 		printf("Almostempty :   %d\n",fifo_almostempty);
 		printf("\n");
-	
+
 	return (0);
 	}
 }
@@ -298,7 +298,7 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 int OverflowController(int FIFO_TYPE){		// (Selezione della FIFO)
 	int FIFO_CSR_OFST;
 	uint32_t *h2f_lw_fifo_event_reg_addr;
-	
+
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO)								// Se la FIFO selezionata è "CONFIG_FIFO", utilizza l'offset FIFO_HPS_TO_FPGA_IN_CSR_BASE.
 		FIFO_CSR_OFST = FIFO_HPS_TO_FPGA_IN_CSR_BASE;
@@ -308,11 +308,11 @@ int OverflowController(int FIFO_TYPE){		// (Selezione della FIFO)
 		return (1);
 	else
 		return (1);
-	
-	
+
+
 	// Definizione dei puntatori.
 	h2f_lw_fifo_event_reg_addr = virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + FIFO_CSR_OFST + ALTERA_AVALON_FIFO_EVENT_REG ) & ( unsigned long )( HW_REGS_MASK ) );
-	
+
 	// Azione
 	if(((*h2f_lw_fifo_event_reg_addr) & ALTERA_AVALON_FIFO_EVENT_OVF_MSK) && 1){	// Se il bit di overflow è a "1", stampa un messaggio d'errore e termina la funzione con un errore.
 		printf("Warning: attempted TX_FIFO_overflow\n");
@@ -326,4 +326,11 @@ int OverflowController(int FIFO_TYPE){		// (Selezione della FIFO)
 }
 
 
+// Leggi Contenuto registro da PIO
+void ReadReg(int regAddr, uint32_t *data){
+	//Write the address of the register to be read
+	*fpgaRegAddr = regAddr;
 
+	//Read the register content
+	*data = *fpgaRegCont;
+}

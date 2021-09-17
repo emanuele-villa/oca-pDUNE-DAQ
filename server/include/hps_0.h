@@ -195,6 +195,54 @@
 #define FIFO_HPS_TO_FPGA_IN_USE_WRITE_CONTROL 1
 
 /*
+ * Macros for device 'RegAddr_pio', class 'altera_avalon_pio'
+ * The macros are prefixed with 'REGADDR_PIO_'.
+ * The prefix is the slave descriptor.
+ */
+#define REGADDR_PIO_COMPONENT_TYPE altera_avalon_pio
+#define REGADDR_PIO_COMPONENT_NAME RegAddr_pio
+#define REGADDR_PIO_BASE 0x1000
+#define REGADDR_PIO_SPAN 16
+#define REGADDR_PIO_END 0x100f
+#define REGADDR_PIO_BIT_CLEARING_EDGE_REGISTER 0
+#define REGADDR_PIO_BIT_MODIFYING_OUTPUT_REGISTER 0
+#define REGADDR_PIO_CAPTURE 0
+#define REGADDR_PIO_DATA_WIDTH 32
+#define REGADDR_PIO_DO_TEST_BENCH_WIRING 0
+#define REGADDR_PIO_DRIVEN_SIM_VALUE 0
+#define REGADDR_PIO_EDGE_TYPE NONE
+#define REGADDR_PIO_FREQ 50000000
+#define REGADDR_PIO_HAS_IN 0
+#define REGADDR_PIO_HAS_OUT 1
+#define REGADDR_PIO_HAS_TRI 0
+#define REGADDR_PIO_IRQ_TYPE NONE
+#define REGADDR_PIO_RESET_VALUE 0
+
+/*
+ * Macros for device 'RegContent_pio', class 'altera_avalon_pio'
+ * The macros are prefixed with 'REGCONTENT_PIO_'.
+ * The prefix is the slave descriptor.
+ */
+#define REGCONTENT_PIO_COMPONENT_TYPE altera_avalon_pio
+#define REGCONTENT_PIO_COMPONENT_NAME RegContent_pio
+#define REGCONTENT_PIO_BASE 0x2000
+#define REGCONTENT_PIO_SPAN 16
+#define REGCONTENT_PIO_END 0x200f
+#define REGCONTENT_PIO_BIT_CLEARING_EDGE_REGISTER 0
+#define REGCONTENT_PIO_BIT_MODIFYING_OUTPUT_REGISTER 0
+#define REGCONTENT_PIO_CAPTURE 0
+#define REGCONTENT_PIO_DATA_WIDTH 32
+#define REGCONTENT_PIO_DO_TEST_BENCH_WIRING 0
+#define REGCONTENT_PIO_DRIVEN_SIM_VALUE 0
+#define REGCONTENT_PIO_EDGE_TYPE NONE
+#define REGCONTENT_PIO_FREQ 50000000
+#define REGCONTENT_PIO_HAS_IN 1
+#define REGCONTENT_PIO_HAS_OUT 0
+#define REGCONTENT_PIO_HAS_TRI 0
+#define REGCONTENT_PIO_IRQ_TYPE NONE
+#define REGCONTENT_PIO_RESET_VALUE 0
+
+/*
  * Macros for device 'led_pio', class 'altera_avalon_pio'
  * The macros are prefixed with 'LED_PIO_'.
  * The prefix is the slave descriptor.
