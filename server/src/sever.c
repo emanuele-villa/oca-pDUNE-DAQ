@@ -282,6 +282,14 @@ int main(int argc, char *argv[]){
 	extern void *virtual_base;
   extern uint32_t * fpgaRegAddr;
   extern uint32_t * fpgaRegCont;
+  extern uint32_t * configFifo;
+  extern uint32_t * configFifoCsr;
+  extern uint32_t * configFifoLevel;
+  extern uint32_t * configFifoStatus;
+  extern uint32_t * hkFifo;
+  extern uint32_t * hkFifoCsr;
+  extern uint32_t * FastFifo;
+  extern uint32_t * FastFifoCsr;
 
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
@@ -296,8 +304,28 @@ int main(int argc, char *argv[]){
 		return( 1 );
 	}
 
+  //Base address of the RegisterArray address
   fpgaRegAddr = virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + REGADDR_PIO_BASE) & (unsigned long)(HW_REGS_MASK));
+  //Base address of the RegisterArray readback
   fpgaRegCont = virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + REGCONTENT_PIO_BASE) & (unsigned long)(HW_REGS_MASK));
+
+  //Base addresses of the Data and CSR of the CONFIG FIFO
+  configFifo = virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + FIFO_HPS_TO_FPGA_IN_BASE) & (unsigned long)(HW_REGS_MASK));
+  configFifoCsr = virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + FIFO_HPS_TO_FPGA_IN_CSR_BASE) & (unsigned long)(HW_REGS_MASK));
+  configFifoLevel = configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_LEVEL_REG;
+  configFifoStatus = configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_STATUS_REG;
+
+  //Base addresses of the Data and CSR of the HK FIFO
+  hkFifo = virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + FIFO_FPGA_TO_HPS_OUT_BASE) & (unsigned long)(HW_REGS_MASK));
+  hkFifoCsr = virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + FIFO_FPGA_TO_HPS_OUT_CSR_BASE) & (unsigned long)(HW_REGS_MASK));
+  hkFifoLevel = hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_LEVEL_REG;
+  hkFifoStatus = hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_STATUS_REG;
+
+  //Base addresses of the Data and CSR of the FAST FIFO
+  FastFifo = virtual_base + ((unsigned long )(ALT_LWFPGASLVS_OFST + FAST_FIFO_FPGA_TO_HPS_OUT_BASE) & (unsigned long)(HW_REGS_MASK));
+  FastFifoCsr = virtual_base + ((unsigned long )(ALT_LWFPGASLVS_OFST + FAST_FIFO_FPGA_TO_HPS_OUT_CSR_BASE) & (unsigned long)(HW_REGS_MASK));
+  FastFifoLevel = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_LEVEL_REG;
+  FastFifoStatus = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_STATUS_REG;
 
 	pthread_t threads;
 	pthread_create(&threads, NULL, receiver_comandi, argv[1]);
