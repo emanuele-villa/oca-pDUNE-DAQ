@@ -9,6 +9,20 @@
 
 
 
+extern void *virtual_base;			// Indirizzo base dell'area di memoria virtuale (variabile globale).
+
+uint32_t data_array[4093];		// Array di 4093 elementi di tipo uint32_t, da svuotare in lettura.
+uint32_t level;				// Livello di riempimento della FIFO.
+uint32_t full;					// bit di "full" della FIFO.
+uint32_t empty;				// bit di "empty" della FIFO.
+uint32_t almostfull;			// bit di "almostfull" della FIFO.
+uint32_t almostempty;			// bit di "almostempty" della FIFO.
+uint32_t almostfull_setting_;		// livello di "almostfull" della FIFO.
+uint32_t almostempty_setting_;		// livello di "almostempty" della FIFO.
+
+
+
+
 uint32_t crc_init(void)
 {
     return 0x46af6449;
@@ -20,7 +34,7 @@ uint32_t crc_update(uint32_t crc, const void *data, size_t data_len)
     unsigned int i;
     bool bit;
     unsigned char c;
-
+    puts("crc");
     while (data_len--) {
         c = d[data_len];
         for (i = 0; i < 8; i++) {
@@ -57,11 +71,12 @@ int read_register(uint16_t reg, uint32_t *value){
 int write_register(uint16_t reg, uint32_t *value){
 
 	bool res[6];
-
 	for(int j = 0; j < 4; j++){
 
 		res[j] = parity8((uint8_t)((*value >> 8 * j) & 0x000000ff));
+		
 	}
+
 
 	for(int j = 0; j < 2; j++){
 
@@ -78,6 +93,7 @@ int write_register(uint16_t reg, uint32_t *value){
 
 	result |= res[0];
 
+
 	uint32_t address, parity, crc;
 	crc = crc_init();
 	parity = result; 
@@ -93,18 +109,25 @@ int write_register(uint16_t reg, uint32_t *value){
 	packet[5] = parity | address;
 	packet[6] = 0xBADC0FEE;
 
+	printf("%x\n", packet[5]);
+	printf("%x\n", packet[4]);
+
 	for(int i = 0; i < 7; i++){
 
 		if(i == 0 || i == 1 || i == 6)
 			continue;
-		crc = crc_update(crc, (const void*)packet[i], sizeof(uint32_t));
+		crc = crc_update(crc, &packet[i], sizeof(uint32_t));
 	}
 
 	crc = crc_finalize(crc);
 
 	packet[7] = crc;
-	//int ret = WriteFifoBurst(CONFIG_FIFO, packet, 8);
-	int ret = ReadFifoBurst(DATA_FIFO, packet, 8);
+
+	int ret = WriteFifoBurst(CONFIG_FIFO, packet, 8);
+	uint32_t output[8];
+	ret = StatusFifo(HK_FIFO, &level, &full, &empty, &almostfull, &almostempty, &almostfull_setting_, &almostempty_setting_);
+	ret = ReadFifoBurst(HK_FIFO, data_array, level);
+	
 	return(0);
 }
 

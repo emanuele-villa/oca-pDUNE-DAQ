@@ -46,8 +46,17 @@ uint32_t fifo_almostempty;			// bit di "almostempty" della FIFO.
 uint32_t almostfull_setting;		// livello di "almostfull" della FIFO.
 uint32_t almostempty_setting;		// livello di "almostempty" della FIFO.
 
+int receive_register_content(int socket){
+	char msg[4];
+	if(read(socket, msg, sizeof(msg)) < 0){
 
-
+		fprintf(stderr, "errore lettura\n");
+	}else{
+		//strcpy(data, msg);
+		int data = atoi(msg);
+		return data;
+	}
+}
 void *high_priority(void *socket){
 
 	/*srand(time(NULL));
@@ -116,16 +125,19 @@ void Init(int socket){
 		printf("[SERVER] comando inviato. %s\n", msg);
 	}
 
-	uint32_t data = 0xAAAAAAAA;
-	int ret = write_register(5, &data);
+	uint16_t reg;
+	int ret;
+    bzero(msg, sizeof(msg));
 
-	uint32_t output_hk[8];
-	sleep(1);
-	ret = ReadFifoBurst(HK_FIFO, output_hk, 8);
-	for(int i = 0; i < 8; i++){
+    for(int i = 1; i < 8; i++){
 
-		printf("%x\n", output_hk[i]);
-	}
+    	reg = i;
+    	data = receive_register_content(socket);
+    	ret = write_register(reg, &data);
+    }
+
+	write_register(0, 0x00000003);
+	write_register(0, 0x00000000);
 }
 
 void SetDelay(int socket){
