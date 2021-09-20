@@ -20,6 +20,7 @@
 #include "socal/socal.h"
 #include "socal/hps.h"
 #include "socal/alt_gpio.h"
+#include "hps_0.h"
 
 #define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
 #define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
@@ -279,6 +280,8 @@ int main(int argc, char *argv[]){
 
 	//MAPPING
 	extern void *virtual_base;
+	extern uint32_t * fpgaRegAddr;
+    extern uint32_t * fpgaRegCont;
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
 		printf( "ERROR: could not open \"/dev/mem\"...\n" );
@@ -293,7 +296,8 @@ int main(int argc, char *argv[]){
 		return( 1 );
 	}
 
-
+	//Base address of the RegisterArray address
+  
 	pthread_t threads;
 	pthread_create(&threads, NULL, receiver_comandi, argv[1]);
 	pthread_create(&threads, NULL, receiver_slow_control, argv[2]);

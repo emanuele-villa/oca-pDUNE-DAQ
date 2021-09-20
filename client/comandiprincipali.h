@@ -1,35 +1,28 @@
-#ifndef SCHERMATA_H
-#define SCHERMATA_H
+#ifndef COMANDIPRINCIPALI_H
+#define COMANDIPRINCIPALI_H
 
 #include <QDialog>
 #include "de10silicon.h"
-#include <QtCharts>
-#include <QChartView>
 #include <QLineSeries>
 
-
 namespace Ui {
-class Schermata;
+class comandiPrincipali;
 }
 
-class Schermata : public QDialog
+class comandiPrincipali : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit Schermata(QWidget *parent = nullptr);
-    ~Schermata();
+    explicit comandiPrincipali(QWidget *parent = nullptr);
+    ~comandiPrincipali();
     de10_silicon de10;
 private slots:
+    void grafico(QVector<double> event);
+
     void on_init_clicked();
 
     void on_getevent_clicked();
-
-    void on_avvia_clicked();
-
-    void grafico(QVector<double> event);
-
-
 
     void on_setdelay_clicked();
 
@@ -49,11 +42,14 @@ private slots:
 
     void on_savecalibration_clicked();
 
+    void on_avvia_clicked();
+
     void on_stop_clicked();
 
 private:
-    Ui::Schermata *ui;
+    Ui::comandiPrincipali *ui;
     QLineSeries *series;
+
 };
 
-#endif // SCHERMATA_H
+#endif // COMANDIPRINCIPALI_H

@@ -51,6 +51,5 @@ public:
     int Calibrate();
     int WriteCalibPar();
     int SaveCalibrations();
-    void prova();
 };
 #endif

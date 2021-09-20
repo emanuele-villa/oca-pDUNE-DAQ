@@ -8,19 +8,24 @@ CONFIG += c++11
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-SOURCES += de10silicon.cpp \
+SOURCES += \
+    comandiprincipali.cpp \
+    de10silicon.cpp \
     mainwindow.cpp \
     qcustomplot.cpp \
-    schermata.cpp
+    slowcontrol.cpp
 
-HEADERS += de10silicon.h \
+HEADERS += \
+    comandiprincipali.h \
+    de10silicon.h \
     mainwindow.h \
     qcustomplot.h \
-    schermata.h
+    slowcontrol.h
 
 FORMS += \
+    comandiprincipali.ui \
     mainwindow.ui \
-    schermata.ui
+    slowcontrol.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
