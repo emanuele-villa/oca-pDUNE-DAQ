@@ -40,8 +40,7 @@ void *receiver_slow_control(void *args){
 	struct sockaddr_in addr;
 	int timeout;
 	struct pollfd fds[200];
-	int nfds = 1, current_size = 0, i, j;
-	int end_server = 0, close_conn = 0;
+	int nfds = 1, current_size = 0;
 	char *port = (char*)args;
 	int porta = atoi(port);
 
@@ -112,7 +111,7 @@ void *receiver_slow_control(void *args){
 
 			struct sockaddr_in cliaddr;
             int addrlen = sizeof(cliaddr);
-            new_sd = accept(listen_sd, (struct sockaddr *)&cliaddr, &addrlen);
+            new_sd = accept(listen_sd, (struct sockaddr *)&cliaddr, (socklen_t *restrict)&addrlen);
 			printf("connessione da parte di %d accettata\n", new_sd);
 			for(int i = 0; i < 200; i++){
 
