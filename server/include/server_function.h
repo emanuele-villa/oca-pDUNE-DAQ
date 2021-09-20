@@ -17,6 +17,9 @@ void OverWriteDelay(int socket);
 void Calibrate(int socket);
 void WriteCalibPar(int socket);
 void SaveCalibrations(int socket);
+void intTriggerPeriod(int socket);
+void selectTrigger(int socket);
+void configureTestUnit(int socket);
 int mapping();
 
 #endif

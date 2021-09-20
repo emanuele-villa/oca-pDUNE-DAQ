@@ -84,7 +84,7 @@ void *high_priority(void *socket){
 
 		printf("%x\n", packet[i]);
 	}
-	
+
 	n = write(sock, &packet, sizeof(packet));
 	if(n < 0){
 
@@ -149,7 +149,7 @@ void SetDelay(int socket){
 
 
 		}
-		
+
 
 	}
 
@@ -256,7 +256,7 @@ void EventReset(int socket){
 	char *msg = "[SERVER] resetto";
 	if(write(socket, msg, strlen(msg) + 1) < 0){
 
-		fprintf(stderr, "errore scrttura");
+		fprintf(stderr, "errore scrittura");
 	}
 
 	uint32_t data = 0x00000003;
@@ -294,7 +294,7 @@ void OverWriteDelay(int socket){
 	char *msg = "[SERVER] OverWriteDelay";
 	if(write(socket, msg, strlen(msg) + 1) < 0){
 
-		fprintf(stderr, "errore scrttura");
+		fprintf(stderr, "errore scrittura");
 	}
 
 	int delay;
@@ -312,7 +312,7 @@ void Calibrate(int socket){
 	char *msg = "[SERVER] Calibrate";
 	if(write(socket, msg, strlen(msg) + 1) < 0){
 
-		fprintf(stderr, "errore scrttura");
+		fprintf(stderr, "errore scrittura");
 	}
 
 	uint32_t data = 0x00000003;
@@ -330,7 +330,7 @@ void WriteCalibPar(int socket){
 	char *msg = "[SERVER] WriteCalibPar";
 	if(write(socket, msg, strlen(msg) + 1) < 0){
 
-		fprintf(stderr, "errore scrttura");
+		fprintf(stderr, "errore scrittura");
 	}
 }
 
@@ -339,6 +339,74 @@ void SaveCalibrations(int socket){
 	char *msg = "[SERVER] SaveCalibrations";
 	if(write(socket, msg, strlen(msg) + 1) < 0){
 
-		fprintf(stderr, "errore scrttura");
+		fprintf(stderr, "errore scrittura");
 	}
+}
+
+//Update the internal trigger period without changing the other configs
+void intTriggerPeriod(int socket){
+	char msg[sizeof(uint32_t) * 8 + 1];
+	char *ptr;
+	printf("Ricevo internal trigger period\n");
+	if(read(socket, msg, sizeof(msg)) < 0){
+		fprintf(stderr, "Errore lettura\n");
+	}else{
+		printf("Ricevuto\n");
+		uint32_t period = strtoul(msg, &ptr, 16);
+		printf("Period: %x clock cycles\n", period);
+		if(write(socket, msg, strlen(msg) + 1) < 0){
+			fprintf(stderr, "Errore scrittura\n");
+		}
+	}
+
+	uint32_t regContent;
+	ReadReg(2, &regContent);
+	regContent = (period & 0xFFFFFFF0) | (regContent & 0x0000000F);
+	int ret = write_register(2, &regContent);
+}
+
+//Enable/Disable the internal trigger
+void selectTrigger(int socket){
+	char msg[sizeof(uint32_t) * 8 + 1];
+	char *ptr;
+	printf("Ricevo internal trigger enable\n");
+	if(read(socket, msg, sizeof(msg)) < 0){
+		fprintf(stderr, "Errore lettura\n");
+	}else{
+		printf("Ricevuto\n");
+		uint32_t intTrig = strtoul(msg, &ptr, 16);
+		printf("Internal trigger enabled: %d\n", intTrig);
+		if(write(socket, msg, strlen(msg) + 1) < 0){
+			fprintf(stderr, "Errore scrittura\n");
+		}
+	}
+
+	uint32_t regContent;
+	ReadReg(2, &regContent);
+	regContent = (regContent & 0xFFFFFFF0) | (intTrig & 0x00000001);
+	int ret = write_register(2, &regContent);
+}
+
+//Configure and enable/disable the test unit
+void configureTestUnit(int socket){
+	char msg[sizeof(uint32_t) * 8 + 1];
+	char *ptr;
+	printf("Ricevo Test-Unit configuration\n");
+	if(read(socket, msg, sizeof(msg)) < 0){
+		fprintf(stderr, "Errore lettura\n");
+	}else{
+		printf("Ricevuto\n");
+		uint32_t cmdRx = strtoul(msg, &ptr, 16);
+		char testUnitCfg = ((cmdRx&0x300)>>8);
+		char testUnitEn  = ((cmdRx&0x2)>>1);
+		printf("Test Unit Configuration: %x - Test-Unit enable: %d\n", testUnitCfg, testUnitEn);
+		if(write(socket, msg, strlen(msg) + 1) < 0){
+			fprintf(stderr, "Errore scrittura\n");
+		}
+	}
+
+	uint32_t regContent;
+	ReadReg(1, &regContent);
+	regContent = (regContent & 0xFFFFFCFD) | (cmdRx & 0x00000302);
+	int ret = write_register(1, &regContent);
 }

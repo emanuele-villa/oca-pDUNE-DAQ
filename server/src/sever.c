@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sched.h>
@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <sys/ioctl.h>
-#include "server_function.h" //funzioni dei comandi che rispondono al client 
+#include "server_function.h" //funzioni dei comandi che rispondono al client
 #include <sys/mman.h>
 #include "hwlib.h"
 #include "socal/socal.h"
@@ -36,10 +36,10 @@ void *receiver_slow_control(void *args){
 	int listen_sd = -1, new_sd = -1;
 	char buffer[80];
 	struct sockaddr_in addr;
-	int timeout; 
+	int timeout;
 	struct pollfd fds[200];
 	int nfds = 1, current_size = 0, i, j;
-	int end_server = 0, close_conn = 0; 
+	int end_server = 0, close_conn = 0;
 	char *port = (char*)args;
 	int porta = atoi(port);
 
@@ -140,7 +140,7 @@ void *receiver_slow_control(void *args){
 					continue;
 				}
 
-				len = rc; 
+				len = rc;
 				printf("[SERVER] ho ricevuto %d bytes, da %d:: %s\n", len, fds[i].fd, buffer);
 
 				rc = write(fds[i].fd, buffer, len);
@@ -165,7 +165,7 @@ void *receiver_comandi(void *args){
 	int porta = atoi(port);
 	int sock, addrlen, new_socket;
 	struct sockaddr_in client_addr, server_addr;
-	
+
 	sock = socket(AF_INET , SOCK_STREAM , 0);
 	if(sock < 0){
 
@@ -202,9 +202,9 @@ void *receiver_comandi(void *args){
 
 		printf("connessione riuscita al socket comandi principali: socket %d\n", new_socket);
 		close(sock);
-			
+
 	}
-	
+
 	while(1){
 
 		char msg[256];
@@ -267,6 +267,21 @@ void *receiver_comandi(void *args){
 
 				SaveCalibrations(new_socket);
 			}
+
+      if(strcmp(msg, "intTriggerPeriod") == 0){
+
+				intTriggerPeriod(new_socket);
+			}
+
+      if(strcmp(msg, "selectTrigger") == 0){
+
+				selectTrigger(new_socket);
+			}
+
+      if(strcmp(msg, "configureTestUnit") == 0){
+
+				configureTestUnit(new_socket);
+			}
 		}
 
 		bzero(msg, sizeof(msg));
@@ -297,7 +312,7 @@ int main(int argc, char *argv[]){
 	}
 
 	//Base address of the RegisterArray address
-  
+
 	pthread_t threads;
 	pthread_create(&threads, NULL, receiver_comandi, argv[1]);
 	pthread_create(&threads, NULL, receiver_slow_control, argv[2]);

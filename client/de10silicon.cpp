@@ -303,6 +303,27 @@ int de10_silicon::SaveCalibrations(){
     return 0;
 }
 
+int de10_silicon::intTriggerPeriod(){
+
+    client_send("intTriggerPeriod");
+    client_receive();
+    return 0;
+}
+
+int de10_silicon::selectTrigger(){
+
+    client_send("selectTrigger");
+    client_receive();
+    return 0;
+}
+
+int de10_silicon::configureTestUnit(){
+
+    client_send("configureTestUnit");
+    client_receive();
+    return 0;
+}
+
 
 int main(int argc, char *argv[]){
 

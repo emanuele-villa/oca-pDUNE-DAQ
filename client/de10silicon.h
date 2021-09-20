@@ -51,5 +51,8 @@ public:
     int Calibrate();
     int WriteCalibPar();
     int SaveCalibrations();
+    int intTriggerPeriod();
+    int selectTrigger();
+    int configureTestUnit();
 };
 #endif
