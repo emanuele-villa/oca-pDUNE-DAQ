@@ -66,10 +66,10 @@ uint32_t crc_finalize(uint32_t crc)
 
 void ReadReg(int regAddr, uint32_t *data){
 	//Write the address of the register to be read
-	*fpgaRegAddr = regAddr;
+	//*fpgaRegAddr = regAddr;
 
 	//Read the register content
-	*data = *fpgaRegCont;
+	//*data = *fpgaRegCont;
 }
 
 int write_register(uint16_t reg, uint32_t *value){
