@@ -127,10 +127,12 @@ int write_register(uint16_t reg, uint32_t *value){
 
 	packet[7] = crc;
 
+	puts("faccio write burst");
 	int ret = WriteFifoBurst(CONFIG_FIFO, packet, 8);
-	uint32_t output[8];
-	ret = StatusFifo(HK_FIFO, &level, &full, &empty, &almostfull, &almostempty, &almostfull_setting_, &almostempty_setting_);
-	ret = ReadFifoBurst(HK_FIFO, data_array, level);
+	puts("ho fatto write burst");
+	//uint32_t output[8];
+	//ret = StatusFifo(HK_FIFO, &level, &full, &empty, &almostfull, &almostempty, &almostfull_setting_, &almostempty_setting_);
+	//ret = ReadFifoBurst(HK_FIFO, data_array, level);
 	
 	return(0);
 }

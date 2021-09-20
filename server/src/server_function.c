@@ -47,38 +47,20 @@ uint32_t almostfull_setting;		// livello di "almostfull" della FIFO.
 uint32_t almostempty_setting;		// livello di "almostempty" della FIFO.
 
 uint32_t receive_register_content(int socket){
-	char msg[4];
+	char msg[sizeof(uint32_t) * 8 + 1];
+	char *ptr;
 	if(read(socket, msg, sizeof(msg)) < 0){
 
 		fprintf(stderr, "errore lettura\n");
 		return -1;
 	}else{
-		//strcpy(data, msg);
-		int data = atoi(msg);
-		printf("ho ricevuto: %d\n", data);
+		uint32_t data = strtoul(msg, &ptr, 16);
+		printf("ho ricevuto: %x\n", data);
 		return data;
 	}
 }
 void *high_priority(void *socket){
 
-	/*srand(time(NULL));
-	int sock = *(int*) socket;
-	printf("alta priorità socket: %d\n", sock);
-	
-	int num[640];
-	int count = 640;
-	for(int i = 0; i < 640; i++){
-
-		int r = random() % 100;
-		num[i] = r;
-	}
-
-	int n;
-	n = write(sock, &num, sizeof(num));
-	if(n < 0){
-
-		perror("errore scrittura:");
-	}*/
 	int n;
 	int sock = *(int *)socket;
 	uint32_t length;
@@ -140,22 +122,26 @@ void Init(int socket){
     	printf("ho scritto: %x nel registro %d\n", data, reg);
     }
 
-	write_register(0, 0x00000003);
-	write_register(0, 0x00000000);
+    puts("reset");
+    data = 0x00000003;
+	write_register(0, &data);
+	data = 0x00000000;
+	write_register(0, &data);
+	puts("fine reset");
 }
 
 void SetDelay(int socket){
 
-	char msg[256];
+	char msg[sizeof(uint32_t) * 8 + 1];
+	char *ptr;
 	printf("ricevo delay\n");
 	if(read(socket, msg, sizeof(msg)) < 0){
 
 		fprintf(stderr, "errore lettura\n");
 	}else{
 		printf("ricevuto\n");
-		//strcpy(data, msg);
-		int delay = atoi(msg);
-		sprintf(msg, "%s %d", "imposto delay:", delay);
+		uint32_t delay = strtoul(msg, &ptr, 16);
+		printf("delay: %x\n", delay);
 		if(write(socket, msg, strlen(msg) + 1) < 0){
 
 			fprintf(stderr, "errore scrittura\n");
@@ -167,9 +153,9 @@ void SetDelay(int socket){
 
 	}
 
-	write_register(0, 0x00000000);
-	delay = receive_register_content(socket);
-	uint32_t data;
+	uint32_t data = 0x00000000;
+	write_register(0, &data);
+	int delay = receive_register_content(socket);
 	ReadReg(7, &data);
 	delay &= 0x0000ffff;
 	data &= 0xFFFF0000;
@@ -200,13 +186,17 @@ void SetMode(int socket){
 
 	bzero(msg, sizeof(msg));
 	int mode;
+	uint32_t data;
 	mode = receive_register_content(socket);
-	if(mode == 0)
-		write_register(0, 0x00000000);
+	if(mode == 0){
+		data = 0x00000000;
+		write_register(0, &data);
+	}
 	else if(mode == 1){
-
-		write_register(0, 0x00000003);
-		write_register(0, 0x00000008);
+		data = 0x00000003;
+		write_register(0, &data);
+		data = 0x00000008;
+		write_register(0, &data);
 	}
 
 }
@@ -224,8 +214,8 @@ void GetEventNumber(int socket){
 
 	}
 
-	int ret = write_register(0, 0x00000000);
-	uint32_t data;
+	uint32_t data = 0x00000000;
+	int ret = write_register(0, &data);
 	ReadReg(1, &data);
 	data &= 0xFFFFFF8F;
 	data |= 0x00000050;
@@ -269,8 +259,10 @@ void EventReset(int socket){
 		fprintf(stderr, "errore scrttura");
 	}
 
-	int ret = write_register(0, 0x00000003);
-	int ret = write_register(0, 0x00000000);
+	uint32_t data = 0x00000003;
+	int ret = write_register(0, &data);
+	data = 0x00000000;
+	ret = write_register(0, &data);
 }
 
 //manda un evento (pacchetto fast data fifo)
@@ -323,9 +315,10 @@ void Calibrate(int socket){
 		fprintf(stderr, "errore scrttura");
 	}
 
-	int ret = write_register(0, 0x00000003);
-	ret = write_register(0, 0x00000000);
-	uint32_t data; 
+	uint32_t data = 0x00000003;
+	int ret = write_register(0, &data);
+	data = 0x00000000;
+	ret = write_register(0, &data);
 	ReadReg(2, &data);
 	data &= 0xFFFFFFFD;
 	data |= 0x00000002;
