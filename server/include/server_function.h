@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+void ResetFpga();
 void Init(int socket);
 void SetDelay(int socket);
 void SetMode(int socket);
