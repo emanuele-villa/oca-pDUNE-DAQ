@@ -1,147 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Schermata</class>
- <widget class="QDialog" name="Schermata">
+ <class>comandiPrincipali</class>
+ <widget class="QDialog" name="comandiPrincipali">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1066</width>
-    <height>801</height>
+    <width>1194</width>
+    <height>837</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QPushButton" name="init">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>20</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>init</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="getevent">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>20</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>get event</string>
-   </property>
-  </widget>
   <widget class="QTextEdit" name="dati">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>390</y>
+     <x>50</x>
+     <y>360</y>
      <width>371</width>
      <height>401</height>
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="avvia">
-   <property name="geometry">
-    <rect>
-     <x>410</x>
-     <y>320</y>
-     <width>171</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>avvia procedura</string>
-   </property>
-  </widget>
-  <widget class="QCustomPlot" name="plot" native="true">
-   <property name="geometry">
-    <rect>
-     <x>410</x>
-     <y>390</y>
-     <width>571</width>
-     <height>401</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="setdelay">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>20</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>set delay</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="printeventnumber">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>110</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>print event number</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="setmode">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>110</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>set mode</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="eventreset">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>200</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>event reset</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="overwritedelay">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>200</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>overwrite daly</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="geteventnumber">
    <property name="geometry">
     <rect>
-     <x>200</x>
-     <y>110</y>
+     <x>240</x>
+     <y>80</y>
      <width>151</width>
      <height>71</height>
     </rect>
@@ -150,37 +36,11 @@
     <string>get event number</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="writecalibpar">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>290</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>write calib par</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="calibrate">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>200</y>
-     <width>151</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>calibrate</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="savecalibration">
    <property name="geometry">
     <rect>
-     <x>200</x>
-     <y>290</y>
+     <x>240</x>
+     <y>260</y>
      <width>151</width>
      <height>71</height>
     </rect>
@@ -189,17 +49,157 @@
     <string>save calibration</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="init">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>-10</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>init</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="setdelay">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>-10</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>set delay</string>
+   </property>
+  </widget>
+  <widget class="QCustomPlot" name="plot" native="true">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>360</y>
+     <width>571</width>
+     <height>401</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="eventreset">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>170</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>event reset</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="writecalibpar">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>260</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>write calib par</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="getevent">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>-10</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>get event</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="printeventnumber">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>80</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>print event number</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="calibrate">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>170</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>calibrate</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="avvia">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>290</y>
+     <width>171</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>avvia procedura</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="overwritedelay">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>170</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>overwrite daly</string>
+   </property>
+  </widget>
   <widget class="QPushButton" name="stop">
    <property name="geometry">
     <rect>
-     <x>590</x>
-     <y>320</y>
+     <x>630</x>
+     <y>290</y>
      <width>161</width>
      <height>61</height>
     </rect>
    </property>
    <property name="text">
     <string>stop</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="setmode">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>80</y>
+     <width>151</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>set mode</string>
    </property>
   </widget>
  </widget>

@@ -51,6 +51,8 @@ public:
     int Calibrate();
     int WriteCalibPar();
     int SaveCalibrations();
-    void prova();
+    int intTriggerPeriod();
+    int selectTrigger();
+    int configureTestUnit();
 };
 #endif

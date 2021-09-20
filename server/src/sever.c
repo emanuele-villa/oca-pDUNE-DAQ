@@ -267,6 +267,21 @@ void *receiver_comandi(void *args){
 
 				SaveCalibrations(new_socket);
 			}
+
+      if(strcmp(msg, "intTriggerPeriod") == 0){
+
+				intTriggerPeriod(new_socket);
+			}
+
+      if(strcmp(msg, "selectTrigger") == 0){
+
+				selectTrigger(new_socket);
+			}
+
+      if(strcmp(msg, "configureTestUnit") == 0){
+
+				configureTestUnit(new_socket);
+			}
 		}
 
 		bzero(msg, sizeof(msg));

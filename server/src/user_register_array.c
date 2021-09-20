@@ -64,8 +64,12 @@ uint32_t crc_finalize(uint32_t crc)
     return crc & 0xffffffff;
 }
 
-int read_register(uint16_t reg, uint32_t *value){
-	return(0);
+void ReadReg(int regAddr, uint32_t *data){
+	//Write the address of the register to be read
+	//*fpgaRegAddr = regAddr;
+
+	//Read the register content
+	//*data = *fpgaRegCont;
 }
 
 int write_register(uint16_t reg, uint32_t *value){
@@ -123,10 +127,12 @@ int write_register(uint16_t reg, uint32_t *value){
 
 	packet[7] = crc;
 
+	puts("faccio write burst");
 	int ret = WriteFifoBurst(CONFIG_FIFO, packet, 8);
-	uint32_t output[8];
-	ret = StatusFifo(HK_FIFO, &level, &full, &empty, &almostfull, &almostempty, &almostfull_setting_, &almostempty_setting_);
-	ret = ReadFifoBurst(HK_FIFO, data_array, level);
+	puts("ho fatto write burst");
+	//uint32_t output[8];
+	//ret = StatusFifo(HK_FIFO, &level, &full, &empty, &almostfull, &almostempty, &almostfull_setting_, &almostempty_setting_);
+	//ret = ReadFifoBurst(HK_FIFO, data_array, level);
 	
 	return(0);
 }

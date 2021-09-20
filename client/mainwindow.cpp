@@ -1,15 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <de10silicon.h>
-#include <QObject>
-#include "schermata.h"
+#include "comandiprincipali.h"
+#include "slowcontrol.h"
+#include <QString>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,17 +11,28 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 }
 
-
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
 
-
-void MainWindow::on_pushButton_clicked()
+void MainWindow::on_principali_clicked()
 {
-     Schermata schermata;
-     schermata.setModal(true);
-     schermata.exec();
+    comandiPrincipali schermata;
+    QString indirizzo = ui->textEdit->toPlainText();
+    QByteArray ba = indirizzo.toLatin1();
+    char *address = ba.data();
+    ui->label->setText(address);
+    schermata.setModal(true);
+    schermata.exec();
 }
+
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    slowControl schermata;
+    schermata.setModal(true);
+    schermata.exec();
+}
+

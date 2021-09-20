@@ -7,7 +7,7 @@ INCLUDE := -I include
 
 #DE10 specific
 ALT_DEVICE_FAMILY ?= soc_cv_av
-SOCEDS_DEST_ROOT = /home/depa/intelFPGA/20.1/embedded
+#SOCEDS_DEST_ROOT = /home/depa/intelFPGA/20.1/embedded
 HWLIBS_ROOT = $(SOCEDS_DEST_ROOT)/ip/altera/hps/altera_hps/hwlib
 
 #Compiler

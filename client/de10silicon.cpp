@@ -1,26 +1,20 @@
-#include <sys/time.h>
+﻿#include <sys/time.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
 #include "de10silicon.h"
-//#include <pthread.h>
 #include <errno.h>
 #include <QApplication>
 #include <QObject>
-
+#include <stdint.h>
 
 de10_silicon::de10_silicon(char *address, int port){
     changeText("hello");
     printf("de10 silicon creato\n");
     client_socket = client_connect(address, port);
-    //char msg[256] = "[CLIENT] messaggio";
-    //client_send(msg);
-    //bzero(msg, sizeof(msg));
-    //client_receive();
-    /*pthread_t thread;
-    pthread_create(&thread, NULL, receiver, (void*)client_socket);*/
+
 
 }
 
@@ -81,6 +75,7 @@ int de10_silicon::client_send(const char *buffer) {
         if ((write(client_socket, buffer, strlen(buffer)) > 0)) {
             usleep(250000);
             printf("[CLIENT] messaggio inviato correttamente\n");
+            changeText("inviato");
         }else{
 
             fprintf(stderr, "errore invio");
@@ -91,10 +86,33 @@ int de10_silicon::client_send(const char *buffer) {
 
 int de10_silicon::client_receive_int(){
 
-    QVector<double> values(640);
+    int n;
+    int cont = 0;
+    while(cont < 111 * sizeof(int)){
+        int temp;
+        n = read(client_socket, &temp, sizeof(temp));
+        if(n < 0){
+
+            perror("errore lettura");
+        }else{
+
+            char c[4];
+            char msg[256];
+            sprintf(c, "%x", temp);
+            //sprintf(msg, "ho letto %d", n);
+            changeText(c);
+            //usleep(100000);
+            bzero(c, sizeof(c));
+            cont += n;
+        }
+    }
+
+    changeText("fine");
+
+    /*QVector<double> values(110);
     int n;
     int i = 0;
-    while(i < 640){
+    while(i < 110){
         int temp;
         n = read(client_socket, &temp, sizeof(temp));
         if(n <  0){
@@ -105,12 +123,12 @@ int de10_silicon::client_receive_int(){
             values[i] = temp;
             i++;
         }
-    }
+    }*/
 
     //predisporre qui il grafico
 
 
-    sendData(values);
+    //sendData(values);
 
     /*for(int i = 0; i < 640; i++){
 
@@ -157,16 +175,56 @@ int de10_silicon::Init() {
     printf("[>>> initializing dampe (reset everything)]\n");
     client_send("init");
     client_receive();
+    uint32_t reg_content = 1;
+    //char *c = (char *)&reg_content;
+    char c[sizeof (uint32_t) * 8 +1];
+    sprintf(c, "%x", reg_content);
+    client_send(c);
+    changeText(c);
+    bzero(c, sizeof(c));
+    reg_content = 0x02faf080;
+    //c = (char *)&reg_content;
+    sprintf(c, "%x", reg_content);
+    client_send(c);
+    changeText(c);
+    bzero(c, sizeof(c));
+    reg_content = 0x000000ff;
+    //c = (char *)&reg_content;
+    sprintf(c, "%x", reg_content);
+    client_send(c);
+    changeText(c);
+    bzero(c, sizeof(c));
+    reg_content = 0x0000028a;
+    //c = (char *)&reg_content;
+    sprintf(c, "%x", reg_content);
+    client_send(c);
+    changeText(c);
+    bzero(c, sizeof(c));
+    reg_content = 0x00040028;
+    //c = (char *)&reg_content;
+    sprintf(c, "%x", reg_content);
+    client_send(c);
+    changeText(c);
+    reg_content = 0x00040002;
+    //c = (char *)&reg_content;
+    sprintf(c, "%x", reg_content);
+    client_send(c);
+    changeText(c);
+    reg_content  = 0x00070145;
+
+    //c = (char *)&reg_content;
+    sprintf(c, "%x", reg_content);
+    client_send(c);
+    changeText(c);
+
     return 0;
 }
 int de10_silicon::SetDelay(){
-    printf("[>>> dampe SET delay (do nothing)]\n");
-    client_send("set delay\n");
-    int delay = 5;
-    char *c;
-    //sprintf(c, "%d", delay);
-    //printf("%s\n",c);
-    client_send("5");
+    client_send("set delay");
+    uint32_t delay = 5;
+    char c[sizeof (uint32_t) * 8 + 1];
+    sprintf(c, "%x", delay);
+    client_send(c);
     client_receive();
     return 0;
 }
@@ -174,8 +232,8 @@ int de10_silicon::SetDelay(){
 int de10_silicon::SetMode() {
 
     client_send("set mode");
-    int mode = 3;
-    char *c;
+    uint32_t mode = 3;
+    char c[sizeof (uint32_t) * 8 + 1];
     sprintf(c, "%d", mode);
     client_send(c);
     client_receive();
@@ -245,10 +303,27 @@ int de10_silicon::SaveCalibrations(){
     return 0;
 }
 
-void de10_silicon::prova(){
+int de10_silicon::intTriggerPeriod(){
 
-    printf("ciao");
+    client_send("intTriggerPeriod");
+    client_receive();
+    return 0;
 }
+
+int de10_silicon::selectTrigger(){
+
+    client_send("selectTrigger");
+    client_receive();
+    return 0;
+}
+
+int de10_silicon::configureTestUnit(){
+
+    client_send("configureTestUnit");
+    client_receive();
+    return 0;
+}
+
 
 int main(int argc, char *argv[]){
 
@@ -258,5 +333,3 @@ int main(int argc, char *argv[]){
     return a.exec();
     return 0;
 }
-
-
