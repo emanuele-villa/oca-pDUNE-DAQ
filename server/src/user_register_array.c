@@ -6,6 +6,7 @@
 #include "user_avalon_fifo_util.h"
 #include "hps_0.h"
 #include "user_register_array.h"
+#include "server.h"
 
 
 
@@ -64,12 +65,13 @@ uint32_t crc_finalize(uint32_t crc)
     return crc & 0xffffffff;
 }
 
+// Leggi Contenuto registro da PIO
 void ReadReg(int regAddr, uint32_t *data){
 	//Write the address of the register to be read
-	//*fpgaRegAddr = regAddr;
+	*fpgaRegAddr = regAddr;
 
 	//Read the register content
-	//*data = *fpgaRegCont;
+	*data = *fpgaRegCont;
 }
 
 int write_register(uint16_t reg, uint32_t *value){
@@ -78,7 +80,7 @@ int write_register(uint16_t reg, uint32_t *value){
 	for(int j = 0; j < 4; j++){
 
 		res[j] = parity8((uint8_t)((*value >> 8 * j) & 0x000000ff));
-		
+
 	}
 
 
@@ -87,7 +89,7 @@ int write_register(uint16_t reg, uint32_t *value){
 		res[j + 4] = parity8((uint8_t)((reg >> 8 * j) & 0x000000ff));
 	}
 
-	uint8_t result = 0; 
+	uint8_t result = 0;
 	for(int i = 5; i > 0; i--){
 
 		result |= res[i];
@@ -100,11 +102,11 @@ int write_register(uint16_t reg, uint32_t *value){
 
 	uint32_t address, parity, crc;
 	crc = crc_init();
-	parity = result; 
-	parity <<= 24; 
+	parity = result;
+	parity <<= 24;
 	address = reg;
 
-	uint32_t packet[8]; 
+	uint32_t packet[8];
 	packet[0] = 0xAA55CA5A;
 	packet[1] = 7;
 	packet[2] = 0;
@@ -133,7 +135,7 @@ int write_register(uint16_t reg, uint32_t *value){
 	//uint32_t output[8];
 	//ret = StatusFifo(HK_FIFO, &level, &full, &empty, &almostfull, &almostempty, &almostfull_setting_, &almostempty_setting_);
 	//ret = ReadFifoBurst(HK_FIFO, data_array, level);
-	
+
 	return(0);
 }
 
@@ -147,7 +149,7 @@ bool parity8(uint8_t data){
 
 		arr[i] = data & 1;
 		data >>= 1;
-		
+
 	}
 
 	b = arr[0] ^ arr[1] ^arr[2] ^ arr[3] ^ arr[4] ^ arr[5] ^ arr[6] ^ arr[7];

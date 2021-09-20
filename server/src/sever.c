@@ -15,12 +15,14 @@
 #include <time.h>
 #include <sys/ioctl.h>
 #include "server_function.h" //funzioni dei comandi che rispondono al client
+#include "server.h"
 #include <sys/mman.h>
 #include "hwlib.h"
 #include "socal/socal.h"
 #include "socal/hps.h"
 #include "socal/alt_gpio.h"
 #include "hps_0.h"
+#include "user_avalon_fifo_regs.h"
 
 #define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
 #define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
@@ -294,17 +296,21 @@ void *receiver_comandi(void *args){
 int main(int argc, char *argv[]){
 
 	//MAPPING
-	extern void *virtual_base;
-  extern uint32_t * fpgaRegAddr;
-  extern uint32_t * fpgaRegCont;
-  extern uint32_t * configFifo;
-  extern uint32_t * configFifoCsr;
-  extern uint32_t * configFifoLevel;
-  extern uint32_t * configFifoStatus;
-  extern uint32_t * hkFifo;
-  extern uint32_t * hkFifoCsr;
-  extern uint32_t * FastFifo;
-  extern uint32_t * FastFifoCsr;
+	//void *virtual_base;
+  //uint32_t * fpgaRegAddr;
+  //uint32_t * fpgaRegCont;
+  //uint32_t * configFifo;
+  //uint32_t * configFifoCsr;
+  //uint32_t * configFifoLevel;
+  //uint32_t * configFifoStatus;
+  //uint32_t * hkFifo;
+  //uint32_t * hkFifoCsr;
+  //uint32_t * hkFifoLevel;
+  //uint32_t * hkFifoStatus;
+  //uint32_t * FastFifo;
+  //uint32_t * FastFifoCsr;
+  //uint32_t * FastFifoLevel;
+  //uint32_t * FastFifoStatus;
 
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {

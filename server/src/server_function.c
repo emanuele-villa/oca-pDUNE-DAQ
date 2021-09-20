@@ -28,7 +28,6 @@
 
 //metodi che leggono e scrivono registri da fare
 
-extern void *virtual_base;			// Indirizzo base dell'area di memoria virtuale (variabile globale).
 int error;							// Flag per la segnalazione di errori.
 int fd;								// File descriptor degli indirizzi fisici.							// Tipo di operazione che si vuole compiere sulla FIFO (lettura/scrittura).
 int num_el;							// Numero di scritture consecutive della FIFO che si vogliono compiere.

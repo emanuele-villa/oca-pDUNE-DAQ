@@ -1,9 +1,9 @@
+#ifndef _USER_AVALON_FIFO_UTIL_H_
+#define _USER_AVALON_FIFO_UTIL_H_
+
 #define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
 #define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
 #define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
-
-#ifndef USER_AVALON_FIFO_UTIL_H_
-#define USER_AVALON_FIFO_UTIL_H_
 
 // FIFO_TYPE disponibili
 #define CONFIG_FIFO			 1		// MACRO per selezionare la FIFO per la ricezione dei dati di configurazione.

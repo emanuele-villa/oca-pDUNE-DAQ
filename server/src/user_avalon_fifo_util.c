@@ -5,9 +5,9 @@
 #include "socal/hps.h"
 #include "user_avalon_fifo_regs.h"
 #include "user_avalon_fifo_util.h"
+#include "server.h"
 #include "hps_0.h"
 
-//void *virtual_base;							// Indirizzo base dell'area di memoria virtuale (variabile globale).
 
 
 // Funzione di inizializzazione della FIFO.
@@ -17,18 +17,21 @@ int InitFifo(int FIFO_TYPE, uint32_t AE, uint32_t AF){		// (Selezione della FIFO
 	uint32_t *lw_fifo_almostempty_reg_addr;
 
 	// Selezione della FIFO
-	if (FIFO_TYPE == CONFIG_FIFO)
+	if (FIFO_TYPE == CONFIG_FIFO){
 		lw_fifo_event_reg_addr = configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
-	else if (FIFO_TYPE == HK_FIFO)
+	}
+	else if (FIFO_TYPE == HK_FIFO){
 		lw_fifo_event_reg_addr = hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
-	else if (FIFO_TYPE == DATA_FIFO)
+	}
+	else if (FIFO_TYPE == DATA_FIFO){
 		lw_fifo_event_reg_addr = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
+	}
 	else
 		return (1);
 
@@ -140,28 +143,30 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezio
 
 // Funzione di lettura dello stato della FIFO.
 int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_t *fifo_empty, uint32_t *fifo_almostfull, uint32_t *fifo_almostempty, uint32_t *almostfull_setting, uint32_t *almostempty_setting){
-	int FIFO_CSR_OFST;										// (Selezione della FIFO, puntatori per estrarre i valori di fifo_level, fifo_ful, fifo_empty, fifo_almostempty, fifo_almostfull, livello almostempty, livello almostfull)
 	uint32_t *lw_fifo_level_reg_addr;
 	uint32_t *lw_fifo_status_reg_addr;
 	uint32_t *lw_fifo_almostfull_reg_addr;
 	uint32_t *lw_fifo_almostempty_reg_addr;
 
 	// Selezione della FIFO
-	if (FIFO_TYPE == CONFIG_FIFO)
+	if (FIFO_TYPE == CONFIG_FIFO){
 		lw_fifo_level_reg_addr = configFifoLevel;
 		lw_fifo_status_reg_addr = configFifoStatus;
 		lw_fifo_almostfull_reg_addr = configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
-	else if (FIFO_TYPE == HK_FIFO)
+	}
+	else if (FIFO_TYPE == HK_FIFO){
 		lw_fifo_level_reg_addr = hkFifoLevel;
 		lw_fifo_status_reg_addr = hkFifoStatus;
 		lw_fifo_almostfull_reg_addr = hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
-	else if (FIFO_TYPE == DATA_FIFO)
+	}
+	else if (FIFO_TYPE == DATA_FIFO){
 		lw_fifo_level_reg_addr = FastFifoLevel;
 		lw_fifo_status_reg_addr = FastFifoStatus;
 		lw_fifo_almostfull_reg_addr = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
+	}
 	else
 		return (1);
 
@@ -234,7 +239,6 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 
 // Funzione di controllo del bit di overflow della FIFO.
 int OverflowController(int FIFO_TYPE){		// (Selezione della FIFO)
-	int FIFO_CSR_OFST;
 	uint32_t *h2f_lw_fifo_event_reg_addr;
 
 	if (FIFO_TYPE != CONFIG_FIFO){
@@ -253,14 +257,4 @@ int OverflowController(int FIFO_TYPE){		// (Selezione della FIFO)
 	}
 	else
 		return (0);		// Altrimenti, se il bit di overflow è a "0", restituisci uno "0".
-}
-
-
-// Leggi Contenuto registro da PIO
-void ReadReg(int regAddr, uint32_t *data){
-	//Write the address of the register to be read
-	*fpgaRegAddr = regAddr;
-
-	//Read the register content
-	*data = *fpgaRegCont;
 }

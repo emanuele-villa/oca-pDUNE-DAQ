@@ -1,5 +1,5 @@
-#ifndef SERVER_FUNCTION_H_
-#define SERVER_FUNCTION_H_
+#ifndef _SERVER_FUNCTION_H_
+#define _SERVER_FUNCTION_H_
 
 
 
