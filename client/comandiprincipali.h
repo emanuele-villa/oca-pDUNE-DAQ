@@ -46,6 +46,8 @@ private slots:
 
     void on_stop_clicked();
 
+    void on_readReg_clicked();
+
 private:
     Ui::comandiPrincipali *ui;
     QLineSeries *series;

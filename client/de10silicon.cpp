@@ -12,7 +12,7 @@
 
 de10_silicon::de10_silicon(char *address, int port){
     changeText("hello");
-    printf("de10 silicon creato\n");
+    printf("de10 silicon creato, address: %s\n", address);
     client_socket = client_connect(address, port);
 
 
@@ -66,7 +66,6 @@ int de10_silicon::client_connect(char *address, int port) {
 }
 
 int de10_silicon::client_send(const char *buffer) {
-    int result;
     //char backup[d_dampe_string_buffer];
     printf("invio\n");
     if ((client_socket != -1) && (buffer)) {
@@ -171,9 +170,10 @@ int de10_silicon::client_receive(){
 //--------------------------------------------------------------
 int de10_silicon::readReg(){
     client_send("readReg");
-    uint32_t regAddr = 31; //0xc1a0c1a0
+    uint32_t regAddr = 30; //0xc1a0c1a0
     char c[sizeof (uint32_t) * 8 + 1];
-    sprintf(c, "%x", delay);
+    printf("Invio richiesta lettura\n");
+    sprintf(c, "%x", regAddr);
     client_send(c);
     client_receive();
     return 0;
@@ -261,7 +261,6 @@ int de10_silicon::GetEventNumber() {
 }
 
 char* de10_silicon::PrintAllEventNumber(int log,int JLV1num) {
-    int ret=0;
     static char numbers[1023]="";
     // snprintf(numbers, 1023, "Dampe %02d: %6d", selfaddress, 0);
     // printf("[>>>>>] dampe: %s\n", numbers);
@@ -281,8 +280,6 @@ int de10_silicon::EventReset() {
 
 int de10_silicon::GetEvent(){
     client_send("get event");
-    int ret = 1;
-    int i = 1;
     client_receive_int();
     return 0;
 }
@@ -357,7 +354,7 @@ int de10_silicon::configureTestUnit(){
     client_send("configureTestUnit");
     uint32_t TestUnit_config = 0x00000100 | daq_TestUnit_en; // Test Unit in modalità operativa 1: invio di dati pseudocasuali sia nel valore che nel tempo di di invio
     char c[sizeof (uint32_t) * 8 + 1];
-    sprintf(c, "%d", de10_silicon::TestUnit_config);
+    sprintf(c, "%d", TestUnit_config);
     client_send(c);
     client_receive();
     return 0;

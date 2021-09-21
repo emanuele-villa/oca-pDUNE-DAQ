@@ -10,7 +10,7 @@
 comandiPrincipali::comandiPrincipali(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::comandiPrincipali),
-    de10("192.168.10.100", 5000)
+    de10("192.168.1.3", 5000)
 {
     ui->setupUi(this);
     connect(&de10, SIGNAL(textChanged(QString)), ui->dati, SLOT(append(QString)));
@@ -107,6 +107,11 @@ void comandiPrincipali::on_avvia_clicked()
 void comandiPrincipali::on_stop_clicked()
 {
 
+}
+
+void comandiPrincipali::on_readReg_clicked()
+{
+    de10.readReg();
 }
 
 void comandiPrincipali::grafico(QVector<double> event){
