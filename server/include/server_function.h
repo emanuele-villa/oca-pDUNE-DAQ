@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+uint32_t receive_register_content(int socket);
+
 void ResetFpga();
 void Init(int socket);
 void SetDelay(int socket);

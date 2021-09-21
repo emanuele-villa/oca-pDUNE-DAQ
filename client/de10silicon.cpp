@@ -169,6 +169,16 @@ int de10_silicon::client_receive(){
 }
 
 //--------------------------------------------------------------
+int de10_silicon::readReg(){
+    client_send("readReg");
+    uint32_t regAddr = 31; //0xc1a0c1a0
+    char c[sizeof (uint32_t) * 8 + 1];
+    sprintf(c, "%x", delay);
+    client_send(c);
+    client_receive();
+    return 0;
+}
+
 int de10_silicon::Init() {
     //client_send("trigger -off\n");
     //client_send("write -x 040700\n");

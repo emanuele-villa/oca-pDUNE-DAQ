@@ -23,6 +23,7 @@
 #include "socal/alt_gpio.h"
 #include "hps_0.h"
 #include "user_avalon_fifo_regs.h"
+#include "user_register_array.h"
 
 #define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
 #define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
@@ -221,6 +222,18 @@ void *receiver_comandi(void *args){
 
 				Init(new_socket);
 			}
+
+      if(strcmp(msg, "readReg") == 0){
+        uint32_t regAddr = receive_register_content(new_socket);
+        uint32_t regContent;
+
+        ReadReg(regAddr, &regContent);
+
+        sprintf(msg, "%s %u: %x", "[SERVER] Reg", regAddr, regContent);
+        if(write(new_socket, msg, strlen(msg)) < 0){
+          fprintf(stderr, "Errore Scrittura su socket\n");
+        }
+      }
 
 			if(strcmp(msg, "set delay") == 0){
 
