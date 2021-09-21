@@ -32,6 +32,10 @@ private:
     int client_connect(char *address, int port);
     //int client_receive();
 public:
+    uint32_t daq_mode;
+    uint32_t daq_cal_mode;
+    uint32_t daq_IntTri_en;
+    uint32_t daq_TestUnit_en;
     void changeText(const QString& new_text){
 
         emit textChanged(new_text);

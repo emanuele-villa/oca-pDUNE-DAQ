@@ -231,7 +231,7 @@ int de10_silicon::Init() {
 }
 int de10_silicon::SetDelay(){
     client_send("set delay");
-    uint32_t delay = 5;
+    uint32_t delay = 0x00000145;
     char c[sizeof (uint32_t) * 8 + 1];
     sprintf(c, "%x", delay);
     client_send(c);
@@ -240,11 +240,14 @@ int de10_silicon::SetDelay(){
 }
 
 int de10_silicon::SetMode() {
-
+    if (de10_silicon::daq_mode == 0)
+      de10_silicon::daq_mode = 1;
+    else
+      de10_silicon::daq_mode = 0;
+    
     client_send("set mode");
-    uint32_t mode = 3;
     char c[sizeof (uint32_t) * 8 + 1];
-    sprintf(c, "%d", mode);
+    sprintf(c, "%d", de10_silicon::daq_mode);
     client_send(c);
     client_receive();
     return 0;
@@ -277,7 +280,6 @@ int de10_silicon::EventReset() {
 }
 
 int de10_silicon::GetEvent(){
-
     client_send("get event");
     int ret = 1;
     int i = 1;
@@ -286,50 +288,77 @@ int de10_silicon::GetEvent(){
 }
 
 int de10_silicon::OverWriteDelay(){
-
     client_send("OverWriteDelay");
+    uint32_t delay = 0x00000145;
+    char c[sizeof (uint32_t) * 8 + 1];
+    sprintf(c, "%x", delay);
+    client_send(c);
     client_receive();
     return 0;
 }
 
-int de10_silicon::Calibrate(){
-
+int de10_silicon::Calibrate(){ 
+    if (de10_silicon::daq_cal_mode == 0)
+      de10_silicon::daq_cal_mode = 2;
+    else
+      de10_silicon::daq_cal_mode = 0;
+    
     client_send("Calibrate");
+    char c[sizeof (uint32_t) * 8 + 1];
+    sprintf(c, "%d", de10_silicon::daq_cal_mode);
+    client_send(c);
     client_receive();
     return 0;
 }
 
 int de10_silicon::WriteCalibPar(){
-
     client_send("WriteCalibPar");
     client_receive();
     return 0;
 }
 
 int de10_silicon::SaveCalibrations(){
-
     client_send("SaveCalibrations");
     client_receive();
     return 0;
 }
 
 int de10_silicon::intTriggerPeriod(){
-
+    
     client_send("intTriggerPeriod");
+    uint32_t TrigPer = 0x02faf080;
+    char c[sizeof (uint32_t) * 8 + 1];
+    sprintf(c, "%x", TrigPer);
+    client_send(c);
     client_receive();
     return 0;
 }
 
 int de10_silicon::selectTrigger(){
-
+    if (de10_silicon::daq_IntTri_en == 0)
+      de10_silicon::daq_IntTri_en = 1;
+    else
+      de10_silicon::daq_IntTri_en = 0;
+    
     client_send("selectTrigger");
+    char c[sizeof (uint32_t) * 8 + 1];
+    sprintf(c, "%d", de10_silicon::daq_IntTri_en);
+    client_send(c);
     client_receive();
     return 0;
 }
 
 int de10_silicon::configureTestUnit(){
-
+    if (de10_silicon::daq_TestUnit_en == 0)
+      de10_silicon::daq_TestUnit_en = 2;
+    else
+      de10_silicon::daq_IntTri_en = 0;
+    
     client_send("configureTestUnit");
+    uint32_t TestUnit_config = 0x00000100 | daq_TestUnit_en; // Test Unit in modalità operativa 1: invio di dati pseudocasuali sia nel valore che nel tempo di di invio
+    char c[sizeof (uint32_t) * 8 + 1];
+    sprintf(c, "%d", de10_silicon::TestUnit_config);
+    client_send(c);
     client_receive();
     return 0;
 }
