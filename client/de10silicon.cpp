@@ -168,9 +168,8 @@ int de10_silicon::client_receive(){
 }
 
 //--------------------------------------------------------------
-int de10_silicon::readReg(){
+int de10_silicon::readReg(int regAddr){
     client_send("readReg");
-    uint32_t regAddr = 30; //0xc1a0c1a0
     char c[sizeof (uint32_t) * 8 + 1];
     printf("Invio richiesta lettura\n");
     sprintf(c, "%x", regAddr);

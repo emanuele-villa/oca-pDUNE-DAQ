@@ -44,7 +44,7 @@ public:
 
         emit data(event);
     }
-    int readReg();
+    int readReg(int regAddr);
     int Init();
     int SetDelay();
     int SetMode();

@@ -111,7 +111,10 @@ void comandiPrincipali::on_stop_clicked()
 
 void comandiPrincipali::on_readReg_clicked()
 {
-    de10.readReg();
+    int regaddr;
+    regaddr=ui->regAddrSB->value();
+    qDebug()<<"Register address "<<regaddr;
+    de10.readReg(regaddr);
 }
 
 void comandiPrincipali::grafico(QVector<double> event){
