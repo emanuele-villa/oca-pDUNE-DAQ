@@ -227,6 +227,7 @@ void *receiver_comandi(void *args){
         uint32_t regAddr = receive_register_content(new_socket);
         uint32_t regContent;
 
+        printf("Invio richiesta di lettura...\n");
         ReadReg(regAddr, &regContent);
 
         sprintf(msg, "%s %u: %x", "[SERVER] Reg", regAddr, regContent);

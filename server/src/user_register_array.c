@@ -72,6 +72,7 @@ void ReadReg(int regAddr, uint32_t *data){
 
 	//Read the register content
 	*data = *fpgaRegCont;
+  printf("Register addr: %d - content: %08x\n", regAddr, *data);
 }
 
 int write_register(uint16_t reg, uint32_t *value){
