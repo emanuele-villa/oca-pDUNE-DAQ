@@ -7,10 +7,10 @@
 #include <QLineSeries>
 #include <QString>
 
-comandiPrincipali::comandiPrincipali(QWidget *parent) :
+comandiPrincipali::comandiPrincipali(QWidget *parent, char *indirizzo) :
     QDialog(parent),
     ui(new Ui::comandiPrincipali),
-    de10("192.168.1.3", 5000)
+    de10(indirizzo, 5000)
 {
     ui->setupUi(this);
     connect(&de10, SIGNAL(textChanged(QString)), ui->dati, SLOT(append(QString)));

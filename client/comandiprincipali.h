@@ -14,9 +14,10 @@ class comandiPrincipali : public QDialog
     Q_OBJECT
 
 public:
-    explicit comandiPrincipali(QWidget *parent = nullptr);
+    explicit comandiPrincipali(QWidget *parent = nullptr, char *indirizzo = "");
     ~comandiPrincipali();
     de10_silicon de10;
+    //char *indirizzo;
 private slots:
     void grafico(QVector<double> event);
 
