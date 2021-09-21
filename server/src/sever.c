@@ -167,6 +167,7 @@ void *receiver_comandi(void *args){
 	int sock, addrlen, new_socket;
 	struct sockaddr_in client_addr, server_addr;
 
+  printf("TCP/IP socket: Opening\n");
 	sock = socket(AF_INET , SOCK_STREAM , 0);
 	if(sock < 0){
 
@@ -177,16 +178,18 @@ void *receiver_comandi(void *args){
 	server_addr.sin_port = htons(porta);
 	server_addr.sin_addr.s_addr = INADDR_ANY;
 
+  printf("TCP/IP socket: binding... ");
 	if(bind(sock, (struct sockaddr *) &server_addr , sizeof(server_addr)) < 0){
 
 		perror("errore nel bind\n");
 		exit(EXIT_FAILURE);
 	}else{
 
-		printf("bind corretto...\n");
+		printf("ok\n");
 		fflush(stdout);
 	}
 
+  printf("TCP/IP socket: listening\n");
 	if(listen(sock, 1) < 0){
 
 		perror("impossibile ascoltare\n");
@@ -294,29 +297,14 @@ void *receiver_comandi(void *args){
 
 int main(int argc, char *argv[]){
 
-	//MAPPING
-	//void *virtual_base;
-  //uint32_t * fpgaRegAddr;
-  //uint32_t * fpgaRegCont;
-  //uint32_t * configFifo;
-  //uint32_t * configFifoCsr;
-  //uint32_t * configFifoLevel;
-  //uint32_t * configFifoStatus;
-  //uint32_t * hkFifo;
-  //uint32_t * hkFifoCsr;
-  //uint32_t * hkFifoLevel;
-  //uint32_t * hkFifoStatus;
-  //uint32_t * FastFifo;
-  //uint32_t * FastFifoCsr;
-  //uint32_t * FastFifoLevel;
-  //uint32_t * FastFifoStatus;
-
+  printf("Opening /dev/mem...\n");
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
 		printf( "ERROR: could not open \"/dev/mem\"...\n" );
 		return( 1 );
 	}
 
+  printf("Mapping FPGA resources...\n");
 	virtual_base = mmap( NULL, HW_REGS_SPAN, ( PROT_READ | PROT_WRITE ), MAP_SHARED, fd, HW_REGS_BASE );
 	if( virtual_base == MAP_FAILED ) {
 		printf( "ERROR: mmap() failed...\n" );
@@ -324,6 +312,7 @@ int main(int argc, char *argv[]){
 		return( 1 );
 	}
 
+  printf("Computing base addresses...\n");
   //Base address of the RegisterArray address
   fpgaRegAddr = virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + REGADDR_PIO_BASE) & (unsigned long)(HW_REGS_MASK));
   //Base address of the RegisterArray readback
@@ -347,6 +336,7 @@ int main(int argc, char *argv[]){
   FastFifoLevel = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_LEVEL_REG;
   FastFifoStatus = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_STATUS_REG;
 
+  printf("Creating threads...\n");
 	pthread_t threads;
 	pthread_create(&threads, NULL, receiver_comandi, argv[1]);
 	pthread_create(&threads, NULL, receiver_slow_control, argv[2]);
