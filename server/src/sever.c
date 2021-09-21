@@ -209,7 +209,18 @@ void *receiver_comandi(void *args){
 		close(sock);
 
 	}
-
+  
+  //Stampa del contenuto del Register Array
+  int j;
+  uint32_t trash;
+  printf("\n");
+  printf("Contenuto iniziale del Register Array:\n");
+  for(j=0; j<32; j++){
+    ReadReg(j, &trash);
+  }
+  printf("\n");
+  //Fine della stampa
+  
 	while(1){
 
 		char msg[256];
