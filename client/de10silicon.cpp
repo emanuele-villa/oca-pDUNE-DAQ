@@ -140,7 +140,7 @@ int de10_silicon::client_receive(){
 
     char msg[257];
     size_t n = 0;
-    printf("in ascolto su socket %d\n", client_socket);
+    //printf("in ascolto su socket %d\n", client_socket);
 
     n = read(client_socket, msg, sizeof(msg) - 1);
 

@@ -259,21 +259,15 @@ void OverWriteDelay(int socket){
 
 //Configura sistema in modalità calibrazione
 void Calibrate(int socket){
-
-	char *msg = "[SERVER] Calibrate";
-	if(write(socket, msg, strlen(msg) + 1) < 0){
-		fprintf(stderr, "errore scrittura");
-	}
-
+	char msg[32];
+	int ret;
 	int mode = receive_register_content(socket);
 	uint32_t data;
-	int ret;
 	ReadReg(2, &data);
 	data = (data & 0xFFFFFFFD) | (mode & 0x00000002);
 	ret = write_register(2, &data);
-
-	sprintf(msg, "%s %u", "[SERVER] Calibration enable: ", mode);
-	if(write(socket, msg, strlen(msg)) < 0){
+	sprintf(msg, "%s %d", "[SERVER] Calibration enable: ", mode);
+	if(ret = write(socket, msg, strlen(msg)) < 0){
 		fprintf(stderr, "Errore Scrittura su socket\n");
 	}
 }
