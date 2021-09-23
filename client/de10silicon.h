@@ -1,4 +1,4 @@
-#ifndef DE10_SILICON_H
+﻿#ifndef DE10_SILICON_H
 #define DE10_SILICON_H
 #include <stdio.h>
 #include <unistd.h>
@@ -12,6 +12,8 @@
 #include <QLineSeries>
 #include <QtCharts>
 #include <QChartView>
+#include <iostream>
+#include <fstream>
 
 #define de10_silicon_socket_null -1
 #define de10_silicon_dampe_string_buffer 512
@@ -27,6 +29,7 @@ public:
     int client_receive();
     int client_receive_int();
     int client_socket;
+    std::ofstream outfile;
 
 private:
     int client_connect(char *address, int port);

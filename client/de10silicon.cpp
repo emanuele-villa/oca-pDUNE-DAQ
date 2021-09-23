@@ -9,10 +9,21 @@
 #include <QApplication>
 #include <QObject>
 #include <stdint.h>
+#include <iostream>
+#include <fstream>
 
 de10_silicon::de10_silicon(char *address, int port){
     changeText("hello");
     printf("de10 silicon creato, address: %s\n", address);
+    std::ofstream outfile;
+    if(! outfile.is_open()){
+
+        outfile.open("out.dat", std::ios::binary | std::ios::out);
+    }
+    if(!outfile){
+
+        std::cerr <<"impossibile aprire file";
+    }
     client_socket = client_connect(address, port);
 
 
@@ -87,6 +98,7 @@ int de10_silicon::client_receive_int(){
 
     int n;
     int cont = 0;
+    int data[111];
     while(cont < 111 * sizeof(int)){
         int temp;
         n = read(client_socket, &temp, sizeof(temp));
@@ -103,6 +115,9 @@ int de10_silicon::client_receive_int(){
             //usleep(100000);
             bzero(c, sizeof(c));
             cont += n;
+            outfile.write(reinterpret_cast<const char *>(&temp), sizeof(int));
+            printf("ho scritto su file\n");
+
         }
     }
 
@@ -225,7 +240,6 @@ int de10_silicon::Init() {
     sprintf(c, "%x", reg_content);
     client_send(c);
     changeText(c);
-
     return 0;
 }
 int de10_silicon::SetDelay(){
@@ -280,6 +294,7 @@ int de10_silicon::EventReset() {
 int de10_silicon::GetEvent(){
     client_send("get event");
     client_receive_int();
+    outfile.close();
     return 0;
 }
 
