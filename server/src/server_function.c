@@ -79,9 +79,9 @@ void *high_priority(void *socket){
 	error = ReadFifoBurst(DATA_FIFO, packet + 2, length - 1);
 	printf("lettura burst error: %d\n", error);
 	printf("ho inviato questi dati.\n");
-	for(int i = 0; i < length; i++){
+	for(int i = 0; i < length+1; i++){
 
-		printf("%x\n", packet[i]);
+		printf("%08x\n", packet[i]);
 	}
 
 	n = write(sock, &packet, sizeof(packet));
