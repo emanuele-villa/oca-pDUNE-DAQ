@@ -87,7 +87,8 @@ int de10_silicon::client_receive_int(){
 
     int n;
     int cont = 0;
-    while(cont < 111 * sizeof(int)){
+    qDebug() << "Voglio leggere 651 parole\n";
+    while(cont < 651 * sizeof(int)){
         int temp;
         n = read(client_socket, &temp, sizeof(temp));
         if(n < 0){
@@ -97,11 +98,11 @@ int de10_silicon::client_receive_int(){
 
             char c[4];
             char msg[256];
-            sprintf(c, "%x", temp);
+            sprintf(c, "%08x", temp);
             //sprintf(msg, "ho letto %d", n);
             changeText(c);
             //usleep(100000);
-            bzero(c, sizeof(c));
+            //bzero(c, sizeof(c));
             cont += n;
         }
     }
