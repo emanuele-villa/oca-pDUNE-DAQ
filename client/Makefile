@@ -15,7 +15,7 @@ INCLUDE= -I$(INC) -I$(ROOTSYS)/include
 CFLAGS= -g
 CPPFLAGS+= $(INCLUDE) 
 
-OBJECTS=$(OBJ)/main.o $(OBJ)/de10silicon_base.o
+OBJECTS=$(OBJ)/main.o $(OBJ)/de10silicon_base.o $(OBJ)/daqserver.o
 
 all: OCA
 

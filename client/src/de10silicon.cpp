@@ -10,7 +10,7 @@
 #include <QObject>
 #include <stdint.h>
 
-de10_silicon::de10_silicon(char *address, int port){
+de10_silicon::de10_silicon(const char *address, int port){
 
 }
 

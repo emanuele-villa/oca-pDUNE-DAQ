@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <stdint.h>
 
-de10_silicon_base::de10_silicon_base(char *address, int port){
+de10_silicon_base::de10_silicon_base(const char *address, int port){
   changeText("hello");
   printf("de10 silicon creato\n");
   client_socket = client_connect(address, port);
@@ -25,7 +25,7 @@ de10_silicon_base::~de10_silicon_base(){
   }
 }
 
-int de10_silicon_base::client_connect(char *address, int port) {
+int de10_silicon_base::client_connect(const char *address, int port) {
   struct sockaddr_in server_addr;
   struct hostent *server;
   
@@ -147,7 +147,7 @@ int de10_silicon_base::client_receive(){
 int de10_silicon_base::Init() {
   //client_send("trigger -off\n");
   //client_send("write -x 040700\n");
-  printf("[>>> initializing dampe (reset everything)]\n");
+  printf("[>>> initializing (reset everything)]\n");
   client_send("init");
   client_receive();
   uint32_t reg_content = 1;
