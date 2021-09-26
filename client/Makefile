@@ -16,10 +16,15 @@ CFLAGS= -g
 CPPFLAGS+= $(INCLUDE) 
 
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10silicon_base.o $(OBJ)/daqserver.o
+OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o
 
-all: OCA
+all: OCA testOCA
 
 OCA: $(OBJECTS)
+	@echo Linking $^ to $@
+	$(CXX) $^ -o $@ $(ROOTGLIBS)
+
+testOCA: $(OBJECTSTEST)
 	@echo Linking $^ to $@
 	$(CXX) $^ -o $@ $(ROOTGLIBS)
 
@@ -38,5 +43,6 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 clean:
 	rm -fv $(OBJ)/*.o
 	rm -fv ./OCA
+	rm -fv ./testOCA
 #	rm -fv ./SUMMARY
 #	rm -fv ./SUMMARY_MUTE

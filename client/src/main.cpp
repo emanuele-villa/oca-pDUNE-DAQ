@@ -8,8 +8,7 @@ const int nde10 = 0;
 const char* addressde10[nde10] = {}; 
 const int portde10[nde10] = {};
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   printf("prova\n");
 
   de10_silicon_base* det[nde10];
