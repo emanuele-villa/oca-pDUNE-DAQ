@@ -79,36 +79,17 @@ void *high_priority(void *socket){
 
 // Reset della logica FPGA
 void ResetFpga(){
-	uint32_t regContent;
-	regContent = 0x00000003;
-	write_register(rGOTO_STATE, &regContent);
-	regContent = 0x00000000;
-	write_register(rGOTO_STATE, &regContent);
+	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000003);
+	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000000);
 }
 
-////Inizializza l'array di registri e resetta la logica FPGA
-//void Init(uint32_t * regsContentIn, uint32_t opLen){
-//	//Configure the whole regArray (except register rGOTO_STATE)
-//	writeRegMulti(regsContentIn, opLen);
-//
-//	//Reset the FPGA
-//	ResetFpga();
-//}
-
 //Inizializza l'array di registri e resetta la logica FPGA
-void Init(int socket){
-	uint16_t reg;
-	uint32_t data;
-  for(int i = 1; i < 8; i++){
-		reg = i;
-		data = receive_register_content(socket);
-		write_register(reg, &data);
-		printf("ho scritto: %x nel registro %d\n", data, reg);
-	}
+void Init(uint32_t * regsContentIn, uint32_t opLen){
+	//Configure the whole regArray (except register rGOTO_STATE)
+	writeReg(regsContentIn, opLen);
 
-	puts("reset");
+	//Reset the FPGA
 	ResetFpga();
-	puts("fine reset");
 }
 
 // Numero di cicli di clock di attesa tra il trigger e l'hold dei VA
@@ -116,7 +97,7 @@ void SetDelay(uint32_t delayIn){
 	uint32_t regContent;
 	ReadReg(rMSD_PARAM, &regContent);
 	regContent = (regContent & 0xFFFF0000) | (delayIn & 0x0000ffff);
-	write_register(rMSD_PARAM, &regContent);
+	singleWriteReg(rMSD_PARAM, regContent);
 }
 
 //Configura la modalità: Stop(0), Run(1)
@@ -131,7 +112,7 @@ void SetMode(uint32_t modeIn){
 		regContent = 0x00000010;
 	}
 
-	write_register(rGOTO_STATE, &regContent);
+	singleWriteReg(rGOTO_STATE, regContent);
 }
 
 //Cattura il valore del trigger counter interno ed esterno
@@ -150,7 +131,7 @@ void Calibrate(uint32_t calibIn){
 	uint32_t regContent;
 	ReadReg(rTRIGBUSY_LOGIC, &regContent);
 	regContent = (regContent & 0xFFFFFFFD) | (calibIn & 0x00000002);
-	write_register(rTRIGBUSY_LOGIC, &regContent);
+	singleWriteReg(rTRIGBUSY_LOGIC, regContent);
 }
 
 //Update the internal trigger period without changing the other configs
@@ -158,7 +139,7 @@ void intTriggerPeriod(uint32_t periodIn){
 	uint32_t regContent;
 	ReadReg(rTRIGBUSY_LOGIC, &regContent);
 	regContent = (periodIn & 0xFFFFFFF0) | (regContent & 0x0000000F);
-	write_register(rTRIGBUSY_LOGIC, &regContent);
+	singleWriteReg(rTRIGBUSY_LOGIC, regContent);
 }
 
 //Enable/Disable the internal trigger
@@ -166,7 +147,7 @@ void selectTrigger(uint32_t intTrigIn){
 	uint32_t regContent;
 	ReadReg(rTRIGBUSY_LOGIC, &regContent);
 	regContent = (regContent & 0xFFFFFFFE) | (intTrigIn & 0x00000001);
-	write_register(rTRIGBUSY_LOGIC, &regContent);
+	singleWriteReg(rTRIGBUSY_LOGIC, regContent);
 }
 
 //Configure and enable/disable the test unit
@@ -174,7 +155,7 @@ void configureTestUnit(uint32_t tuCfg){
 	uint32_t regContent;
 	ReadReg(rUNITS_EN, &regContent);
 	regContent = (regContent & 0xFFFFFCFD) | (tuCfg & 0x00000302);
-	write_register(rUNITS_EN, &regContent);
+	singleWriteReg(rUNITS_EN, regContent);
 }
 
 //manda un evento (pacchetto fast data fifo)

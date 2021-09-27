@@ -1,23 +1,23 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <inttypes.h>
 
-#include "server.h"
-#include "user_avalon_fifo_util.h"
 #include "user_register_array.h"
+#include "user_avalon_fifo_util.h"
+#include "server.h"
 
-uint32_t crc_init(void)
-{
+
+uint32_t crc_init(){
     return 0x46af6449;
 }
 
-uint32_t crc_update(uint32_t crc, const void *data, size_t data_len)
-{
+uint32_t crc_update(uint32_t crc, const void *data, size_t data_len){
     const unsigned char *d = (const unsigned char *)data;
     unsigned int i;
     bool bit;
     unsigned char c;
-    puts("crc");
+
     while (data_len--) {
         c = d[data_len];
         for (i = 0; i < 8; i++) {
@@ -32,8 +32,7 @@ uint32_t crc_update(uint32_t crc, const void *data, size_t data_len)
     return crc & 0xffffffff;
 }
 
-uint32_t crc_finalize(uint32_t crc)
-{
+uint32_t crc_finalize(uint32_t crc){
     unsigned int i;
     bool bit;
 
@@ -47,6 +46,32 @@ uint32_t crc_finalize(uint32_t crc)
     return crc & 0xffffffff;
 }
 
+//Compute the parity of an incoming unsigned 8-bit
+bool parity8(uint8_t dataIn){
+	//bool b;
+	//bool arr[8];
+	//for(int i = 0; i < 8; i++){
+	//	arr[i] = data & 1;
+	//	data >>= 1;
+	//}
+	//b = arr[0] ^ arr[1] ^arr[2] ^ arr[3] ^ arr[4] ^ arr[5] ^ arr[6] ^ arr[7];
+	//return b;
+
+  //gcc specific
+  return __builtin_parity(dataIn&0x000000FF);
+}
+
+//Compute 4 parity bits of an incoming unsigned 32-bit
+uint8_t parity32(uint32_t dataIn){
+  uint8_t parity = 0;
+  uint8_t nibbles;
+  for (int ii = 0; ii < 4; ii++){
+    nibbles = (dataIn >> ii*8) & 0xFF;
+    parity = parity | ((parity8(nibbles))<<ii);
+  }
+  return parity;
+}
+
 // Leggi Contenuto registro da PIO
 void ReadReg(int regAddr, uint32_t *data){
 	//Write the address of the register to be read
@@ -54,88 +79,59 @@ void ReadReg(int regAddr, uint32_t *data){
 
 	//Read the register content
 	*data = *fpgaRegCont;
-  //printf("Register addr: %d - content: %08x\n", regAddr, *data);
+
+  if(verbose > 0){
+    printf("Register addr: %d - content: %08x\n", regAddr, *data);
+  }
 }
 
-int write_register(uint16_t reg, uint32_t *value){
+//Write a single register
+void singleWriteReg(uint32_t regAddr, uint32_t regContent){
+  uint32_t singleWrite[1];
+  singleWrite[1] = regContent;
+  singleWrite[0] = regAddr;
+  writeReg(singleWrite, 2);
+}
 
-	bool res[6];
-	for(int j = 0; j < 4; j++){
+//Write registers via the HPS2FPGA FIFO
+int writeReg(uint32_t * pktContent, int pktLen){
+  uint32_t packet[pktLen+6];
+  uint8_t parityMsb, parityLsb;
+  uint32_t pktCrc;
 
-		res[j] = parity8((uint8_t)((*value >> 8 * j) & 0x000000ff));
+  //Create the packet header
+  pktCrc = crc_init();
+  packet[0] = REG_SOP;
+  packet[1] = (uint32_t)pktLen+5;
+  packet[2] = 0; //@todo add FW version
+  pktCrc = crc_update(pktCrc, &packet[2], sizeof(uint32_t));
+  packet[3] = REG_HDR1;
+  pktCrc = crc_update(pktCrc, &packet[3], sizeof(uint32_t));
 
-	}
+  //Create the packet body
+  for(int ii=0; ii<pktLen; ii=ii+2){
+    parityLsb = parity32(*(pktContent+ii));
+    parityMsb = parity32(*(pktContent+ii+1));
+    packet[ii+4] = *(pktContent+ii);
+    packet[ii+5] = ((parityMsb<<28)&0xF0000000) || ((parityLsb<<24)&0x0F000000) || *(pktContent+ii+1);
+    pktCrc = crc_update(pktCrc, &packet[ii+4], sizeof(uint32_t));
+    pktCrc = crc_update(pktCrc, &packet[ii+5], sizeof(uint32_t));
+  }
 
+  //Create the packet footer
+  packet[pktLen+4] = REG_EOP;
+  pktCrc = crc_finalize(pktCrc);
+  packet[pktLen+5] = pktCrc;
 
-	for(int j = 0; j < 2; j++){
+  if (verbose > 1){
+    printf("Packet Content:\n");
+    for (int jj=0; jj<pktLen+5;jj++){
+      printf("%08x\n", packet[jj]);
+    }
+  }
 
-		res[j + 4] = parity8((uint8_t)((reg >> 8 * j) & 0x000000ff));
-	}
-
-	uint8_t result = 0;
-	for(int i = 5; i > 0; i--){
-
-		result |= res[i];
-		result <<= 1;
-
-	}
-
-	result |= res[0];
-
-
-	uint32_t address, parity, crc;
-	crc = crc_init();
-	parity = result;
-	parity <<= 24;
-	address = reg;
-
-	uint32_t packet[8];
-	packet[0] = 0xAA55CA5A;
-	packet[1] = 7;
-	packet[2] = 0;
-	packet[3] = 0x4EADE500;
-	packet[4] = *value;
-	packet[5] = parity | address;
-	packet[6] = 0xBADC0FEE;
-
-	printf("%x\n", packet[5]);
-	printf("%x\n", packet[4]);
-
-	for(int i = 0; i < 7; i++){
-
-		if(i == 0 || i == 1 || i == 6)
-			continue;
-		crc = crc_update(crc, &packet[i], sizeof(uint32_t));
-	}
-
-	crc = crc_finalize(crc);
-
-	packet[7] = crc;
-
-	puts("faccio write burst");
-	WriteFifoBurst(CONFIG_FIFO, packet, 8);
-	puts("ho fatto write burst");
-	//uint32_t output[8];
-	//ret = StatusFifo(HK_FIFO, &level, &full, &empty, &almostfull, &almostempty, &almostfull_setting_, &almostempty_setting_);
-	//ret = ReadFifoBurst(HK_FIFO, data_array, level);
+  //Send the packet
+	WriteFifoBurst(CONFIG_FIFO, packet, pktLen+5);
 
 	return(0);
-}
-
-
-bool parity8(uint8_t data){
-
-	bool b;
-	bool arr[8];
-
-	for(int i  = 0; i < 8; i++){
-
-		arr[i] = data & 1;
-		data >>= 1;
-
-	}
-
-	b = arr[0] ^ arr[1] ^arr[2] ^ arr[3] ^ arr[4] ^ arr[5] ^ arr[6] ^ arr[7];
-
-	return b;
 }

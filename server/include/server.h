@@ -37,6 +37,8 @@ uint32_t * FastFifoCsr;
 uint32_t * FastFifoLevel;
 uint32_t * FastFifoStatus;
 
+int verbose;
+
 void *receiver_slow_control(void *args);
 void *receiver_comandi(void *args);
 int main(int argc, char *argv[]);

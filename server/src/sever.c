@@ -225,13 +225,19 @@ void *receiver_comandi(void *args){
 		}else{
 
 			if(strcmp(msg, "init") == 0){
-        //uint32_t * regsContent;
+        uint32_t regsContent[14];
 
-        sprintf(replyStr, "%s", "[SERVER] Starting Init...");
+        sprintf(replyStr, "%s", "[SERVER] Starting Init. Send data...");
         printf("%s\n", replyStr);
         sendSocket(new_socket, replyStr);
 
-        Init(new_socket);
+        //Receive the whole content (apart from reg rGOTO_STATE)
+        for(int ii = 0; ii < 7; ii++){
+          regsContent[ii*2]   = receive_register_content(new_socket);
+          regsContent[ii*2+1] = (uint32_t)ii;
+        }
+
+        Init(regsContent, 14);
 			}
 
       if(strcmp(msg, "readReg") == 0){
@@ -351,7 +357,7 @@ void *receiver_comandi(void *args){
 
 
 int main(int argc, char *argv[]){
-
+  verbose = 2; //@todo pass the verbose as argument
   printf("Opening /dev/mem...\n");
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
