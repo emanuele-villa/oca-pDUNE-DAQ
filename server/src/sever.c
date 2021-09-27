@@ -218,93 +218,129 @@ void *receiver_comandi(void *args){
 	while(1){
 
 		char msg[256];
+    char replyStr[256];
 		if(read(new_socket, msg, sizeof(msg)) < 0){
 
 			perror("errore nella read\n");
 		}else{
 
 			if(strcmp(msg, "init") == 0){
+        //uint32_t * regsContent;
 
-				Init(new_socket);
+        sprintf(replyStr, "%s", "[SERVER] Starting Init...");
+        printf("%s\n", replyStr);
+        sendSocket(new_socket, replyStr);
+
+        Init(new_socket);
 			}
 
       if(strcmp(msg, "readReg") == 0){
         uint32_t regAddr = receive_register_content(new_socket);
         uint32_t regContent;
 
-        printf("Invio richiesta di lettura...\n");
+        printf("Send read request...\n");
         ReadReg(regAddr, &regContent);
 
-        sprintf(msg, "%s %u: %x", "[SERVER] Reg", regAddr, regContent);
-        if(write(new_socket, msg, strlen(msg)) < 0){
-          fprintf(stderr, "Errore Scrittura su socket\n");
-        }
+        sprintf(replyStr, "%s %u: %08x", "[SERVER] Reg", regAddr, regContent);
+        sendSocket(new_socket, replyStr);
       }
 
-			if(strcmp(msg, "set delay") == 0){
+			if((strcmp(msg, "set delay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
+      	uint32_t delay = receive_register_content(new_socket);
 
-				SetDelay(new_socket);
-			}
+				SetDelay(delay);
 
-			if(strcmp(msg, "get event") == 0){
-
-				GetEvent(new_socket);
+        sprintf(replyStr, "%s %d", "[SERVER] Delay: ", delay);
+        sendSocket(new_socket, replyStr);
 			}
 
 			if(strcmp(msg, "set mode") == 0){
-
-				SetMode(new_socket);
+        uint32_t mode = receive_register_content(new_socket);
+				SetMode(mode);
+        sprintf(replyStr, "%s %d", "[SERVER] Setting mode: ", mode);
+        sendSocket(new_socket, replyStr);
 			}
 
 			if(strcmp(msg, "get event number") == 0){
+        uint32_t extTrigCount, intTrigCount;
 
-				GetEventNumber(new_socket);
+				GetEventNumber(&extTrigCount, &intTrigCount);
+
+        sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
+                            extTrigCount, intTrigCount);
+        sendSocket(new_socket, replyStr);
 			}
 
 			if(strcmp(msg, "print all event number") == 0){
+        uint32_t extTrigCount, intTrigCount;
 
-				PrintAllEventNumber(new_socket);
+				GetEventNumber(&extTrigCount, &intTrigCount);
+
+        sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
+                            extTrigCount, intTrigCount);
+        printf("%s\n",replyStr);
+        sendSocket(new_socket, replyStr);
 			}
 
 			if(strcmp(msg, "event reset") == 0){
-
-				EventReset(new_socket);
-			}
-
-			if(strcmp(msg, "OverWriteDelay") == 0){
-
-				OverWriteDelay(new_socket);
+				EventReset();
+        sprintf(replyStr, "%s", "[SERVER] Reset ok");
+        sendSocket(new_socket, replyStr);
 			}
 
 			if(strcmp(msg, "Calibrate") == 0){
+        uint32_t calib = receive_register_content(new_socket);
 
-				Calibrate(new_socket);
+        Calibrate(calib);
+
+        sprintf(replyStr, "%s %d", "[SERVER] Calibration enable: ", calib);
+        sendSocket(new_socket, replyStr);
 			}
 
 			if(strcmp(msg, "WriteCalibPar") == 0){
-
-				WriteCalibPar(new_socket);
+        sprintf(replyStr, "%s", "[SERVER] WriteCalibPar");
+        sendSocket(new_socket, replyStr);
 			}
 
 			if(strcmp(msg, "SaveCalibrations") == 0){
-
-				SaveCalibrations(new_socket);
+        sprintf(replyStr, "%s", "[SERVER] SaveCalibrations");
+        sendSocket(new_socket, replyStr);
 			}
 
       if(strcmp(msg, "intTriggerPeriod") == 0){
+        uint32_t period = receive_register_content(new_socket);
 
-				intTriggerPeriod(new_socket);
+        intTriggerPeriod(period);
+
+        sprintf(replyStr, "%s %08u", "[SERVER] Trigger period: ", period);
+        sendSocket(new_socket, replyStr);
 			}
 
       if(strcmp(msg, "selectTrigger") == 0){
+        uint32_t intTrig = receive_register_content(new_socket);
 
-				selectTrigger(new_socket);
+        selectTrigger(intTrig);
+
+        sprintf(replyStr, "%s %u", "[SERVER] Trigger enable: ", intTrig);
+        sendSocket(new_socket, replyStr);
 			}
 
       if(strcmp(msg, "configureTestUnit") == 0){
+        uint32_t tuCfg = receive_register_content(new_socket);
+      	char testUnitCfg = ((tuCfg&0x300)>>8);
+      	char testUnitEn  = ((tuCfg&0x2)>>1);
 
-				configureTestUnit(new_socket);
+        configureTestUnit(tuCfg);
+
+        sprintf(replyStr, "%s %x %u", "[SERVER] Test Unit status: ", \
+                  testUnitCfg, testUnitEn);
+        sendSocket(new_socket, replyStr);
 			}
+
+      if(strcmp(msg, "get event") == 0){
+
+        GetEvent(new_socket);
+      }
 		}
 
 		bzero(msg, sizeof(msg));

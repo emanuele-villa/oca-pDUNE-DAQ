@@ -3,22 +3,21 @@
 
 
 uint32_t receive_register_content(int socket);
+int sendSocket(int socket, char * msg);
 void *high_priority(void *socket);
 
 void ResetFpga();
 void Init(int socket);
-void SetDelay(int socket);
-void SetMode(int socket);
-void GetEventNumber(int socket);
+void SetDelay(uint32_t delayIn);
+void SetMode(uint32_t modeIn);
+void GetEventNumber(uint32_t * extTrigCount, uint32_t * intTrigCount);
 void PrintAllEventNumber(int socket);
-void EventReset(int socket);
+void EventReset();
+void Calibrate(uint32_t calibIn);
+void intTriggerPeriod(uint32_t periodIn);
+void selectTrigger(uint32_t intTrigIn);
+void configureTestUnit(uint32_t tuCfg);
 void GetEvent(int socket);
-void OverWriteDelay(int socket);
-void Calibrate(int socket);
-void WriteCalibPar(int socket);
-void SaveCalibrations(int socket);
-void intTriggerPeriod(int socket);
-void selectTrigger(int socket);
-void configureTestUnit(int socket);
+
 
 #endif
