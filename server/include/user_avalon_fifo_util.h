@@ -1,24 +1,13 @@
 #ifndef _USER_AVALON_FIFO_UTIL_H_
 #define _USER_AVALON_FIFO_UTIL_H_
 
-#define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
-#define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
-#define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
-
 // FIFO_TYPE disponibili
 #define CONFIG_FIFO			 1		// MACRO per selezionare la FIFO per la ricezione dei dati di configurazione.
-#define CONFIG_FIFO_DEPTH FIFO_HPS_TO_FPGA_IN_CSR_FIFO_DEPTH
 
 #define HK_FIFO				 2		// MACRO per selezionare la FIFO per la trasmissione dei dati di telemetria.
-#define HK_FIFO_DEPTH FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH
 
 #define DATA_FIFO			 3		// MACRO per selezionare la FIFO per la trasmissione dei dati di payload.
-#define FAST_FIFO_DEPTH FAST_FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH
 
-
-#include <stdio.h>
-#include <unistd.h>
-#include <inttypes.h>
 
 
 // Dichiarazione di un set di funzioni per compiere operazioni sulle FIFO

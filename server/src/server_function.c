@@ -1,41 +1,16 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <errno.h>
-#include <time.h>
-#include <sched.h>
 #include <pthread.h>
-#include "server_function.h"
-#include "user_avalon_fifo_regs.h"
-#include "user_avalon_fifo_util.h"
-#include "hps_0.h"
-#include <sys/mman.h>
-#include <fcntl.h>
 #include "hwlib.h"
-#include "socal/socal.h"
-#include "socal/hps.h"
-#include "socal/alt_gpio.h"
+
+#include "user_avalon_fifo_util.h"
 #include "user_register_array.h"
+#include "server_function.h"
 
-#define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
-#define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
-#define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
-
-//metodi che leggono e scrivono registri da fare
 
 int error;							// Flag per la segnalazione di errori.
-int fd;								// File descriptor degli indirizzi fisici.							// Tipo di operazione che si vuole compiere sulla FIFO (lettura/scrittura).
-int num_el;							// Numero di scritture consecutive della FIFO che si vogliono compiere.
-int el;								// Indice del numero di scritture della FIFO.
-uint32_t new_value;					// Valore singolo con il quale verrà caricata la FIFO.
-uint32_t v_data_array[1021];		// Array di 1021 elementi di tipo uint32_t, da riempire in scrittura.
-uint32_t p_data_array[1021];		// Array di 1021 elementi di tipo uint32_t, da svuotare in lettura.
-uint32_t f_data_array[4093];		// Array di 4093 elementi di tipo uint32_t, da svuotare in lettura.
 uint32_t value_read;				// Valore in uscita dalla FIFO.
 uint32_t fifo_level;				// Livello di riempimento della FIFO.
 uint32_t fifo_full;					// bit di "full" della FIFO.
@@ -117,11 +92,10 @@ void Init(int socket){
 
 	uint16_t reg;
 	uint32_t data;
-	int ret;
   for(int i = 1; i < 8; i++){
 		reg = i;
 		data = receive_register_content(socket);
-		ret = write_register(reg, &data);
+		write_register(reg, &data);
 		printf("ho scritto: %x nel registro %d\n", data, reg);
 	}
 
@@ -218,14 +192,13 @@ void GetEvent(int socket){
 
 	pthread_t t;
 	pthread_attr_t attr;
-	int ret;
 	int new_priority = 20;
 	struct sched_param param;
 
-	ret = pthread_attr_init(&attr);
-	ret = pthread_attr_getschedparam(&attr, &param);
+	pthread_attr_init(&attr);
+	pthread_attr_getschedparam(&attr, &param);
 	param.sched_priority = new_priority;
-	ret = pthread_attr_setschedparam(&attr, &param);
+	pthread_attr_setschedparam(&attr, &param);
 
 	printf("socket: %d\n", socket);
 	if(pthread_create(&t, &attr, &high_priority, &socket) < 0){
@@ -260,14 +233,13 @@ void OverWriteDelay(int socket){
 //Configura sistema in modalità calibrazione
 void Calibrate(int socket){
 	char msg[32];
-	int ret;
 	int mode = receive_register_content(socket);
 	uint32_t data;
 	ReadReg(2, &data);
 	data = (data & 0xFFFFFFFD) | (mode & 0x00000002);
-	ret = write_register(2, &data);
+	write_register(2, &data);
 	sprintf(msg, "%s %d", "[SERVER] Calibration enable: ", mode);
-	if(ret = write(socket, msg, strlen(msg)) < 0){
+	if(write(socket, msg, strlen(msg)) < 0){
 		fprintf(stderr, "Errore Scrittura su socket\n");
 	}
 }
@@ -294,7 +266,7 @@ void intTriggerPeriod(int socket){
 
 	ReadReg(2, &regContent);
 	regContent = (period & 0xFFFFFFF0) | (regContent & 0x0000000F);
-	int ret = write_register(2, &regContent);
+	write_register(2, &regContent);
 
 	sprintf(msg, "%s %08u", "[SERVER] Trigger period: ", period);
 	if(write(socket, msg, strlen(msg)) < 0){
@@ -310,7 +282,7 @@ void selectTrigger(int socket){
 
 	ReadReg(2, &regContent);
 	regContent = (regContent & 0xFFFFFFF0) | (intTrig & 0x00000001);
-	int ret = write_register(2, &regContent);
+	write_register(2, &regContent);
 
 	sprintf(msg, "%s %u", "[SERVER] Trigger enable: ", intTrig);
 	if(write(socket, msg, strlen(msg)) < 0){
@@ -328,7 +300,7 @@ void configureTestUnit(int socket){
 	char testUnitEn  = ((cmdRx&0x2)>>1);
 	ReadReg(1, &regContent);
 	regContent = (regContent & 0xFFFFFCFD) | (cmdRx & 0x00000302);
-	int ret = write_register(1, &regContent);
+	write_register(1, &regContent);
 
 	sprintf(msg, "%s %x %u", "[SERVER] Test Unit status: ", \
 																											testUnitCfg, testUnitEn);

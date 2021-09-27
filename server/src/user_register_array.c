@@ -1,28 +1,10 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <inttypes.h>
-#include "user_avalon_fifo_regs.h"
-#include "user_avalon_fifo_util.h"
-#include "hps_0.h"
-#include "user_register_array.h"
+
 #include "server.h"
-
-
-
-extern void *virtual_base;			// Indirizzo base dell'area di memoria virtuale (variabile globale).
-
-uint32_t data_array[4093];		// Array di 4093 elementi di tipo uint32_t, da svuotare in lettura.
-uint32_t level;				// Livello di riempimento della FIFO.
-uint32_t full;					// bit di "full" della FIFO.
-uint32_t empty;				// bit di "empty" della FIFO.
-uint32_t almostfull;			// bit di "almostfull" della FIFO.
-uint32_t almostempty;			// bit di "almostempty" della FIFO.
-uint32_t almostfull_setting_;		// livello di "almostfull" della FIFO.
-uint32_t almostempty_setting_;		// livello di "almostempty" della FIFO.
-
-
-
+#include "user_avalon_fifo_util.h"
+#include "user_register_array.h"
 
 uint32_t crc_init(void)
 {
@@ -72,7 +54,7 @@ void ReadReg(int regAddr, uint32_t *data){
 
 	//Read the register content
 	*data = *fpgaRegCont;
-  printf("Register addr: %d - content: %08x\n", regAddr, *data);
+  //printf("Register addr: %d - content: %08x\n", regAddr, *data);
 }
 
 int write_register(uint16_t reg, uint32_t *value){
@@ -131,7 +113,7 @@ int write_register(uint16_t reg, uint32_t *value){
 	packet[7] = crc;
 
 	puts("faccio write burst");
-	int ret = WriteFifoBurst(CONFIG_FIFO, packet, 8);
+	WriteFifoBurst(CONFIG_FIFO, packet, 8);
 	puts("ho fatto write burst");
 	//uint32_t output[8];
 	//ret = StatusFifo(HK_FIFO, &level, &full, &empty, &almostfull, &almostempty, &almostfull_setting_, &almostempty_setting_);

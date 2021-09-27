@@ -1,13 +1,11 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <inttypes.h>
 #include <string.h>
-#include "socal/hps.h"
+
+#include "hps_0.h"
 #include "user_avalon_fifo_regs.h"
 #include "user_avalon_fifo_util.h"
 #include "server.h"
-#include "hps_0.h"
-
 
 
 // Funzione di inizializzazione della FIFO.

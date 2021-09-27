@@ -3,35 +3,22 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <sched.h>
-#include <sys/time.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <sys/poll.h>
-#include <stdint.h>
-#include <time.h>
-#include <signal.h>
 #include <sys/ioctl.h>
-#include "server_function.h" //funzioni dei comandi che rispondono al client
-#include "server.h"
 #include <sys/mman.h>
-#include "hwlib.h"
 #include "socal/socal.h"
 #include "socal/hps.h"
 #include "socal/alt_gpio.h"
+
+
 #include "hps_0.h"
 #include "user_avalon_fifo_regs.h"
+#include "user_avalon_fifo_util.h"
 #include "user_register_array.h"
-
-#define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
-#define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
-#define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
-
-#define TRUE             1
-#define FALSE            0
+#include "server_function.h"
+#include "server.h"
 
 
 void *receiver_slow_control(void *args){
@@ -216,7 +203,7 @@ void *receiver_comandi(void *args){
 		close(sock);
 
 	}
-  
+
   //Stampa del contenuto del Register Array
   int j;
   uint32_t trash;
@@ -227,7 +214,7 @@ void *receiver_comandi(void *args){
   }
   printf("\n");
   //Fine della stampa
-  
+
 	while(1){
 
 		char msg[256];

@@ -1,11 +1,6 @@
 #ifndef _USER_REGISTER_ARRAY_H_
 #define _USER_REGISTER_ARRAY_H_
 
-#include <stdio.h>
-#include <unistd.h>
-#include <inttypes.h>
-#include <stdbool.h>
-
 void ReadReg(int regAddr, uint32_t *data);
 int write_register(uint16_t reg, uint32_t *value);
 
