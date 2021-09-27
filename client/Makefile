@@ -15,8 +15,8 @@ INCLUDE= -I$(INC) -I$(ROOTSYS)/include
 CFLAGS= -g
 CPPFLAGS+= $(INCLUDE) 
 
-OBJECTS=$(OBJ)/main.o $(OBJ)/de10silicon_base.o $(OBJ)/daqserver.o
-OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o
+OBJECTS=$(OBJ)/main.o $(OBJ)/de10silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o
+OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o
 
 all: OCA testOCA
 
@@ -41,8 +41,8 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
-	rm -fv $(OBJ)/*.o
-	rm -fv ./OCA
-	rm -fv ./testOCA
+	@rm -fv $(OBJ)/*.o
+	@rm -fv ./OCA
+	@rm -fv ./testOCA
 #	rm -fv ./SUMMARY
 #	rm -fv ./SUMMARY_MUTE

@@ -1,79 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sched.h>
-#include <sys/time.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/poll.h>
-#include <stdint.h>
-#include <time.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
 #include "daqserver.h"
+#include "utility.h"
 
-daqserver::daqserver(int port){
-
-  int sock, addrlen;
-  struct sockaddr_in client_addr, server_addr;
-  
-  sock = socket(AF_INET , SOCK_STREAM , 0);
-  if(sock < 0){
-    perror("errore creazione socket\n");
+daqserver::daqserver(int port, int verb):tcpserver(port, verb){
+  if (verbosity>0){
+    printf("%s) daqserver created\n", __METHOD_NAME__);
   }
-  
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_port = htons(port);
-  server_addr.sin_addr.s_addr = INADDR_ANY;
-  
-  if(bind(sock, (struct sockaddr *) &server_addr , sizeof(server_addr)) < 0){
-    perror("errore nel bind\n");
-    exit(EXIT_FAILURE);
-  }
-  else{
-    printf("bind corretto...\n");
-    fflush(stdout);
-  }
-  
-  if(listen(sock, 1) < 0){
-    perror("impossibile ascoltare\n");
-    exit(EXIT_FAILURE);
-  }
-  addrlen = sizeof(client_addr);
-  printf("attendo connessioni...\n");
-  _socket = accept(sock, (struct sockaddr *) &client_addr, (socklen_t *) &addrlen);
-  if(_socket < 0){
-    perror("errore accettazione\n");
-  }
-  else{
-    printf("connessione riuscita al socket comandi principali: socket %d\n", _socket);
-    close(sock);
-  }
-
   return;
 }
 
-void daqserver::Listen(){
-
-  while(1){
-    
-    char msg[256];
-    
-    if(read(_socket, msg, sizeof(msg)) < 0){
-      perror("errore nella read\n");
-    }
-    else {
-      printf("%s\n", msg);
-    }
-
-    bzero(msg, sizeof(msg));
+daqserver::~daqserver(){
+  if (verbosity>0) {
+    printf("%s) destroying daqserver\n", __METHOD_NAME__);
   }
-  
   return;
 }
 

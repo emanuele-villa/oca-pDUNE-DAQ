@@ -1,25 +1,14 @@
 #ifndef DAQSERVER_H
 #define DAQSERVER_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <string>
-#include <vector>
+#include "tcpserver.h"
 
-class daqserver {
-
- private:
-  int _socket;
+class daqserver: public tcpserver {
   
- public:
+public:
   ~daqserver();
-  daqserver(int port);
+  daqserver(int port, int verb=0);
   
-  void Listen();
 };
 
 #endif

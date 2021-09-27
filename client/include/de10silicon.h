@@ -22,7 +22,7 @@ signals:
   
 public:
   ~de10_silicon();
-  de10_silicon(const char *address, int port):de10_silicon_base(address, port);
+  de10_silicon(const char *address, int port);
   
 public:
   void changeText(const sstd::string& new_text){
