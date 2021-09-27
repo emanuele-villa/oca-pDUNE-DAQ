@@ -19,7 +19,7 @@
 
 daqserver::daqserver(int port){
 
-  int sock, addrlen, new_socket;
+  int sock, addrlen;
   struct sockaddr_in client_addr, server_addr;
   
   sock = socket(AF_INET , SOCK_STREAM , 0);
@@ -46,15 +46,34 @@ daqserver::daqserver(int port){
   }
   addrlen = sizeof(client_addr);
   printf("attendo connessioni...\n");
-  new_socket = accept(sock, (struct sockaddr *) &client_addr, (socklen_t *) &addrlen);
-  if(new_socket < 0){
+  _socket = accept(sock, (struct sockaddr *) &client_addr, (socklen_t *) &addrlen);
+  if(_socket < 0){
     perror("errore accettazione\n");
   }
   else{
-    printf("connessione riuscita al socket comandi principali: socket %d\n", new_socket);
+    printf("connessione riuscita al socket comandi principali: socket %d\n", _socket);
     close(sock);
   }
 
+  return;
+}
+
+void daqserver::Listen(){
+
+  while(1){
+    
+    char msg[256];
+    
+    if(read(_socket, msg, sizeof(msg)) < 0){
+      perror("errore nella read\n");
+    }
+    else {
+      printf("%s\n", msg);
+    }
+
+    bzero(msg, sizeof(msg));
+  }
+  
   return;
 }
 

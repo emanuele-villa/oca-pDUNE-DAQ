@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
   }
 
   daqserver* daqsrv = new daqserver(9999);
+  daqsrv->Listen();
   
   return 0;
 }

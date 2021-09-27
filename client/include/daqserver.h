@@ -12,10 +12,14 @@
 
 class daqserver {
 
-public:
+ private:
+  int _socket;
+  
+ public:
   ~daqserver();
   daqserver(int port);
   
+  void Listen();
 };
 
 #endif
