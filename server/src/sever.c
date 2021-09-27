@@ -13,6 +13,7 @@
 #include <sys/poll.h>
 #include <stdint.h>
 #include <time.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include "server_function.h" //funzioni dei comandi che rispondono al client
 #include "server.h"
@@ -167,6 +168,7 @@ void *receiver_comandi(void *args){
 	int porta = atoi(port);
 	int sock, addrlen, new_socket;
 	struct sockaddr_in client_addr, server_addr;
+	int n = 1;
 
   printf("TCP/IP socket: Opening\n");
 	sock = socket(AF_INET , SOCK_STREAM , 0);
@@ -178,6 +180,11 @@ void *receiver_comandi(void *args){
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(porta);
 	server_addr.sin_addr.s_addr = INADDR_ANY;
+
+	if (setsockopt(sock , SOL_SOCKET, SO_REUSEADDR,&n, sizeof(int)) == -1) {
+    	perror("setsockopt");
+    	exit(1);
+	}
 
   printf("TCP/IP socket: binding... ");
 	if(bind(sock, (struct sockaddr *) &server_addr , sizeof(server_addr)) < 0){
