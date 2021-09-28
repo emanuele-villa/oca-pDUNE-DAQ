@@ -23,7 +23,7 @@ CFLAGS := -g -Wall -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVIC
 LDFLAGS := -g -Wall
 LIB := -pthread
 
-TARGET := $(BINDIR)/sever
+TARGET := $(BINDIR)/server
 
 #Linking
 $(TARGET): $(OBJFILES)
