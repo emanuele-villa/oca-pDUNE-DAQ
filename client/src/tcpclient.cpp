@@ -119,18 +119,18 @@ int tcpclient::client_receive_int(){
 
   //  changeText("fine");
   
-  return n;
+  return n;//FIX ME: tocca ritornare temp
 }
 
 int tcpclient::client_receive(){
   
-  char msg[257];
+  char msg[LEN];
   size_t n = 0;
   if (verbosity>0) {
     printf("%s) listening on socker number %d\n", __METHOD_NAME__, client_socket);
   }
   
-  n = read(client_socket, msg, sizeof(msg) - 1);
+  n = read(client_socket, msg, sizeof(msg) - 1);//FIX ME: giusto leggere "grande a piacere"?
   
   if(n < 0){
     fprintf(stderr, "%s) receiving error\n", __METHOD_NAME__);
