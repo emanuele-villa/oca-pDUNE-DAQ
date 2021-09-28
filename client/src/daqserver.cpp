@@ -2,16 +2,25 @@
 #include "utility.h"
 
 daqserver::daqserver(int port, int verb):tcpserver(port, verb){
-  if (verbosity>0){
+  if (kVerbosity>0){
     printf("%s) daqserver created\n", __METHOD_NAME__);
   }
   return;
 }
 
 daqserver::~daqserver(){
-  if (verbosity>0) {
+  if (kVerbosity>0) {
     printf("%s) destroying daqserver\n", __METHOD_NAME__);
   }
+  return;
+}
+
+void daqserver::ProcessMsgReceived(char* msg){
+
+  if (kVerbosity>-1) {//FIX ME: >-1 perche' ora non fa niene, poi deve fare quelle sotto
+    printf("%s) %s\n", __METHOD_NAME__, msg);
+  }
+  
   return;
 }
 

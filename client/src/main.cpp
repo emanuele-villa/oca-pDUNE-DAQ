@@ -24,6 +24,7 @@ void PrintStatus(int dummy) {
 
 void StopRun(int dummy) {
   ControlOn=0;
+  daqsrv->StopListening();
   return;
 }
 
@@ -47,12 +48,7 @@ int main(int argc, char *argv[]) {
   signal(SIGINT,StopRun);// sending 'CTRL_C' the program exits in the right way
   signal(SIGQUIT,PrintStatus);//sending 'CTRL \' we print the numbers of taken events
 
-  while (ControlOn){
-    printf("%d\n", ControlOn);
-    sleep(1);
-    
-    daqsrv->Listen();
-  }
+  daqsrv->Listen();
 
   if (daqsrv) delete daqsrv;
   

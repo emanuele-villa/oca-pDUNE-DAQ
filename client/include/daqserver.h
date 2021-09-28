@@ -8,7 +8,8 @@ class daqserver: public tcpserver {
 public:
   ~daqserver();
   daqserver(int port, int verb=0);
-  
+
+  virtual void ProcessMsgReceived(char* msg);
 };
 
 #endif
