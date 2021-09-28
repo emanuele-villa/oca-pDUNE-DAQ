@@ -1,14 +1,13 @@
 #ifndef _HIGHLEVEL_DRIVERS_FPGA_H_
 #define _HIGHLEVEL_DRIVERS_FPGA_H_
 
-#define DATA_SOP 0xBABA1AFA
+#define DATA_SOP 0xBABA1A9A
 
 void ResetFpga();
 void Init(uint32_t * regsContentIn, uint32_t opLen);
 void SetDelay(uint32_t delayIn);
 void SetMode(uint32_t modeIn);
 void GetEventNumber(uint32_t * extTrigCount, uint32_t * intTrigCount);
-void PrintAllEventNumber(int socket);
 void EventReset();
 void Calibrate(uint32_t calibIn);
 void intTriggerPeriod(uint32_t periodIn);

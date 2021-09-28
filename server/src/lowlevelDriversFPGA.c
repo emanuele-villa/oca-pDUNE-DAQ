@@ -332,15 +332,15 @@ void ReadReg(int regAddr, uint32_t *data){
 	*data = *fpgaRegCont;
 
   if(verbose > 0){
-    printf("Register addr: %d - content: %08x\n", regAddr, *data);
+    printf("ReadREG: Register addr: %d - content: %08x\n", regAddr, *data);
   }
 }
 
 //Write a single register
 void singleWriteReg(uint32_t regAddr, uint32_t regContent){
-  uint32_t singleWrite[1];
-  singleWrite[1] = regContent;
-  singleWrite[0] = regAddr;
+  uint32_t singleWrite[2];
+  singleWrite[0] = regContent;
+  singleWrite[1] = regAddr;
   writeReg(singleWrite, 2);
 }
 
@@ -361,10 +361,10 @@ int writeReg(uint32_t * pktContent, int pktLen){
 
   //Create the packet body
   for(int ii=0; ii<pktLen; ii=ii+2){
-    parityLsb = parity32(*(pktContent+ii));
-    parityMsb = parity32(*(pktContent+ii+1));
-    packet[ii+4] = *(pktContent+ii);
-    packet[ii+5] = ((parityMsb<<28)&0xF0000000) || ((parityLsb<<24)&0x0F000000) || *(pktContent+ii+1);
+    parityLsb = parity32(pktContent[ii]);
+    parityMsb = parity32(pktContent[ii+1]);
+    packet[ii+4] = pktContent[ii];
+    packet[ii+5] = ((uint32_t)parityMsb<<28) | ((uint32_t)parityLsb<<24) | pktContent[ii+1];
     pktCrc = crc_update(pktCrc, &packet[ii+4], sizeof(uint32_t));
     pktCrc = crc_update(pktCrc, &packet[ii+5], sizeof(uint32_t));
   }
@@ -375,14 +375,14 @@ int writeReg(uint32_t * pktContent, int pktLen){
   packet[pktLen+5] = pktCrc;
 
   if (verbose > 1){
-    printf("Packet Content:\n");
-    for (int jj=0; jj<pktLen+5;jj++){
+    printf("\nwriteReg: Packet Content:\n");
+    for (int jj=0; jj<pktLen+6;jj++){
       printf("%08x\n", packet[jj]);
     }
   }
 
   //Send the packet
-	WriteFifoBurst(CONFIG_FIFO, packet, pktLen+5);
+  WriteFifoBurst(CONFIG_FIFO, packet, pktLen+6);
 
 	return(0);
 }
