@@ -106,7 +106,8 @@ int getEvent(uint32_t *evt, int evtLen){
 
   //Read the status of the FIFO and return if almost-empty
   readErr = StatusFifo(DATA_FIFO, &fifoLevel, &fifoFull, &fifoEmpty, &fifoAFull, &fifoAEmpty, &aFullThr, &aEmptyThr);
-  if (fifoAEmpty==1){
+  if (fifoEmpty==1){
+    printf("Fifo Empty. \n");
     return 1;
   }
 
