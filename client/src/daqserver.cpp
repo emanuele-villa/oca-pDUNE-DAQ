@@ -19,7 +19,7 @@ daqserver::~daqserver(){
 
   while(1){
     
-    char msg[256];
+    char msg[LEN];
     
     if(read(new_socket, msg, sizeof(msg)) < 0){
       perror("errore nella read\n");

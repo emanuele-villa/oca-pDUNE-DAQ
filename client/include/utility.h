@@ -3,6 +3,12 @@
 
 #include <string>
 
+#include <stdio.h>
+#include <stdarg.h>
+#include <errno.h>
+
+const int LEN = 1024 * 1000;// 1MB data
+
 inline std::string methodName(const std::string& prettyFunction) {
   size_t colons = prettyFunction.find("::");
   size_t begin = prettyFunction.substr(0,colons).rfind(" ") + 1;
@@ -23,5 +29,8 @@ inline std::string className(const std::string& prettyFunction) {
 
 #define __METHOD_NAME__ methodName(__PRETTY_FUNCTION__).c_str()
 #define __CLASS_NAME__ className(__PRETTY_FUNCTION__).c_str()
+
+void print_error(const char* format, ...);
+void exit_if(bool r, const char* format, ...);
 
 #endif
