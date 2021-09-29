@@ -47,7 +47,7 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
-	@rm -fv $(OBJ)/*.o
+	@rm -Rfv $(OBJ)
 	@rm -fv ./OCA
 	@rm -fv ./testOCA
 #	rm -fv ./SUMMARY
