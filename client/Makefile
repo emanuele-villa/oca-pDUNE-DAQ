@@ -19,7 +19,7 @@ ROOTGLIBS     =
 INCLUDE= -I$(INC) -I$(ROOTSYS)/include
 
 CFLAGS= -g
-CPPFLAGS+= $(INCLUDE) 
+CPPFLAGS+= $(INCLUDE)
 
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
