@@ -44,7 +44,7 @@ CFLAGSARM := $(CFLAGS) -I$(INC) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/includ
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
-OBJECTSHPS := $(patsubst $(SRC)/%,$(OBJARM)/%,$(SOURCES:.c=.o))
+OBJECTSHPS := $(OBJ)/server.o $(OBJ)/server_function.o $(OBJ)/highlevelDriversFPGA.o $(OBJ)/lowlevelDriversFPGA.o
 
 # Executables:
 HPSSERVER := $(EXE)/server
