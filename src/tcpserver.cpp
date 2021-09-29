@@ -119,7 +119,5 @@ void tcpserver::StopListening(){
 
   kListeningOn=false;
 
-  bzero(msg, sizeof(msg));
-
   return;
 }
