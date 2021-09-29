@@ -99,7 +99,7 @@ void tcpserver::Listen(){
   }
 
   if (kVerbosity) {
-    printf("Stop Listening\n");
+    printf("%) Stop Listening\n", __METHOD_NAME__);
   }
 
   return;

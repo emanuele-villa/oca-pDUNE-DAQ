@@ -13,9 +13,11 @@ CXX = g++
 CC = gcc
 F77 = gfortran
 
-CROSS_COMPILE = arm-linux-gnueabihf-
-CCARM = $(CROSS_COMPILE)gcc
-LDARM = $(CROSS_COMPILE)gcc
+CROSS_COMPILE = arm-linux-gnueabihf
+#CCARM = $(CROSS_COMPILE)-gcc
+#LDARM = $(CROSS_COMPILE)-gcc
+CCARM = gcc --target=$(CROSS_COMPILE) --gcc-toolchain=`brew --prefix $(CROSS_COMPILE)-binutils`
+LDARM = gcc --target=$(CROSS_COMPILE) --gcc-toolchain=`brew --prefix $(CROSS_COMPILE)-binutils`
 ARCHARM = arm
 
 # Root specific (unused for now):
@@ -44,7 +46,7 @@ CFLAGSARM := $(CFLAGS) -I$(INC) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/includ
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
-OBJECTSHPS := $(OBJ)/server.o $(OBJ)/server_function.o $(OBJ)/highlevelDriversFPGA.o $(OBJ)/lowlevelDriversFPGA.o
+OBJECTSHPS := $(OBJARM)/server.o $(OBJARM)/server_function.o $(OBJARM)/highlevelDriversFPGA.o $(OBJARM)/lowlevelDriversFPGA.o
 
 # Executables:
 HPSSERVER := $(EXE)/server
@@ -98,11 +100,9 @@ $(OBJARM)/%.o: $(SRC)/%.c
 clean:
 	@echo " Cleaning..."
 	@$(RM) -Rfv $(OBJ)
-	@$(RM) -fv $(OCADAQ)
-	@$(RM) -fv $(OCATEST)
+	@$(RM) -Rfv $(OBJARM)
+	@$(RM) -Rfv $(EXE)
 #	@$(RM) -fv ./SUMMARY
 #	@$(RM) -fv ./SUMMARY_MUTE
-	@$(RM) -Rfv $(OBJARM)
-	@$(RM) -fv $(HPSSERVER)
 
 .PHONY: clean
