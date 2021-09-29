@@ -1,6 +1,10 @@
 #ifndef __USER_AVALON_FIFO_REGS_H__
 #define __USER_AVALON_FIFO_REGS_H__
 
+#define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
+#define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
+#define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
+
 
 // OFFSET per puntare sui registri di stato della FIFO a partire da FIFO_HPS_TO_FPGA_IN_CSR_BASE
 #define ALTERA_AVALON_FIFO_LEVEL_REG                         (0x00000000)
@@ -38,4 +42,3 @@
 #define ALTERA_AVALON_FIFO_IENABLE_ALL  (0x3F)
 
 #endif /* __USER_AVALON_FIFO_REGS_H__ */
-

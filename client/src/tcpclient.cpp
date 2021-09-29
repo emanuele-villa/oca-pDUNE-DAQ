@@ -32,7 +32,7 @@ tcpclient::~tcpclient(){
 int tcpclient::client_connect(const char *address, int port) {
   struct sockaddr_in server_addr;
   struct hostent *server;
-  
+
   client_socket = socket(AF_INET, SOCK_STREAM, 0);
 
   if(client_socket < 0){
@@ -44,18 +44,18 @@ int tcpclient::client_connect(const char *address, int port) {
       printf("%s) socket created (number %d)\n", __METHOD_NAME__, client_socket);
     }
   }
-    
+
   server = gethostbyname(address);
   if(server == NULL){
     fprintf(stderr, "%s) host not existing: %s", __METHOD_NAME__, address);
     exit(EXIT_FAILURE);
   }
-  
+
   bzero((char *) &server_addr, sizeof(server_addr));
   server_addr.sin_family = AF_INET;
   bcopy((char *)server->h_addr, (char *)&server_addr.sin_addr.s_addr, server->h_length);
   server_addr.sin_port = htons(port);
-  
+
   if(::connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0){
     perror("connection error: ");
     exit(EXIT_FAILURE);
@@ -64,7 +64,7 @@ int tcpclient::client_connect(const char *address, int port) {
   if (verbosity>0) {
     printf("%s) connection succeded\n", __METHOD_NAME__);
   }
-  
+
   return client_socket;
 }
 
@@ -90,17 +90,17 @@ int tcpclient::client_send(const char *buffer) {
       fprintf(stderr, "%s) error on sending", __METHOD_NAME__);
     }
   }
-  
+
   return true;
 }
 
 int tcpclient::client_receive_int(){
-  
+
   int n;
-  
+
   int cont = 0;
-  
-  while(cont < 111 * sizeof(int)){
+
+  while(cont < 651 * sizeof(int)){
     int temp;
     n = read(client_socket, &temp, sizeof(temp));
     if(n < 0){
@@ -109,7 +109,7 @@ int tcpclient::client_receive_int(){
     else{
       char c[4];
       char msg[256];
-      sprintf(c, "%x", temp);
+      sprintf(c, "%08x", temp);
       //sprintf(msg, "ho letto %d", n);
       //usleep(100000);
       bzero(c, sizeof(c));
@@ -118,20 +118,21 @@ int tcpclient::client_receive_int(){
   }
 
   //  changeText("fine");
-  
+
   return n;//FIX ME: tocca ritornare temp
 }
 
 int tcpclient::client_receive(){
-  
+
   char msg[LEN];
+
   size_t n = 0;
   if (verbosity>0) {
     printf("%s) listening on socker number %d\n", __METHOD_NAME__, client_socket);
   }
-  
+
   n = read(client_socket, msg, sizeof(msg) - 1);//FIX ME: giusto leggere "grande a piacere"?
-  
+
   if(n < 0){
     fprintf(stderr, "%s) receiving error\n", __METHOD_NAME__);
   }
@@ -147,13 +148,13 @@ int tcpclient::client_receive(){
       printf("%s) %s\n", __METHOD_NAME__, msg);
       usleep(100000);
     }
-    
+
     if(msg[n - 1] == '\0'){
       bzero(msg, sizeof(msg));
       return -1;
     }
   }
-  
+
   bzero(msg, sizeof(msg));
   return n;
 }

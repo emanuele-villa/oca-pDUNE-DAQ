@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
-#include "de10silicon.h"
+#include "de10_silicon.h"
 #include <errno.h>
 #include <QApplication>
 #include <QObject>

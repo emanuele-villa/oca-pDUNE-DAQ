@@ -1,345 +1,415 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <errno.h>
-#include <time.h>
-#include <sched.h>
 #include <pthread.h>
-#include "server_function.h"
-#include "user_avalon_fifo_regs.h"
-#include "user_avalon_fifo_util.h"
-#include "hps_0.h"
-#include <sys/mman.h>
-#include <fcntl.h>
 #include "hwlib.h"
-#include "socal/socal.h"
-#include "socal/hps.h"
-#include "socal/alt_gpio.h"
-#include "user_register_array.h"
+#include <netinet/in.h>
+//#include <fcntl.h>
+#include <sys/poll.h>
+#include <sys/ioctl.h>
+//#include <sys/mman.h>
 
-#define HW_REGS_BASE ( ALT_STM_OFST )		// Physical base address: 0xFC000000
-#define HW_REGS_SPAN ( 0x04000000 )			// Span Physical address: 64 MB
-#define HW_REGS_MASK ( HW_REGS_SPAN - 1 )
+#include "highlevelDriversFPGA.h"
+#include "lowlevelDriversFPGA.h"
+#include "server_function.h"
+#include "server.h"
 
-//metodi che leggono e scrivono registri da fare
-
-extern void *virtual_base;			// Indirizzo base dell'area di memoria virtuale (variabile globale).
-int error;							// Flag per la segnalazione di errori.
-int fd;								// File descriptor degli indirizzi fisici.							// Tipo di operazione che si vuole compiere sulla FIFO (lettura/scrittura).
-int num_el;							// Numero di scritture consecutive della FIFO che si vogliono compiere.
-int el;								// Indice del numero di scritture della FIFO.
-uint32_t new_value;					// Valore singolo con il quale verrà caricata la FIFO.
-uint32_t v_data_array[1021];		// Array di 1021 elementi di tipo uint32_t, da riempire in scrittura.
-uint32_t p_data_array[1021];		// Array di 1021 elementi di tipo uint32_t, da svuotare in lettura.
-uint32_t f_data_array[4093];		// Array di 4093 elementi di tipo uint32_t, da svuotare in lettura.
-uint32_t value_read;				// Valore in uscita dalla FIFO.
-uint32_t fifo_level;				// Livello di riempimento della FIFO.
-uint32_t fifo_full;					// bit di "full" della FIFO.
-uint32_t fifo_empty;				// bit di "empty" della FIFO.
-uint32_t fifo_almostfull;			// bit di "almostfull" della FIFO.
-uint32_t fifo_almostempty;			// bit di "almostempty" della FIFO.
-uint32_t almostfull_setting;		// livello di "almostfull" della FIFO.
-uint32_t almostempty_setting;		// livello di "almostempty" della FIFO.
-
-uint32_t receive_register_content(int socket){
+//Receive a single 32-bit word from socket
+uint32_t receiveWordSocket(int socket){
 	char msg[sizeof(uint32_t) * 8 + 1];
 	char *ptr;
 	if(read(socket, msg, sizeof(msg)) < 0){
-
-		fprintf(stderr, "errore lettura\n");
+		fprintf(stderr, "Error in reading the socket\n");
 		return -1;
 	}else{
 		uint32_t data = strtoul(msg, &ptr, 16);
-		printf("ho ricevuto: %x\n", data);
+		printf("Received %08x\n", data);
 		return data;
 	}
 }
-void *high_priority(void *socket){
 
+//Send a string to socket
+int sendSocket(int socket, char * msg){
+	if(write(socket, msg, strlen(msg)) < 0){
+		fprintf(stderr, "Error in writing to the socket\n");
+		return 1;
+	}
+	return 0;
+}
+
+//Acquire a packet from the FPGA and forward it to the socket
+void *high_priority(void *socket){
+	uint32_t evt;
+	int evtLen=0;
 	int n;
 	int sock = *(int *)socket;
-	uint32_t length;
-	error = StatusFifo(DATA_FIFO, &fifo_level, &fifo_full, &fifo_empty, &fifo_almostfull, &fifo_almostempty, &almostfull_setting, &almostempty_setting);
-	error = ReadFifo(DATA_FIFO, &value_read);
-	printf("start: %x\n", value_read);
-	if(value_read == 0xBABA1AFA){
 
-		error = ReadFifo(DATA_FIFO, &length);
-		printf("errore lettura: %d\n", error);
-		printf("lunghezza pacchetto: %d\n", length);
-	}
+	//Get an event from FPGA
+	int evtErr = getEvent(&evt, evtLen);
+	if (verbose > 1) printf("getEvent result: %d\n", evtErr);
 
-	uint32_t packet[length + 1];
-	packet[0] = 0xBABA1AFA;
-	packet[1] = length;
-	error = ReadFifoBurst(DATA_FIFO, packet + 2, length - 1);
-	printf("lettura burst error: %d\n", error);
-	printf("ho inviato questi dati.\n");
-	for(int i = 0; i < length; i++){
-
-		printf("%x\n", packet[i]);
-	}
-
-	n = write(sock, &packet, sizeof(packet));
+	//Send the event to the socket
+	n = write(sock, &evt, evtLen);
 	if(n < 0){
-
-		perror("errore scrittura");
+		perror("Error in writing an event to the socket\n");
 	}else{
-
-		printf("ho inviato: %d\n", n);
+		if (verbose > 1) printf("Sent %d bytes\n", n);
 	}
 
+	//Kill the thread
 	pthread_exit(NULL);
 }
 
-// Reset della logica FPGA
-void ResetFpga(){
-	uint32_t data;
-	data = 0x00000003;
-	write_register(0, &data);
-	data = 0x00000000;
-	write_register(0, &data);
-}
-
-//Inizializza l'array di registri e resetta la logica FPGA
-void Init(int socket){
-
-	char msg[256] = "[SERVER] faccio init";
-	if(write(socket, msg, strlen(msg) + 1) < 0){
-		fprintf(stderr, "errore scrittura");
-	}else{
-		printf("[SERVER] comando inviato. %s\n", msg);
-	}
-
-	uint16_t reg;
-	uint32_t data;
-	int ret;
-  for(int i = 1; i < 8; i++){
-		reg = i;
-		data = receive_register_content(socket);
-		ret = write_register(reg, &data);
-		printf("ho scritto: %x nel registro %d\n", data, reg);
-	}
-
-	puts("reset");
-	ResetFpga();
-	puts("fine reset");
-}
-
-// Numero di cicli di clock di attesa tra il trigger e l'hold dei VA
-void SetDelay(int socket){
-	char msg[sizeof(uint32_t) * 8 + 1];
-	uint32_t data;
-
-	int delay = receive_register_content(socket);
-	ReadReg(7, &data);
-	data = (data & 0xFFFF0000) | (delay & 0x0000ffff);
-	write_register(7, &data);
-
-	sprintf(msg, "%s %d", "[SERVER] Delay: ", delay);
-	if(write(socket, msg, strlen(msg) + 1) < 0){
-		fprintf(stderr, "Errore Scrittura\n");
-	}
-}
-
-//Configura la modalità: Stop(0), Run(1)
-void SetMode(int socket){
-	char msg[256];
-
-	int mode;
-	uint32_t data;
-	mode = receive_register_content(socket);
-	if(mode == 0){
-		data = 0x00000000;
-		write_register(0, &data);
-	}
-	else if(mode == 1){
-		ResetFpga();
-		data = 0x00000010;
-		write_register(0, &data);
-	}
-
-	sprintf(msg, "%s %d", "[SERVER]imposto modalità: ", mode);
-	if(write(socket, msg, strlen(msg) + 1) < 0){
-		fprintf(stderr, "errore lettura\n");
-	}
-}
-
-//Cattura il valore del trigger counter interno ed esterno
-void GetEventNumber(int socket){
-	char msg[256];
-	uint32_t external_trigger_counter, internal_trigger_counter;
-
-	ReadReg(23, &external_trigger_counter);
-	ReadReg(24, &internal_trigger_counter);
-
-	sprintf(msg, "%s %08u %08u", "[SERVER] Numero evento esterno e interno: ", \
-														external_trigger_counter, internal_trigger_counter);
-	if(write(socket, msg, strlen(msg)) < 0){
-		fprintf(stderr, "errore lettura\n");
-	}
-}
-
-//Stampa trigger counter interno ed esterno
-void PrintAllEventNumber(int socket){
-	char msg[256];
-	uint32_t external_trigger_counter, internal_trigger_counter;
-
-	ReadReg(23, &external_trigger_counter);
-	ReadReg(24, &internal_trigger_counter);
-
-	sprintf(msg, "%s %08u %08u", "[SERVER] Numero evento esterno e interno: ", \
-														external_trigger_counter, internal_trigger_counter);
-	if(write(socket, msg, strlen(msg)) < 0){
-		fprintf(stderr, "errore lettura\n");
-	}
-
-	printf("Trigger number: External: %d - Internal: %d\n", \
-														external_trigger_counter, internal_trigger_counter);
-}
-
-//Reset della logica FPGA
-void EventReset(int socket){
-	char *msg = "[SERVER] Resetto";
-
-	ResetFpga();
-
-	if(write(socket, msg, strlen(msg) + 1) < 0){
-		fprintf(stderr, "errore scrittura");
-	}
-}
-
-//manda un evento (pacchetto fast data fifo)
+//Spawn a thread to send an event to socket
 void GetEvent(int socket){
-
 	pthread_t t;
 	pthread_attr_t attr;
-	int ret;
 	int new_priority = 20;
 	struct sched_param param;
 
-	ret = pthread_attr_init(&attr);
-	ret = pthread_attr_getschedparam(&attr, &param);
+	pthread_attr_init(&attr);
+	pthread_attr_getschedparam(&attr, &param);
 	param.sched_priority = new_priority;
-	ret = pthread_attr_setschedparam(&attr, &param);
 
-	printf("socket: %d\n", socket);
+	if (verbose > 1) printf("socket: %d\n", socket);
 	if(pthread_create(&t, &attr, &high_priority, &socket) < 0){
-
-		perror("thread create");
+		perror("Error in creating high_priority thread\n");
 	}
 	pthread_join(t, 0);
 
 }
 
-//Come setdelay solo che non legge da file ma prende parametro
-void OverWriteDelay(int socket){
+void *receiver_slow_control(void *args){
 
-	char *msg = "[SERVER] OverWriteDelay";
-	if(write(socket, msg, strlen(msg) + 1) < 0){
+  	int len, rc, on = 1;
+	int listen_sd = -1, new_sd = -1;
+	char buffer[80];
+	struct sockaddr_in addr;
+	int timeout;
+	struct pollfd fds[200];
+	int nfds = 1, current_size = 0;
+	char *port = (char*)args;
+	int porta = atoi(port);
 
-		fprintf(stderr, "errore scrittura");
+	listen_sd = socket(AF_INET, SOCK_STREAM, 0);
+	if(listen_sd < 0){
+
+		perror("socket() fallita");
+		exit(-1);
 	}
 
-	uint32_t data;
-	int delay = receive_register_content(socket);
-	ReadReg(7, &data);
-	data = (data & 0xFFFF0000) | (delay & 0x0000ffff);
-	write_register(7, &data);
+	rc = setsockopt(listen_sd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
+	if(rc < 0){
 
-	sprintf(msg, "%s %04u", "[SERVER] Delay: ", delay);
-	if(write(socket, msg, strlen(msg)) < 0){
-		fprintf(stderr, "Errore Scrittura su socket\n");
+		perror("setopt() fallita");
+		close(listen_sd);
+		exit(-1);
 	}
+
+	rc = ioctl(listen_sd, FIONBIO, (char *)&on);
+	if(rc < 0){
+
+		perror("ioctl() fallita");
+		close(listen_sd);
+		exit(-1);
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(porta);
+
+	rc = bind(listen_sd, (struct sockaddr *)&addr, sizeof(addr));
+	if(rc < 0){
+
+		perror("bind() fallita");
+		close(listen_sd);
+		exit(-1);
+	}
+
+	rc = listen(listen_sd, 32);
+	if(rc < 0){
+
+		perror("listen() fallita");
+		close(listen_sd);
+		exit(-1);
+	}
+
+	memset(fds, 0, sizeof(fds));
+
+	fds[0].fd = listen_sd;
+	fds[0].events = POLLIN;
+
+	timeout = (3 * 60* 1000);
+
+	while(1){
+
+		printf("faccio poll\n");
+		rc = poll(fds, nfds, timeout);
+		if(rc < 0){
+
+			perror("errore poll()");
+			close(listen_sd);
+			exit(-1);
+		}
+
+		current_size = nfds;
+		if(fds[0].revents & POLLIN){
+
+			struct sockaddr_in cliaddr;
+            int addrlen = sizeof(cliaddr);
+            new_sd = accept(listen_sd, (struct sockaddr *)&cliaddr, (socklen_t *restrict)&addrlen);
+			printf("connessione da parte di %d accettata\n", new_sd);
+			for(int i = 0; i < 200; i++){
+
+				if(fds[i].fd == 0){
+
+					fds[i].fd = new_sd;
+					fds[i].events = POLLIN;
+					nfds++;
+					break;
+				}
+			}
+		}
+
+		for(int i = 1; i < 200; i++){
+
+			if(fds[i].fd > 0 && fds[i].revents & POLLIN){
+
+				rc = read(fds[i].fd, buffer, sizeof(buffer));
+				if(rc < 0){
+
+					perror("errore poll()");
+					exit(-1);
+				}else if(rc == 0){
+
+					close(fds[i].fd);
+					fds[i].fd = -1;
+					continue;
+				}
+
+				len = rc;
+				printf("[SERVER] ho ricevuto %d bytes, da %d:: %s\n", len, fds[i].fd, buffer);
+
+				rc = write(fds[i].fd, buffer, len);
+				if(rc < 0){
+
+					perror("errore write()");
+					exit(-1);
+				}
+
+
+
+			}
+		}
+	}
+
+	pthread_exit(NULL);
 }
 
-//Configura sistema in modalità calibrazione
-void Calibrate(int socket){
+void *receiver_comandi(void *args){
 
-	char *msg = "[SERVER] Calibrate";
-	if(write(socket, msg, strlen(msg) + 1) < 0){
-		fprintf(stderr, "errore scrittura");
+	char *port = (char*)args;
+	int porta = atoi(port);
+	int sock, addrlen, new_socket;
+	struct sockaddr_in client_addr, server_addr;
+	int n = 1;
+
+  printf("TCP/IP socket: Opening\n");
+	sock = socket(AF_INET , SOCK_STREAM , 0);
+	if(sock < 0){
+
+		perror("errore creazione socket\n");
 	}
 
-	int mode = receive_register_content(socket);
-	uint32_t data;
-	int ret;
-	ReadReg(2, &data);
-	data = (data & 0xFFFFFFFD) | (mode & 0x00000002);
-	ret = write_register(2, &data);
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(porta);
+	server_addr.sin_addr.s_addr = INADDR_ANY;
 
-	sprintf(msg, "%s %u", "[SERVER] Calibration enable: ", mode);
-	if(write(socket, msg, strlen(msg)) < 0){
-		fprintf(stderr, "Errore Scrittura su socket\n");
+	if (setsockopt(sock , SOL_SOCKET, SO_REUSEADDR,&n, sizeof(int)) == -1) {
+    	perror("setsockopt");
+    	exit(1);
 	}
-}
 
-void WriteCalibPar(int socket){
-	char *msg = "[SERVER] WriteCalibPar";
-	if(write(socket, msg, strlen(msg) + 1) < 0){
-		fprintf(stderr, "errore scrittura");
+  printf("TCP/IP socket: binding... ");
+	if(bind(sock, (struct sockaddr *) &server_addr , sizeof(server_addr)) < 0){
+
+		perror("errore nel bind\n");
+		exit(EXIT_FAILURE);
+	}else{
+
+		printf("ok\n");
+		fflush(stdout);
 	}
-}
 
-void SaveCalibrations(int socket){
-	char *msg = "[SERVER] SaveCalibrations";
-	if(write(socket, msg, strlen(msg) + 1) < 0){
-		fprintf(stderr, "errore scrittura");
+  printf("TCP/IP socket: listening\n");
+	if(listen(sock, 1) < 0){
+
+		perror("impossibile ascoltare\n");
+		exit(EXIT_FAILURE);
 	}
-}
+	addrlen = sizeof(client_addr);
+	printf("attendo connessioni...\n");
+	new_socket = accept(sock, (struct sockaddr *) &client_addr, (socklen_t *) &addrlen);
+	if(new_socket < 0){
 
-//Update the internal trigger period without changing the other configs
-void intTriggerPeriod(int socket){
-	char msg[sizeof(uint32_t) * 10 + 1];
-	uint32_t regContent;
-	uint32_t period = receive_register_content(socket);
+		perror("errore accettazione\n");
 
-	ReadReg(2, &regContent);
-	regContent = (period & 0xFFFFFFF0) | (regContent & 0x0000000F);
-	int ret = write_register(2, &regContent);
+	}else{
 
-	sprintf(msg, "%s %08u", "[SERVER] Trigger period: ", period);
-	if(write(socket, msg, strlen(msg)) < 0){
-		fprintf(stderr, "Errore Scrittura su socket\n");
+		printf("connessione riuscita al socket comandi principali: socket %d\n", new_socket);
+		close(sock);
+
 	}
-}
 
-//Enable/Disable the internal trigger
-void selectTrigger(int socket){
-	char msg[sizeof(uint32_t) * 8 + 1];
-	uint32_t regContent;
-	uint32_t intTrig = receive_register_content(socket);
+  //Stampa del contenuto del Register Array
+  int j;
+  uint32_t trash;
+  printf("\n");
+  printf("Contenuto iniziale del Register Array:\n");
+  for(j=0; j<32; j++){
+    ReadReg(j, &trash);
+  }
+  printf("\n");
+  //Fine della stampa
 
-	ReadReg(2, &regContent);
-	regContent = (regContent & 0xFFFFFFF0) | (intTrig & 0x00000001);
-	int ret = write_register(2, &regContent);
+	while(1){
 
-	sprintf(msg, "%s %u", "[SERVER] Trigger enable: ", intTrig);
-	if(write(socket, msg, strlen(msg)) < 0){
-		fprintf(stderr, "Errore Scrittura su socket\n");
+		char msg[256];
+    char replyStr[256];
+		if(read(new_socket, msg, sizeof(msg)) < 0){
+
+			perror("errore nella read\n");
+		}else{
+
+			if(strcmp(msg, "init") == 0){
+        uint32_t regsContent[14];
+
+        sprintf(replyStr, "%s", "[SERVER] Starting Init. Send data...");
+        printf("%s\n", replyStr);
+        sendSocket(new_socket, replyStr);
+
+        //Receive the whole content (apart from reg rGOTO_STATE)
+        for(int ii = 0; ii < 7; ii++){
+          regsContent[ii*2]   = receiveWordSocket(new_socket);
+          regsContent[ii*2+1] = (uint32_t)ii;
+        }
+
+        Init(regsContent, 14);
+			}
+
+      if(strcmp(msg, "readReg") == 0){
+        uint32_t regAddr = receiveWordSocket(new_socket);
+        uint32_t regContent;
+
+        printf("Send read request...\n");
+        ReadReg(regAddr, &regContent);
+
+        sprintf(replyStr, "%s %u: %08x", "[SERVER] Reg", regAddr, regContent);
+        sendSocket(new_socket, replyStr);
+      }
+
+			if((strcmp(msg, "set delay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
+      	uint32_t delay = receiveWordSocket(new_socket);
+
+				SetDelay(delay);
+
+        sprintf(replyStr, "%s %d", "[SERVER] Delay: ", delay);
+        sendSocket(new_socket, replyStr);
+			}
+
+			if(strcmp(msg, "set mode") == 0){
+        uint32_t mode = receiveWordSocket(new_socket);
+				SetMode(mode);
+        sprintf(replyStr, "%s %d", "[SERVER] Setting mode: ", mode);
+        sendSocket(new_socket, replyStr);
+			}
+
+			if(strcmp(msg, "get event number") == 0){
+        uint32_t extTrigCount, intTrigCount;
+
+				GetEventNumber(&extTrigCount, &intTrigCount);
+
+        sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
+                            extTrigCount, intTrigCount);
+        sendSocket(new_socket, replyStr);
+			}
+
+			if(strcmp(msg, "print all event number") == 0){
+        uint32_t extTrigCount, intTrigCount;
+
+				GetEventNumber(&extTrigCount, &intTrigCount);
+
+        sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
+                            extTrigCount, intTrigCount);
+        printf("%s\n",replyStr);
+        sendSocket(new_socket, replyStr);
+			}
+
+			if(strcmp(msg, "event reset") == 0){
+				EventReset();
+        sprintf(replyStr, "%s", "[SERVER] Reset ok");
+        sendSocket(new_socket, replyStr);
+			}
+
+			if(strcmp(msg, "Calibrate") == 0){
+        uint32_t calib = receiveWordSocket(new_socket);
+
+        Calibrate(calib);
+
+        sprintf(replyStr, "%s %d", "[SERVER] Calibration enable: ", calib);
+        sendSocket(new_socket, replyStr);
+			}
+
+			if(strcmp(msg, "WriteCalibPar") == 0){
+        sprintf(replyStr, "%s", "[SERVER] WriteCalibPar");
+        sendSocket(new_socket, replyStr);
+			}
+
+			if(strcmp(msg, "SaveCalibrations") == 0){
+        sprintf(replyStr, "%s", "[SERVER] SaveCalibrations");
+        sendSocket(new_socket, replyStr);
+			}
+
+      if(strcmp(msg, "intTriggerPeriod") == 0){
+        uint32_t period = receiveWordSocket(new_socket);
+
+        intTriggerPeriod(period);
+
+        sprintf(replyStr, "%s %08u", "[SERVER] Trigger period: ", period);
+        sendSocket(new_socket, replyStr);
+			}
+
+      if(strcmp(msg, "selectTrigger") == 0){
+        uint32_t intTrig = receiveWordSocket(new_socket);
+
+        selectTrigger(intTrig);
+
+        sprintf(replyStr, "%s %u", "[SERVER] Trigger enable: ", intTrig);
+        sendSocket(new_socket, replyStr);
+			}
+
+      if(strcmp(msg, "configureTestUnit") == 0){
+        uint32_t tuCfg = receiveWordSocket(new_socket);
+      	char testUnitCfg = ((tuCfg&0x300)>>8);
+      	char testUnitEn  = ((tuCfg&0x2)>>1);
+
+        configureTestUnit(tuCfg);
+
+        sprintf(replyStr, "%s %x %u", "[SERVER] Test Unit status: ", \
+                  testUnitCfg, testUnitEn);
+        sendSocket(new_socket, replyStr);
+			}
+
+      if(strcmp(msg, "get event") == 0){
+
+        GetEvent(new_socket);
+      }
+		}
+
+		bzero(msg, sizeof(msg));
+
 	}
-}
-
-//Configure and enable/disable the test unit
-void configureTestUnit(int socket){
-	char msg[sizeof(uint32_t) * 8 + 1];
-	uint32_t regContent;
-	uint32_t cmdRx = receive_register_content(socket);
-
-	char testUnitCfg = ((cmdRx&0x300)>>8);
-	char testUnitEn  = ((cmdRx&0x2)>>1);
-	ReadReg(1, &regContent);
-	regContent = (regContent & 0xFFFFFCFD) | (cmdRx & 0x00000302);
-	int ret = write_register(1, &regContent);
-
-	sprintf(msg, "%s %x %u", "[SERVER] Test Unit status: ", \
-																											testUnitCfg, testUnitEn);
-	if(write(socket, msg, strlen(msg)) < 0){
-		fprintf(stderr, "Errore Scrittura su socket\n");
-	}
+	pthread_exit(NULL);
 }

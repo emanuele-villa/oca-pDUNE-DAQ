@@ -19,13 +19,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_principali_clicked()
 {
-    comandiPrincipali schermata;
     QString indirizzo = ui->textEdit->toPlainText();
     QByteArray ba = indirizzo.toLatin1();
     char *address = ba.data();
     ui->label->setText(address);
-    schermata.setModal(true);
-    schermata.exec();
+    comandiPrincipali *schermata = new comandiPrincipali(nullptr, address);
+    //schermata->indirizzo = address;
+    schermata->setModal(true);
+    schermata->exec();
 }
 
 

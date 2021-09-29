@@ -31,7 +31,7 @@ $(TARGET): $(OBJFILES)
 	@echo " Sources: $(SOURCES)"
 	@echo " Objects: $(OBJFILES)"
 	@mkdir -p $(BINDIR)
-	@echo " $(LD) $(LDFLAGS) $^ -o $(TARGET)"; $(LD) $(LDFLAGS) $^ -o $(TARGET) $(LIB)
+	@echo " $(LD) $(LDFLAGS) $^ -o $(TARGET) $(LIB)"; $(LD) $(LDFLAGS) $^ -o $(TARGET) $(LIB)
 
 #Objects
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
@@ -39,7 +39,7 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@echo " $(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<"; $(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 
 clean:
-	@echo " Cleaning..."; 
+	@echo " Cleaning...";
 	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
 
 .PHONY: clean

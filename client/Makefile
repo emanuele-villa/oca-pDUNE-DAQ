@@ -1,21 +1,27 @@
-CXX = $(shell root-config --cxx)
-CC  = $(shell root-config --cc)
-F77 = $(shell root-config --f77)
+#CXX = $(shell root-config --cxx)
+#CC  = $(shell root-config --cc)
+#F77 = $(shell root-config --f77)
+CXX = g++
+CC = gcc
+F77 = gfortran
 
 OBJ=obj
 SRC=src
 INC=include
 
-ROOTCFLAGS    = $(shell root-config --cflags)
-ROOTLIBS      = $(shell root-config --libs)
-ROOTGLIBS     = $(shell root-config --glibs)
+#ROOTCFLAGS    = $(shell root-config --cflags)
+#ROOTLIBS      = $(shell root-config --libs)
+#ROOTGLIBS     = $(shell root-config --glibs)
+ROOTCFLAGS    =
+ROOTLIBS      =
+ROOTGLIBS     =
 
 INCLUDE= -I$(INC) -I$(ROOTSYS)/include
 
 CFLAGS= -g
-CPPFLAGS+= $(INCLUDE) 
+CPPFLAGS+= $(INCLUDE)
 
-OBJECTS=$(OBJ)/main.o $(OBJ)/de10silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
+OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
 all: OCA testOCA

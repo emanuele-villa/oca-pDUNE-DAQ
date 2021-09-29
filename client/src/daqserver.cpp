@@ -2,16 +2,43 @@
 #include "utility.h"
 
 daqserver::daqserver(int port, int verb):tcpserver(port, verb){
-  if (verbosity>0){
+  if (kVerbosity>0){
     printf("%s) daqserver created\n", __METHOD_NAME__);
   }
+
+  addressdet.clear(); 
+  portdet.clear();
+  
   return;
 }
 
 daqserver::~daqserver(){
-  if (verbosity>0) {
+  if (kVerbosity>0) {
     printf("%s) destroying daqserver\n", __METHOD_NAME__);
   }
+  return;
+}
+
+void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portde10[]){
+
+  addressdet.clear(); 
+  portdet.clear();
+
+  for (int ii=0; ii<nde10; ii++) {
+    addressdet.push_back(addressde10[ii]);
+    portdet.push_back(portde10[ii]);
+    det.push_back(new de10_silicon_base(addressde10[ii], portde10[ii], kVerbosity));
+  }
+  
+  return;
+}
+
+void daqserver::ProcessMsgReceived(char* msg){
+
+  if (kVerbosity>-1) {//FIX ME: >-1 perche' ora non fa niene, poi deve fare quelle sotto
+    printf("%s) %s\n", __METHOD_NAME__, msg);
+  }
+  
   return;
 }
 

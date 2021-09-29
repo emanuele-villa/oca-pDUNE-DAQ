@@ -13,6 +13,8 @@
 #include <QtCharts>
 #include <QChartView>
 
+#include "de10_silicon_base.h"
+
 class de10_silicon : public de10_silicon_base, public QObject {
   Q_OBJECT;
   

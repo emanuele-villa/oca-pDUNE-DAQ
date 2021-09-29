@@ -1,26 +1,13 @@
-#ifndef SERVER_FUNCTION_H_
-#define SERVER_FUNCTION_H_
+#ifndef _SERVER_FUNCTION_H_
+#define _SERVER_FUNCTION_H_
 
 
-
-#include <stdio.h>
-#include <unistd.h>
-
-void ResetFpga();
-void Init(int socket);
-void SetDelay(int socket);
-void SetMode(int socket);
-void GetEventNumber(int socket);
-void PrintAllEventNumber(int socket);
-void EventReset(int socket);
+uint32_t receiveWordSocket(int socket);
+int sendSocket(int socket, char * msg);
+void *high_priority(void *socket);
 void GetEvent(int socket);
-void OverWriteDelay(int socket);
-void Calibrate(int socket);
-void WriteCalibPar(int socket);
-void SaveCalibrations(int socket);
-void intTriggerPeriod(int socket);
-void selectTrigger(int socket);
-void configureTestUnit(int socket);
-int mapping();
+void *receiver_slow_control(void *args);
+void *receiver_comandi(void *args);
+
 
 #endif

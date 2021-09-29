@@ -7,10 +7,10 @@
 #include <QLineSeries>
 #include <QString>
 
-comandiPrincipali::comandiPrincipali(QWidget *parent) :
+comandiPrincipali::comandiPrincipali(QWidget *parent, char *indirizzo) :
     QDialog(parent),
     ui(new Ui::comandiPrincipali),
-    de10("192.168.10.100", 5000)
+    de10(indirizzo, 5000)
 {
     ui->setupUi(this);
     connect(&de10, SIGNAL(textChanged(QString)), ui->dati, SLOT(append(QString)));
@@ -107,6 +107,14 @@ void comandiPrincipali::on_avvia_clicked()
 void comandiPrincipali::on_stop_clicked()
 {
 
+}
+
+void comandiPrincipali::on_readReg_clicked()
+{
+    int regaddr;
+    regaddr=ui->regAddrSB->value();
+    qDebug()<<"Register address "<<regaddr;
+    de10.readReg(regaddr);
 }
 
 void comandiPrincipali::grafico(QVector<double> event){
