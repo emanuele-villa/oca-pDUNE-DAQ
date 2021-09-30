@@ -7,6 +7,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+
 const int LEN = 1024 * 1000;// 1MB data
 
 inline std::string methodName(const std::string& prettyFunction) {
