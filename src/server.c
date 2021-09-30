@@ -62,15 +62,15 @@ int main(int argc, char *argv[]){
   FastFifoStatus = FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_STATUS_REG;
 
   printf("Creating threads...\n");
-	pthread_t threads;
-	pthread_create(&threads, NULL, receiver_comandi, argv[1]);
+  pthread_t threads;
+  pthread_create(&threads, NULL, receiver_comandi, argv[1]);
   //@todo Add a semaphore to use the shared resources
   //pthread_create(&threads, NULL, receiver_slow_control, argv[2]);
-
-	while(1){
-
-	}
-
-	pthread_join(threads, 0);
-	return 0;
+  
+  while(1){
+    //FIX ME: cosi'?  
+  }
+  
+  pthread_join(threads, 0);
+  return 0;
 }
