@@ -101,9 +101,9 @@ int de10_silicon_base::Init() {
   changeText(c);
 
   //Register 7
-  reg_content  = delay;
-  //c = (char *)&reg_content;
-  sprintf(c, "%x", reg_content);
+  regContent  = delay;
+  //c = (char *)&regContent;
+  sprintf(c, "%x", regContent);
   client_send(c);
   changeText(c);
 
