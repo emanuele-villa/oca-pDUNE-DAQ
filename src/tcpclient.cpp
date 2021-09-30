@@ -107,7 +107,7 @@ int tcpclient::client_receive_int(){
       perror("reading error: ");
     }
     else{
-      char c[4];
+      char c[9];
       char msg[256];//FIX ME: unused
       sprintf(c, "%08x", temp);
       //sprintf(msg, "ho letto %d", n);
