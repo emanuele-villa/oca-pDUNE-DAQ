@@ -10,6 +10,8 @@
 #include <sys/ioctl.h>
 //#include <sys/mman.h>
 
+#include "utility.h"
+
 #include "highlevelDriversFPGA.h"
 #include "lowlevelDriversFPGA.h"
 #include "server_function.h"
@@ -32,11 +34,14 @@ uint32_t receiveWordSocket(int socket){
 }
 
 //Send a string to socket
-int sendSocket(int socket, char * msg){
-  if(write(socket, msg, strlen(msg)) < 0){
+int sendSocket(int socket, void* msg, uint32_t len){
+  int n;
+  n = write(socket, msg, len);
+  if(n < 0){
     fprintf(stderr, "Error in writing to the socket\n");
     return 1;
   }
+  if (baseAddr.verbose > 1) printf("Sent %d bytes\n", n);
   return 0;
 }
 
@@ -48,15 +53,15 @@ void *high_priority(void *socket){
   int sock = *(int *)socket;
 
   //Get an event from FPGA
-  int evtErr = getEvent(&evt, evtLen);
-  if (verbose > 1) printf("getEvent result: %d\n", evtErr);
+  int evtErr = getEvent(&evt, &evtLen);
+  if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
 
   //Send the event to the socket
   n = write(sock, &evt, evtLen);
   if(n < 0){
     perror("Error in writing an event to the socket\n");
   }else{
-    if (verbose > 1) printf("Sent %d bytes\n", n);
+    if (baseAddr.verbose > 1) printf("Sent %d bytes\n", n);
   }
 
   //Kill the thread
@@ -74,7 +79,7 @@ void GetEvent(int socket){
   pthread_attr_getschedparam(&attr, &param);
   param.sched_priority = new_priority;
 
-  if (verbose > 1) printf("socket: %d\n", socket);
+  if (baseAddr.verbose > 1) printf("socket: %d\n", socket);
   if(pthread_create(&t, &attr, &high_priority, &socket) < 0){
     perror("Error in creating high_priority thread\n");
   }
@@ -166,7 +171,7 @@ void *receiver_slow_control(void *args){
 
       struct sockaddr_in cliaddr;
       int addrlen = sizeof(cliaddr);
-      new_sd = accept(listen_sd, (struct sockaddr *)&cliaddr, (socklen_t *restrict)&addrlen);
+      new_sd = accept(listen_sd, (struct sockaddr *)&cliaddr, (socklen_t * __restrict__ )&addrlen);
       printf("connessione da parte di %d accettata\n", new_sd);
       for(int i = 0; i < 200; i++){
 
@@ -223,7 +228,7 @@ void *receiver_comandi(void *args){
   // in teoria si' perche' io da qui ho copiato
   // ma sicuramente almeno manca il pezzo committato da Nicolo' dopo:
   // https://github.com/PerugiaOverNetDAQ/oca/commit/b8daee0873b71e149a75e278ae9f00c0b8d2b702
-  
+
   char *port = (char*)args;
   int porta = atoi(port);
   int sock, addrlen, new_socket;
@@ -279,7 +284,7 @@ void *receiver_comandi(void *args){
 
   //-----------------------------------------------------
   // questa parte sara' un metodo di hpsserver
-  
+
   //Stampa del contenuto del Register Array
   int j;
   uint32_t trash;
@@ -296,22 +301,21 @@ void *receiver_comandi(void *args){
   // che a sua volta chiama il
   // virtual void ProcessMsgReceived(char* msg);
   // che e' specializzato/implementato in hpsserver
-  
+
   while(1){
 
     char msg[256];
     char replyStr[256];
-    if(read(new_socket, msg, sizeof(msg)) < 0){
-
+    if(read(new_socket, msg, sizeof(msg)) < 0) {
       perror("errore nella read\n");
-    }else{
-
+    }
+    else {
       if(strcmp(msg, "init") == 0){
         uint32_t regsContent[14];
 
         sprintf(replyStr, "%s", "[SERVER] Starting Init. Send data...");
         printf("%s\n", replyStr);
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
 
         //Receive the whole content (apart from reg rGOTO_STATE)
         for(int ii = 0; ii < 7; ii++){
@@ -321,8 +325,7 @@ void *receiver_comandi(void *args){
 
         Init(regsContent, 14);
       }
-
-      if(strcmp(msg, "readReg") == 0){
+      else if(strcmp(msg, "readReg") == 0){
         uint32_t regAddr = receiveWordSocket(new_socket);
         uint32_t regContent;
 
@@ -330,104 +333,105 @@ void *receiver_comandi(void *args){
         ReadReg(regAddr, &regContent);
 
         sprintf(replyStr, "%s %u: %08x", "[SERVER] Reg", regAddr, regContent);
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
+      else if((strcmp(msg, "set delay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
+        uint32_t delay = receiveWordSocket(new_socket);
 
-      if((strcmp(msg, "set delay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
-      	uint32_t delay = receiveWordSocket(new_socket);
-
-	SetDelay(delay);
+        SetDelay(delay);
 
         sprintf(replyStr, "%s %d", "[SERVER] Delay: ", delay);
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "set mode") == 0){
+      else if(strcmp(msg, "set mode") == 0){
         uint32_t mode = receiveWordSocket(new_socket);
-	SetMode(mode);
+        SetMode(mode);
         sprintf(replyStr, "%s %d", "[SERVER] Setting mode: ", mode);
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "get event number") == 0){
+      else if(strcmp(msg, "get event number") == 0){
         uint32_t extTrigCount, intTrigCount;
 
-	GetEventNumber(&extTrigCount, &intTrigCount);
+        GetEventNumber(&extTrigCount, &intTrigCount);
 
         sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
-		extTrigCount, intTrigCount);
-        sendSocket(new_socket, replyStr);
+                    extTrigCount, intTrigCount);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "print all event number") == 0){
+      else if(strcmp(msg, "print all event number") == 0){
         uint32_t extTrigCount, intTrigCount;
 
-	GetEventNumber(&extTrigCount, &intTrigCount);
+        GetEventNumber(&extTrigCount, &intTrigCount);
 
         sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
-		extTrigCount, intTrigCount);
+                    extTrigCount, intTrigCount);
         printf("%s\n",replyStr);
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "event reset") == 0){
-	EventReset();
+      else if(strcmp(msg, "event reset") == 0){
+        EventReset();
         sprintf(replyStr, "%s", "[SERVER] Reset ok");
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "Calibrate") == 0){
+      else if(strcmp(msg, "Calibrate") == 0){
         uint32_t calib = receiveWordSocket(new_socket);
 
         Calibrate(calib);
 
         sprintf(replyStr, "%s %d", "[SERVER] Calibration enable: ", calib);
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "WriteCalibPar") == 0){
+      else if(strcmp(msg, "WriteCalibPar") == 0){
         sprintf(replyStr, "%s", "[SERVER] WriteCalibPar");
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "SaveCalibrations") == 0){
+      else if(strcmp(msg, "SaveCalibrations") == 0){
         sprintf(replyStr, "%s", "[SERVER] SaveCalibrations");
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "intTriggerPeriod") == 0){
+      else if(strcmp(msg, "intTriggerPeriod") == 0){
         uint32_t period = receiveWordSocket(new_socket);
 
         intTriggerPeriod(period);
 
         sprintf(replyStr, "%s %08u", "[SERVER] Trigger period: ", period);
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "selectTrigger") == 0){
+      else if(strcmp(msg, "selectTrigger") == 0){
         uint32_t intTrig = receiveWordSocket(new_socket);
 
         selectTrigger(intTrig);
 
         sprintf(replyStr, "%s %u", "[SERVER] Trigger enable: ", intTrig);
-        sendSocket(new_socket, replyStr);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
-
-      if(strcmp(msg, "configureTestUnit") == 0){
+      else if(strcmp(msg, "configureTestUnit") == 0){
         uint32_t tuCfg = receiveWordSocket(new_socket);
-      	char testUnitCfg = ((tuCfg&0x300)>>8);
-      	char testUnitEn  = ((tuCfg&0x2)>>1);
+        char testUnitCfg = ((tuCfg&0x300)>>8);
+        char testUnitEn  = ((tuCfg&0x2)>>1);
 
         configureTestUnit(tuCfg);
 
         sprintf(replyStr, "%s %x %u", "[SERVER] Test Unit status: ", \
-		testUnitCfg, testUnitEn);
-        sendSocket(new_socket, replyStr);
+                    testUnitCfg, testUnitEn);
+        sendSocket(new_socket, replyStr, strlen(replyStr));
       }
+      else if(strcmp(msg, "get event") == 0){
+        uint32_t* evt = NULL;
+        int evtLen=0;
 
-      if(strcmp(msg, "get event") == 0){
+        //Get an event from FPGA
+        int evtErr = getEvent(evt, &evtLen);
+        if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
 
-        GetEvent(new_socket);
+        //Send the event to the socket
+        sendSocket(new_socket, evt, evtLen);
+      }
+      else {
+        char c[strlen(msg)+32]="";
+        sprintf(c, "%s) Unkown message: %s", __METHOD_NAME__, msg);
+        printf("%s",c);
+        sendSocket(new_socket, c, strlen(c));
       }
     }
 
@@ -436,8 +440,8 @@ void *receiver_comandi(void *args){
   }
 
   //-------------------------------------------------
-  
-  pthread_exit(NULL);
 
-  return;
+  pthread_exit(NULL);
+  void* pippo;
+  return pippo;
 }

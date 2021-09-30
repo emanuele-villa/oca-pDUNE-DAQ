@@ -91,7 +91,7 @@ void configureTestUnit(uint32_t tuCfg){
 }
 
 //Receive one event from the FastDATA FIFO
-int getEvent(uint32_t *evt, int evtLen){
+int getEvent(uint32_t* evt, int* evtLen){
   int readErr;
   uint32_t pktLen;
 
@@ -130,14 +130,14 @@ int getEvent(uint32_t *evt, int evtLen){
     return 3;
   }
 
-  if (verbose > 1){
+  if (baseAddr.verbose > 1){
     printf("Event:\n");
     for(int i = 0; i < pktLen+1; i++){
       printf("%08x\n", packet[i]);
     }
   }
 
-  evtLen = pktLen;
+  *evtLen = pktLen;
   evt = packet;
 
   return 0;
