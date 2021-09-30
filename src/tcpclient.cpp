@@ -70,7 +70,7 @@ int tcpclient::client_connect(const char *address, int port) {
 
 int tcpclient::client_send(const char *buffer) {
 
-  int result;
+  int result = 1;//FIX ME: unused
 
   //char backup[d_dampe_string_buffer];
   if (verbosity>0) {
@@ -91,7 +91,7 @@ int tcpclient::client_send(const char *buffer) {
     }
   }
 
-  return true;
+  return result;
 }
 
 int tcpclient::client_receive_int(){
@@ -108,7 +108,7 @@ int tcpclient::client_receive_int(){
     }
     else{
       char c[4];
-      char msg[256];
+      char msg[256];//FIX ME: unused
       sprintf(c, "%08x", temp);
       //sprintf(msg, "ho letto %d", n);
       //usleep(100000);

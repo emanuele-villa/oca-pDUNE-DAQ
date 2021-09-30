@@ -9,7 +9,7 @@ protected:
   volatile bool kListeningOn;
   
 public:
-  ~tcpserver();
+  virtual ~tcpserver();
   tcpserver(int port, int verb=0);
 
   void SetVerbosity(int verb){ kVerbosity = verb; }

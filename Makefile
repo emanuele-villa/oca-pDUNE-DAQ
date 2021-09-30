@@ -6,27 +6,38 @@ INC := include
 EXE := exe
 
 # Compilers:
-#CXX = $(shell root-config --cxx)
-#CC  = $(shell root-config --cc)
-#F77 = $(shell root-config --f77)
-CXX = g++
-CC = gcc
-F77 = gfortran
+ifndef ROOTSYS
+	CXX = g++	
+	CC = gcc
+	F77 = gfortran
+else
+	CXX = $(shell root-config --cxx)
+	CC  = $(shell root-config --cc)
+	F77 = $(shell root-config --f77)
+endif
+
+UNAME_S := $(shell uname -s)
 
 CROSS_COMPILE = arm-linux-gnueabihf
-#CCARM = $(CROSS_COMPILE)-gcc
-#LDARM = $(CROSS_COMPILE)-gcc
-CCARM = gcc --target=$(CROSS_COMPILE) --gcc-toolchain=`brew --prefix $(CROSS_COMPILE)-binutils`
-LDARM = gcc --target=$(CROSS_COMPILE) --gcc-toolchain=`brew --prefix $(CROSS_COMPILE)-binutils`
-ARCHARM = arm
+ifeq ($(UNAME_S),Linux)
+	CCARM = $(CROSS_COMPILE)-g++
+	LDARM = $(CROSS_COMPILE)-g++
+endif
+ifeq ($(UNAME_S),Darwin)
+	CCARM = `brew --prefix llvm`/bin/clang --target=$(CROSS_COMPILE) --gcc-toolchain=`brew --prefix $(CROSS_COMPILE)-binutils`
+	LDARM = `brew --prefix llvm`/bin/clang --target=$(CROSS_COMPILE) --gcc-toolchain=`brew --prefix $(CROSS_COMPILE)-binutils`
+endif
 
 # Root specific (unused for now):
-#ROOTCFLAGS    = $(shell root-config --cflags)
-#ROOTLIBS      = $(shell root-config --libs)
-#ROOTGLIBS     = $(shell root-config --glibs)
-ROOTCFLAGS    =
-ROOTLIBS      =
-ROOTGLIBS     =
+ifdef ROOTSYS
+	ROOTCFLAGS    =
+	ROOTLIBS      =
+	ROOTGLIBS     =
+else
+	ROOTCFLAGS    = $(shell root-config --cflags)
+	ROOTLIBS      = $(shell root-config --libs)
+	ROOTGLIBS     = $(shell root-config --glibs)
+endif
 
 # DE10 specific:
 ALT_DEVICE_FAMILY ?= soc_cv_av
@@ -34,7 +45,10 @@ ALT_DEVICE_FAMILY ?= soc_cv_av
 HWLIBS_ROOT = $(SOCEDS_DEST_ROOT)/ip/altera/hps/altera_hps/hwlib
 
 # Flags and includes:
-INCLUDE= -I$(INC) -I$(ROOTSYS)/include
+INCLUDE= -I$(INC)
+ifdef ROOTSYS
+	INCLUDE += -I$(ROOTSYS)/include
+endif
 
 CFLAGS := -g -Wall -pthread
 LDFLAGS := -g -Wall -pthread

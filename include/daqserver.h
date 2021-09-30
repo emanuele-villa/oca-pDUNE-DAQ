@@ -17,9 +17,9 @@ public:
   ~daqserver();
   daqserver(int port, int verb=0);
 
-  virtual void ProcessMsgReceived(char* msg);
+  void ProcessMsgReceived(char* msg);
 
-  virtual void SetListDetectors(int nde10, const char* addressde10[], int portde10[]);
+  void SetListDetectors(int nde10, const char* addressde10[], int portde10[]);
   
 };
 
