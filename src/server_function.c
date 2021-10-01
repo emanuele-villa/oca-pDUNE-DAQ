@@ -215,7 +215,7 @@ void *receiver_slow_control(void *args){
   pthread_exit(NULL);
 }
 
-void *receiver_comandi(void *args){
+void* receiver_comandi(void *args){
 
   // questa parte diventa un banale
   // hpsserver* hsrv = new hpsserver(bla, bla, bla)
