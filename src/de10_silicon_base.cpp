@@ -43,7 +43,7 @@ int de10_silicon_base::readReg(int regAddr, uint32_t &regCont){
     ret = 1;
   }
 
-  if (client_receive(readBack)!=0) ret = 1;
+  if (client_receive(readBack)<=0) ret = 1;
 
   if (verbosity>0) {
     printf("%s) Read: %s\n", __METHOD_NAME__, readBack);
