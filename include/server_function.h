@@ -18,6 +18,7 @@ void GetEvent(int socket);
 // server_function.h
 // ci sono queste due funzioni (alleggerite di molto, lo commento nel .c)
 void* receiver_slow_control(void *args);
-void* receiver_comandi(void *args);
+int sockOpener(void* args, int* sockIn);
+void* receiver_comandi(int* sockIn);
 
 #endif

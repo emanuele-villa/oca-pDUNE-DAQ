@@ -41,7 +41,7 @@ int sendSocket(int socket, void* msg, uint32_t len){
     fprintf(stderr, "Error in writing to the socket\n");
     return 1;
   }
-  if (baseAddr.verbose > 1) printf("Sent %d bytes\n", n);
+  if (baseAddr.verbose > 1) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
   return 0;
 }
 
@@ -220,8 +220,7 @@ void *receiver_slow_control(void *args){
   pthread_exit(NULL);
 }
 
-void* receiver_comandi(void *args){
-
+int sockOpener(void* args, int* sockIn) {
   // questa parte diventa un banale
   // hpsserver* hsrv = new hpsserver(bla, bla, bla)
   // dare controllata che tutta 'sta roba sia, uguale, nel costruttore di tcpserver
@@ -229,72 +228,71 @@ void* receiver_comandi(void *args){
   // ma sicuramente almeno manca il pezzo committato da Nicolo' dopo:
   // https://github.com/PerugiaOverNetDAQ/oca/commit/b8daee0873b71e149a75e278ae9f00c0b8d2b702
 
-  char *port = (char*)args;
+  char* port = (char*)args;
   int porta = atoi(port);
-  int sock, addrlen, new_socket;
-  struct sockaddr_in client_addr, server_addr;
-  int n = 1;
+  struct sockaddr_in server_addr;
+  int n =0;
 
-  printf("TCP/IP socket: Opening\n");
-  sock = socket(AF_INET , SOCK_STREAM , 0);
-  if(sock < 0){
-
-    perror("errore creazione socket\n");
+  printf("TCP/IP socket: Opening... ");
+  *sockIn = socket(AF_INET , SOCK_STREAM , 0);
+  if(*sockIn < 0){
+    perror("Error in socket creation...\n");
+    return 1;
   }
+
+  //Avoid "Address already in use" issue at server startup
+  if (setsockopt(*sockIn , SOL_SOCKET, SO_REUSEADDR,&n, sizeof(int)) == -1) {
+    perror("setsockopt failed...\n");
+    //exit(1);
+    return 2;
+  }
+  printf("ok\n");
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(porta);
   server_addr.sin_addr.s_addr = INADDR_ANY;
-
-  if (setsockopt(sock , SOL_SOCKET, SO_REUSEADDR,&n, sizeof(int)) == -1) {
-    perror("setsockopt");
-    exit(1);
-  }
-
   printf("TCP/IP socket: binding... ");
-  if(bind(sock, (struct sockaddr *) &server_addr , sizeof(server_addr)) < 0){
-
-    perror("errore nel bind\n");
-    exit(EXIT_FAILURE);
+  if(bind(*sockIn, (struct sockaddr *) &server_addr , sizeof(server_addr)) < 0){
+    perror("Error\n");
+    //exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }else{
-
     printf("ok\n");
     fflush(stdout);
   }
 
-  printf("TCP/IP socket: listening\n");
-  if(listen(sock, 1) < 0){
-
-    perror("impossibile ascoltare\n");
-    exit(EXIT_FAILURE);
+  printf("TCP/IP socket: listening... ");
+  if(listen(*sockIn, 1) < 0){
+    perror("Error\n");
+    //exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
-  addrlen = sizeof(client_addr);
-  printf("attendo connessioni...\n");
-  new_socket = accept(sock, (struct sockaddr *) &client_addr, (socklen_t *) &addrlen);
-  if(new_socket < 0){
+  printf("ok\n");
 
-    perror("errore accettazione\n");
+  return 0;
+}
 
+void* receiver_comandi(int* sockIn){
+  int addrLen, openConn;
+  struct sockaddr_in client_addr;
+
+  addrLen = sizeof(client_addr);
+  printf("Waiting for a client to connect...\n");
+  openConn = accept(*sockIn, (struct sockaddr *) &client_addr, (socklen_t *) &addrLen);
+  if(openConn < 0){
+    perror("Error in accepting socket connection\n");
   }else{
-
-    printf("connessione riuscita al socket comandi principali: socket %d\n", new_socket);
-    close(sock);
-
+    uint32_t trash;
+    printf("Connection open: socket %d\n", openConn);
+    printf("\nRegister array initial content:\n");
+    for(int j=0; j<32; j++){
+      ReadReg(j, &trash);
+    }
+    printf("\n");
   }
 
   //-----------------------------------------------------
   // questa parte sara' un metodo di hpsserver
-
-  //Stampa del contenuto del Register Array
-  int j;
-  uint32_t trash;
-  printf("\n");
-  printf("Contenuto iniziale del Register Array:\n");
-  for(j=0; j<32; j++){
-    ReadReg(j, &trash);
-  }
-  printf("\n");
-  //Fine della stampa
 
   //------------------------------------------------------
   // questa parte sarà il Listen() (di tcpserver)
@@ -302,12 +300,26 @@ void* receiver_comandi(void *args){
   // virtual void ProcessMsgReceived(char* msg);
   // che e' specializzato/implementato in hpsserver
 
-  while(1){
-
-    char msg[256];
+  char msg[256]="";
+  int bytesRead=0;
+  bool kControl = true;
+  while(kControl) {
     char replyStr[256];
-    if(read(new_socket, msg, sizeof(msg)) < 0) {
-      perror("errore nella read\n");
+
+    bytesRead=read(openConn, msg, sizeof(msg));
+    if(bytesRead < 0) {
+      // Error: check for specific errors
+      if (EAGAIN==errno || EWOULDBLOCK==errno) {
+        printf("%s) errno: %d\n", __METHOD_NAME__, errno);
+      }
+      else {
+        printf("%s) Read error (%d)\n", __METHOD_NAME__, bytesRead);
+        perror("Read error");
+      }
+    }
+    else if (bytesRead==0) {
+      kControl=false;
+      printf("%s) Client closed the connection\n", __METHOD_NAME__);
     }
     else {
       if(strcmp(msg, "init") == 0){
@@ -315,39 +327,39 @@ void* receiver_comandi(void *args){
 
         sprintf(replyStr, "%s", "[SERVER] Starting Init. Send data...");
         printf("%s\n", replyStr);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
 
         //Receive the whole content (apart from reg rGOTO_STATE)
         for(int ii = 0; ii < 7; ii++){
-          regsContent[ii*2]   = receiveWordSocket(new_socket);
+          regsContent[ii*2]   = receiveWordSocket(openConn);
           regsContent[ii*2+1] = (uint32_t)ii;
         }
 
         Init(regsContent, 14);
       }
       else if(strcmp(msg, "readReg") == 0){
-        uint32_t regAddr = receiveWordSocket(new_socket);
+        uint32_t regAddr = receiveWordSocket(openConn);
         uint32_t regContent;
 
         printf("Send read request...\n");
         ReadReg(regAddr, &regContent);
 
         sprintf(replyStr, "%s %u: %08x", "[SERVER] Reg", regAddr, regContent);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if((strcmp(msg, "set delay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
-        uint32_t delay = receiveWordSocket(new_socket);
+        uint32_t delay = receiveWordSocket(openConn);
 
         SetDelay(delay);
 
         sprintf(replyStr, "%s %d", "[SERVER] Delay: ", delay);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "set mode") == 0){
-        uint32_t mode = receiveWordSocket(new_socket);
+        uint32_t mode = receiveWordSocket(openConn);
         SetMode(mode);
         sprintf(replyStr, "%s %d", "[SERVER] Setting mode: ", mode);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "get event number") == 0){
         uint32_t extTrigCount, intTrigCount;
@@ -356,7 +368,7 @@ void* receiver_comandi(void *args){
 
         sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
                     extTrigCount, intTrigCount);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "print all event number") == 0){
         uint32_t extTrigCount, intTrigCount;
@@ -366,47 +378,47 @@ void* receiver_comandi(void *args){
         sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
                     extTrigCount, intTrigCount);
         printf("%s\n",replyStr);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "event reset") == 0){
         EventReset();
         sprintf(replyStr, "%s", "[SERVER] Reset ok");
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "Calibrate") == 0){
-        uint32_t calib = receiveWordSocket(new_socket);
+        uint32_t calib = receiveWordSocket(openConn);
 
         Calibrate(calib);
 
         sprintf(replyStr, "%s %d", "[SERVER] Calibration enable: ", calib);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "WriteCalibPar") == 0){
         sprintf(replyStr, "%s", "[SERVER] WriteCalibPar");
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "SaveCalibrations") == 0){
         sprintf(replyStr, "%s", "[SERVER] SaveCalibrations");
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "intTriggerPeriod") == 0){
-        uint32_t period = receiveWordSocket(new_socket);
+        uint32_t period = receiveWordSocket(openConn);
 
         intTriggerPeriod(period);
 
         sprintf(replyStr, "%s %08u", "[SERVER] Trigger period: ", period);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "selectTrigger") == 0){
-        uint32_t intTrig = receiveWordSocket(new_socket);
+        uint32_t intTrig = receiveWordSocket(openConn);
 
         selectTrigger(intTrig);
 
         sprintf(replyStr, "%s %u", "[SERVER] Trigger enable: ", intTrig);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "configureTestUnit") == 0){
-        uint32_t tuCfg = receiveWordSocket(new_socket);
+        uint32_t tuCfg = receiveWordSocket(openConn);
         char testUnitCfg = ((tuCfg&0x300)>>8);
         char testUnitEn  = ((tuCfg&0x2)>>1);
 
@@ -414,7 +426,7 @@ void* receiver_comandi(void *args){
 
         sprintf(replyStr, "%s %x %u", "[SERVER] Test Unit status: ", \
                     testUnitCfg, testUnitEn);
-        sendSocket(new_socket, replyStr, strlen(replyStr));
+        sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "get event") == 0){
         uint32_t* evt = NULL;
@@ -425,23 +437,27 @@ void* receiver_comandi(void *args){
         if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
 
         //Send the event to the socket
-        sendSocket(new_socket, evt, evtLen);
+        sendSocket(openConn, evt, evtLen);
+      } else if (strcmp(msg, "quit") == 0) {
+        printf("FIX ME: Close connection and socket...\n");
+        //kControl=false;
       }
       else {
         char c[strlen(msg)+32]="";
         sprintf(c, "%s) Unkown message: %s\n", __METHOD_NAME__, msg);
         printf("%s",c);
-        sendSocket(new_socket, c, strlen(c));
+        sendSocket(openConn, c, strlen(c));
       }
     }
 
     bzero(msg, sizeof(msg));
+    sleep(1);
 
   }
 
   //-------------------------------------------------
 
-  pthread_exit(NULL);
+  //pthread_exit(NULL);
   void* pippo;
   return pippo;
 }

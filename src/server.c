@@ -22,7 +22,7 @@
 struct fpgaAddresses baseAddr;
 
 int main(int argc, char *argv[]){
-  baseAddr.verbose = 2; //@todo pass the verbose as argument
+  baseAddr.verbose = 3; //@todo pass the verbose as argument
   printf("Opening /dev/mem...\n");
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
@@ -70,7 +70,17 @@ int main(int argc, char *argv[]){
   //pthread_create(&threads, NULL, receiver_slow_control, argv[2]);
 
   //Connect to the socket and loop forever to receive commands
-  receiver_comandi(argv[1]);
+  int sock = 0;
+  int sockRet = -1;
+  //Open the socket, bind it to the address and listen to the port
+  printf("Creating a server socket...\n");
+  sockRet = sockOpener(argv[1], &sock);
+  //Accept client connections and receive commands, until client is closed
+  while (1) {
+    receiver_comandi(&sock);
+  }
+  //Everything done, close the socket
+  close(sock);
 
   //while(1){
   //  //FIX ME: cosi'?
