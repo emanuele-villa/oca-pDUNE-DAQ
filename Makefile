@@ -54,7 +54,7 @@ CFLAGS := -g -Wall -pthread
 LDFLAGS := -g -Wall -pthread
 
 CPPFLAGS := $(CFLAGS) $(INCLUDE)
-CFLAGSARM := $(CFLAGS) -I$(INCLUDE) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
+CFLAGSARM := $(CFLAGS) $(INCLUDE) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
 
 # Objects and sources:
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
