@@ -9,10 +9,10 @@
 class daqserver: public tcpserver {
 
 private:
-  std::vector<const char*> addressdet; 
+  std::vector<const char*> addressdet;
   std::vector<int> portdet;
   std::vector<de10_silicon_base*> det;
-  
+
 public:
   ~daqserver();
   daqserver(int port, int verb=0);
@@ -20,7 +20,9 @@ public:
   void ProcessMsgReceived(char* msg);
 
   void SetListDetectors(int nde10, const char* addressde10[], int portde10[]);
-  
+
+  int ReadReg(uint32_t regAddr);
+
 };
 
 #endif

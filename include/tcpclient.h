@@ -5,7 +5,7 @@ class tcpclient {
 
 protected:
   int verbosity;
-  
+
 public:
   ~tcpclient();
   tcpclient(const char *address, int port, int verb=0);
@@ -14,15 +14,15 @@ public:
   int GetVerbosity(){ return verbosity; }
 
   int Send(const char *buffer) { return client_send(buffer); }
-  int Receive() {return client_receive(); }
-  
+  int Receive(char* msg);
+
 protected:
   int client_connect(const char *address, int port);
   int client_send(const char *buffer);
-  int client_receive();
+  int client_receive(char* msg);
   int client_receive_int();
   int client_socket;
-  
+
 };
 
 #endif

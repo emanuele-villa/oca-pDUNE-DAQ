@@ -6,11 +6,11 @@
 // const int nde10 = 1;
 // const char* addressde10[nde10] = {"localhost"};
 // int portde10[nde10] = {80};
-const int nde10 = 0;
-const char* addressde10[nde10] = {};
-int portde10[nde10] = {};
+const int nde10 = 1;
+const char* addressde10[nde10] = {"192.168.1.3"};
+int portde10[nde10] = {5000};
 
-int verbosity=0;
+int verbosity=2;
 
 daqserver* daqsrv = NULL;
 int ControlOn=1;
@@ -44,7 +44,8 @@ int main(int argc, char *argv[]) {
   signal(SIGINT,StopRun);// sending 'CTRL_C' the program exits in the right way
   signal(SIGQUIT,PrintStatus);//sending 'CTRL \' we print the numbers of taken events
 
-  daqsrv->Listen();
+  //daqsrv->Listen();
+  daqsrv->ReadReg(31);
 
   if (daqsrv) delete daqsrv;
 

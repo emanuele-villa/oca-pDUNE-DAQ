@@ -6,9 +6,9 @@ daqserver::daqserver(int port, int verb):tcpserver(port, verb){
     printf("%s) daqserver created\n", __METHOD_NAME__);
   }
 
-  addressdet.clear(); 
+  addressdet.clear();
   portdet.clear();
-  
+
   return;
 }
 
@@ -21,7 +21,7 @@ daqserver::~daqserver(){
 
 void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portde10[]){
 
-  addressdet.clear(); 
+  addressdet.clear();
   portdet.clear();
 
   for (int ii=0; ii<nde10; ii++) {
@@ -29,7 +29,7 @@ void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portd
     portdet.push_back(portde10[ii]);
     det.push_back(new de10_silicon_base(addressde10[ii], portde10[ii], kVerbosity));
   }
-  
+
   return;
 }
 
@@ -38,16 +38,16 @@ void daqserver::ProcessMsgReceived(char* msg){
   if (kVerbosity>-1) {//FIX ME: >-1 perche' ora non fa niene, poi deve fare quelle sotto
     printf("%s) %s\n", __METHOD_NAME__, msg);
   }
-  
+
   return;
 }
 
 /*
 
   while(1){
-    
+
     char msg[LEN];
-    
+
     if(read(new_socket, msg, sizeof(msg)) < 0){
       perror("errore nella read\n");
     }
@@ -125,3 +125,16 @@ void daqserver::ProcessMsgReceived(char* msg){
   }
 
 */
+
+int daqserver::ReadReg(uint32_t regAddr) {
+  int ret=0;
+  uint32_t regCont=0; //FIX ME Shall be vector
+
+  for (uint32_t ii=0; ii<det.size(); ii++) {
+    ret |= (det.at(ii)->readReg(regAddr, regCont)<<ii);
+    if (kVerbosity>0) {
+      printf("%s) Read from DE10 %d: %x\n", __METHOD_NAME__, ii, regCont);
+    }
+  }
+  return ret;
+}

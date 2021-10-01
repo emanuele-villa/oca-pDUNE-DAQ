@@ -37,7 +37,7 @@ public:
   virtual void changeText(const std::string& new_text) {};
   virtual void sendData(std::vector<double> event) {};
 
-  int readReg(int regAddr);
+  int readReg(int regAddr, uint32_t &regCont);
   int Init();
   int SetDelay(uint32_t delayIn);
   int SetMode(uint8_t modeIn);

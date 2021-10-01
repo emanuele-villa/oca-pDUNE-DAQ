@@ -1,5 +1,6 @@
 ﻿#include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -57,6 +58,7 @@ int tcpclient::client_connect(const char *address, int port) {
   server_addr.sin_port = htons(port);
 
   if(::connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0){
+    printf("%s) connection error: (socket number %d, %s:%d)\n", __METHOD_NAME__, client_socket, inet_ntoa(server_addr.sin_addr), ntohs(server_addr.sin_port));
     perror("connection error: ");
     exit(EXIT_FAILURE);
   }
@@ -70,7 +72,7 @@ int tcpclient::client_connect(const char *address, int port) {
 
 int tcpclient::client_send(const char *buffer) {
 
-  int result = 1;//FIX ME: unused
+  int result = 0;
 
   //char backup[d_dampe_string_buffer];
   if (verbosity>0) {
@@ -82,13 +84,18 @@ int tcpclient::client_send(const char *buffer) {
     if ((write(client_socket, buffer, strlen(buffer)) > 0)) {
       usleep(250000);
       if (verbosity>0) {
-	printf("%s) [CLIENT] message sent correctly\n", __METHOD_NAME__);
+        printf("%s) [CLIENT] message sent correctly\n", __METHOD_NAME__);
       }
       //      changeText("inviato");
     }
     else {
       fprintf(stderr, "%s) error on sending", __METHOD_NAME__);
+      result = 1;
     }
+  }
+  else {
+    fprintf(stderr, "%s) error on socket", __METHOD_NAME__);
+    result = 2;
   }
 
   return result;
@@ -123,11 +130,10 @@ int tcpclient::client_receive_int(){
   return n;//FIX ME: tocca ritornare temp
 }
 
-int tcpclient::client_receive(){
-
-  char msg[LEN];
+int tcpclient::client_receive(char* msg){
 
   size_t n = 0;
+
   if (verbosity>0) {
     printf("%s) listening on socker number %d\n", __METHOD_NAME__, client_socket);
   }
@@ -139,7 +145,7 @@ int tcpclient::client_receive(){
   }
   else if(n == 0){
     if (verbosity>0) {
-      printf("%s) receiving finished\n", __METHOD_NAME__);
+      printf("%s) Nothing to read\n", __METHOD_NAME__);
     }
   }
   else{
@@ -150,12 +156,22 @@ int tcpclient::client_receive(){
       usleep(100000);
     }
 
-    if(msg[n - 1] == '\0'){
-      bzero(msg, sizeof(msg));
-      return -1;
-    }
+    //FIX ME: a cosa serve?
+    //if(msg[n - 1] == '\0'){
+    //  bzero(msg, sizeof(msg));
+    //  return -1;
+    //}
   }
 
-  bzero(msg, sizeof(msg));
   return n;
+}
+
+int tcpclient::Receive(char* msg) {
+  int ret = client_receive(msg);
+
+  if (ret <= 0) {
+    sprintf(msg, "");
+  }
+
+  return ret;
 }
