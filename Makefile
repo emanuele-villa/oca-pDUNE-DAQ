@@ -7,7 +7,7 @@ EXE := exe
 
 # Compilers:
 ifndef ROOTSYS
-	CXX = g++	
+	CXX = g++
 	CC = gcc
 	F77 = gfortran
 else
@@ -86,10 +86,7 @@ $(OCATEST): $(OBJECTSTEST)
 
 $(HPSSERVER): $(OBJECTSHPS)
 	@echo Linking $^ to $@
-	@echo " Sources: $(SOURCES)"
-	@echo " Objects: $(OBJECTSHPS)"
 	@mkdir -pv $(EXE)
-	@echo " $(LDARM) $(LDFLAGS) $^ -o $(HPSSERVER)"
 	$(LDARM) $(LDFLAGS) $^ -o $(HPSSERVER)
 
 ##SUMMARY: $(TOP)/TakeData/summary.o  $(TOP)lib/libamswire.a
@@ -108,7 +105,6 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 $(OBJARM)/%.o: $(SRC)/%.c
 	@echo Compiling $< ...
 	@mkdir -pv $(OBJARM)
-	@echo " $(CCARM) $(CFLAGSARM) -c -o $@ $<"
 	$(CCARM) $(CFLAGSARM) -c -o $@ $<
 
 clean:

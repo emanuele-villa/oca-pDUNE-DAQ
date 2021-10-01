@@ -8,8 +8,10 @@
 // hpsserver.h
 // qui ci va la classe: copiare daqserver (i.e. figlia di tcpserver + le funzioni sotto che diventano metodi di classe
 
+extern struct fpgaAddresses baseAddr;
+
 uint32_t receiveWordSocket(int socket);
-int sendSocket(int socket, char * msg);
+int sendSocket(int socket, void* msg, uint32_t len);
 void* high_priority(void *socket);
 void GetEvent(int socket);
 

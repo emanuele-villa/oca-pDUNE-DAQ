@@ -11,6 +11,8 @@
 #define REG_HDR1 0x4EADE500
 #define REG_EOP  0xBADC0FEE
 
+extern struct fpgaAddresses baseAddr;
+
 //Generic FIFOs access
 int InitFifo(int FIFO_TYPE, uint32_t AE, uint32_t AF);
 int WriteFifo(int FIFO_TYPE, uint32_t *data);

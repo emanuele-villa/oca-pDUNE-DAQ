@@ -100,7 +100,8 @@ int tcpclient::client_receive_int(){
 
   int cont = 0;
 
-  while(cont < 651 * sizeof(int)){
+  //FIX ME: verificare se é vero che basta solo questa lunghezza e non *sizeof(int)
+  while(cont < 651){
     int temp;
     n = read(client_socket, &temp, sizeof(temp));
     if(n < 0){
