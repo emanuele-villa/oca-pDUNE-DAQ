@@ -1,5 +1,6 @@
 #include "daqclient.h"
 #include <stdio.h>
+#include <unistd.h>
 
 #include "utility.h"
 
@@ -18,10 +19,17 @@ int main(int argc, char *argv[]) {
 
   daqclient* daq = new daqclient(addressdaq, portdaq, verbosity);
 
-  daq->Send("init");
   char readBack[LEN]="";
-  daq->Receive(readBack);
-  printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, readBack);
+  
+  daq->Send("init");
+  // daq->Receive(readBack);//FIX ME: now is blocking.
+  // printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, readBack);
 
+  sleep(3);
+  
+  daq->Send("fava");
+  // daq->Receive(readBack);
+  // printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, readBack);
+  
   return 0;
 }

@@ -74,7 +74,7 @@ void tcpserver::Listen(){
 
   while (kListeningOn){
     //    printf("%d\n", kListeningOn);
-    sleep(1);//FIX ME: parametrizzarlo
+    usleep(10000);//FIX ME: parametrizzarlo
 
     char msg[LEN];
 
@@ -90,6 +90,9 @@ void tcpserver::Listen(){
       else {
 	print_error("%s) Read error: \n", __METHOD_NAME__);
       }
+    }
+    else if (readret==0){
+      kListeningOn=true;
     }
     else {
       ProcessMsgReceived(msg);
