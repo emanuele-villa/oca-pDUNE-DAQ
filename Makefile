@@ -45,7 +45,7 @@ ALT_DEVICE_FAMILY ?= soc_cv_av
 HWLIBS_ROOT = $(SOCEDS_DEST_ROOT)/ip/altera/hps/altera_hps/hwlib
 
 # Flags and includes:
-INCLUDE= -I$(INC) -I/Users/bozzo/Downloads/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf/arm-none-linux-gnueabihf/include/c++/10.3.1/
+INCLUDE= -I$(INC) #-I/Users/bozzo/Downloads/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf/arm-none-linux-gnueabihf/include/c++/10.3.1/
 ifdef ROOTSYS
 	INCLUDE += -I$(ROOTSYS)/include
 endif
