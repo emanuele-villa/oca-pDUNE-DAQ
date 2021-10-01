@@ -19,7 +19,7 @@ public:
 protected:
   int client_connect(const char *address, int port);
   int client_send(const char *buffer);
-  int client_receive(char* msg);
+  int client_receive(char* msg, int lentoread = 256);//FIX ME: questo default è per come faceva
   int client_receive_int();
   int client_socket;
 

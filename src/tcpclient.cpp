@@ -131,7 +131,7 @@ int tcpclient::client_receive_int(){
   return n;//FIX ME: tocca ritornare temp
 }
 
-int tcpclient::client_receive(char* msg){
+int tcpclient::client_receive(char* msg, int lentoread){
 
   size_t n = 0;
 
@@ -139,7 +139,7 @@ int tcpclient::client_receive(char* msg){
     printf("%s) listening on socker number %d\n", __METHOD_NAME__, client_socket);
   }
 
-  n = read(client_socket, msg, sizeof(msg) - 1);//FIX ME: giusto leggere "grande a piacere"?
+  n = read(client_socket, msg, lentoread);
 
   if(n < 0){
     fprintf(stderr, "%s) receiving error\n", __METHOD_NAME__);

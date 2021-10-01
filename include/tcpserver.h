@@ -5,10 +5,11 @@ class tcpserver {
 
 protected:
   int kVerbosity;
-  int kSocket;
+  int kSocket;//FIX ME: this name is a shit. Change
+  int kSock;
   volatile bool kListeningOn;
 
-  void AcceptConnection(int sock);
+  void AcceptConnection();
   
 public:
   virtual ~tcpserver();
