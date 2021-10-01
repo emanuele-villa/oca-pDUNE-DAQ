@@ -20,10 +20,11 @@ tcpclient::tcpclient(const char *address, int port, int verb){
 }
 
 tcpclient::~tcpclient(){
-  client_send("quit\n");
+  //  client_send("ciao");
+  //  printf("%s) client_socket = %d\n", __METHOD_NAME__, client_socket);
   if (client_socket != -1) {
+    //    close(client_socket);
     shutdown(client_socket, SHUT_RDWR);
-    close(client_socket);
     client_socket = -1;
   }
 }

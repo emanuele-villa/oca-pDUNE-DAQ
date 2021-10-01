@@ -44,8 +44,12 @@ int main(int argc, char *argv[]) {
   signal(SIGINT,StopRun);// sending 'CTRL_C' the program exits in the right way
   signal(SIGQUIT,PrintStatus);//sending 'CTRL \' we print the numbers of taken events
 
-  //daqsrv->Listen();
-  daqsrv->ReadReg(31);
+  // quando lo usiamo cosi' lui sta in Listen perenne e aspetta dei comandi dal suo master per passarlo alle de10nano 
+  daqsrv->Listen();
+
+  // quando invece lo usiamo cosi' lui è master della acquisizione, non e' server di nulla e puo' essere utilizzato per mandare comandi in sequenza
+  // la cosa migliore sarebbe fare un classe `daqmaster` che eredita da `daqserver` (o viceversa...) che non e' un server e non aspetta comandi da un master a lui superiore
+  //  daqsrv->ReadReg(31);
 
   if (daqsrv) delete daqsrv;
 

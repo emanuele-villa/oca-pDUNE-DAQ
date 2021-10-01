@@ -16,6 +16,14 @@ daqserver::~daqserver(){
   if (kVerbosity>0) {
     printf("%s) destroying daqserver\n", __METHOD_NAME__);
   }
+
+  for (uint32_t ii=0; ii<det.size(); ii++) {
+    if (det.at(ii)) delete det.at(ii);
+    if (kVerbosity>0) {
+      printf("%s) destroying DE10 %d\n", __METHOD_NAME__, ii);
+    }
+  }
+  
   return;
 }
 
