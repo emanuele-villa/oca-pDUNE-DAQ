@@ -64,7 +64,7 @@ tcpserver::~tcpserver(){
   if (kVerbosity>0) {
     printf("%s) destroying tcpserver\n", __METHOD_NAME__);
   }
-  printf("FIX ME: close the socket\n");
+  printf("%s) FIX ME: close the socket\n", __METHOD_NAME__);
   return;
 }
 

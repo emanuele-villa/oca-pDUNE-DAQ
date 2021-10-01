@@ -7,7 +7,7 @@ protected:
   int verbosity;
 
 public:
-  ~tcpclient();
+  virtual ~tcpclient();
   tcpclient(const char *address, int port, int verb=0);
 
   void SetVerbosity(int verb){ verbosity = verb; }
