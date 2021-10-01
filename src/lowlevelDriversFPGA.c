@@ -384,5 +384,5 @@ int writeReg(uint32_t * pktContent, int pktLen){
   //Send the packet
   WriteFifoBurst(CONFIG_FIFO, packet, pktLen+6);
 
-	return(0);
+return 0;
 }

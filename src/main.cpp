@@ -44,8 +44,8 @@ int main(int argc, char *argv[]) {
   signal(SIGINT,StopRun);// sending 'CTRL_C' the program exits in the right way
   signal(SIGQUIT,PrintStatus);//sending 'CTRL \' we print the numbers of taken events
 
-  //daqsrv->Listen();
-  daqsrv->ReadReg(31);
+  daqsrv->Listen();
+  //  daqsrv->ReadReg(31);
 
   if (daqsrv) delete daqsrv;
 

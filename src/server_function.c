@@ -429,7 +429,7 @@ void* receiver_comandi(void *args){
       }
       else {
         char c[strlen(msg)+32]="";
-        sprintf(c, "%s) Unkown message: %s", __METHOD_NAME__, msg);
+        sprintf(c, "%s) Unkown message: %s\n", __METHOD_NAME__, msg);
         printf("%s",c);
         sendSocket(new_socket, c, strlen(c));
       }

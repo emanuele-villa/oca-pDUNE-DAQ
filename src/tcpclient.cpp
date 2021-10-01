@@ -20,7 +20,7 @@ tcpclient::tcpclient(const char *address, int port, int verb){
 }
 
 tcpclient::~tcpclient(){
-  client_send("quit\n");
+  client_send("quit");
   if (client_socket != -1) {
     shutdown(client_socket, SHUT_RDWR);
     close(client_socket);

@@ -5,18 +5,18 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, int verb):tc
   //Initialize and compute configurations
   testUnitCfg = 0;
   hkEn = 0;
-  ConfigureTestUnit(0);
+  //  ConfigureTestUnit(0);
   dataEn = 1;
-  SetIntTriggerPeriod(0x02faf080);
-  SetCalibrationMode(0);
-  SelectTrigger(0);
+  //  SetIntTriggerPeriod(0x02faf080);
+  //  SetCalibrationMode(0);
+  //  SelectTrigger(0);
   pktLen = 0x0000028A;
   feClkDuty  = 0x00000004;
   feClkDiv   = 0x00000028;
   adcClkDuty = 0x00000004;
   adcClkDiv  = 0x00000002;
-  SetDelay(0x00000145);
-  SetMode(0);
+  //  SetDelay(0x00000145);
+  //  SetMode(0);
   detId = 0x000000E3;
 
   changeText("hello");
@@ -239,6 +239,7 @@ int de10_silicon_base::ConfigureTestUnit(uint32_t testUnitEnIn){
   char readBack[LEN]="";
   testUnitEn = (testUnitEnIn&0x00000001)<<1;
   client_send("configureTestUnit");
+  //FIX ME: controllare ritorno chiamata sopra
   char c[sizeof (uint32_t) * 8 + 1];
   sprintf(c, "%d", testUnitEnIn);
   client_send(c);
