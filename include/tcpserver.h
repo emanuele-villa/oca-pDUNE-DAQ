@@ -7,6 +7,8 @@ protected:
   int kVerbosity;
   int kSocket;
   volatile bool kListeningOn;
+
+  void AcceptConnection(int sock);
   
 public:
   virtual ~tcpserver();

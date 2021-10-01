@@ -15,7 +15,7 @@ tcpserver::tcpserver(int port, int verb){
   kListeningOn=true;
 
   int sock, addrlen;
-  struct sockaddr_in client_addr, server_addr;
+  struct sockaddr_in server_addr;
 
   sock = socket(AF_INET , SOCK_STREAM , 0);
   exit_if(sock<0, "%s) Socket creation error:", __METHOD_NAME__);
@@ -36,6 +36,15 @@ tcpserver::tcpserver(int port, int verb){
   int retlisten=listen(sock, 100);//Matteo D.
   exit_if(retlisten<0, "%s) Listening not possibile:", __METHOD_NAME__);
 
+  AcceptConnection(sock);
+
+  return;
+}
+
+void tcpserver::AcceptConnection(int sock){
+
+  struct sockaddr_in client_addr;
+  
   addrlen = sizeof(client_addr);
   printf("%s) waiting for connections...\n", __METHOD_NAME__);
   kSocket = accept(sock, (struct sockaddr *) &client_addr, (socklen_t *) &addrlen);
