@@ -19,14 +19,8 @@ endif
 UNAME_S := $(shell uname -s)
 
 CROSS_COMPILE = arm-linux-gnueabihf
-ifeq ($(UNAME_S),Linux)
-	CCARM = $(CROSS_COMPILE)-g++
-	LDARM = $(CROSS_COMPILE)-g++
-endif
-ifeq ($(UNAME_S),Darwin)
-	CCARM = `brew --prefix llvm`/bin/clang --target=$(CROSS_COMPILE) --gcc-toolchain=`brew --prefix $(CROSS_COMPILE)-binutils`
-	LDARM = `brew --prefix llvm`/bin/clang --target=$(CROSS_COMPILE) --gcc-toolchain=`brew --prefix $(CROSS_COMPILE)-binutils`
-endif
+CCARM = $(CROSS_COMPILE)-g++
+LDARM = $(CROSS_COMPILE)-g++
 
 # Root specific (unused for now):
 ifdef ROOTSYS
@@ -45,16 +39,17 @@ ALT_DEVICE_FAMILY ?= soc_cv_av
 HWLIBS_ROOT = $(SOCEDS_DEST_ROOT)/ip/altera/hps/altera_hps/hwlib
 
 # Flags and includes:
-INCLUDE= -I$(INC) #-I/Users/bozzo/Downloads/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf/arm-none-linux-gnueabihf/include/c++/10.3.1/
+INCLUDE := -I$(INC)
 ifdef ROOTSYS
 	INCLUDE += -I$(ROOTSYS)/include
 endif
+INCLUDEARM += $(INCLUDE)
 
 CFLAGS := -g -Wall -pthread
 LDFLAGS := -g -Wall -pthread
 
 CPPFLAGS := $(CFLAGS) $(INCLUDE)
-CFLAGSARM := $(CFLAGS) $(INCLUDE) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
+CFLAGSARM := $(CFLAGS) $(INCLUDEARM) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
 
 # Objects and sources:
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
@@ -85,9 +80,13 @@ $(OCATEST): $(OBJECTSTEST)
 	$(CXX) $^ -o $@ $(ROOTGLIBS)
 
 $(HPSSERVER): $(OBJECTSHPS)
+ifeq ($(UNAME_S),Darwin)
+	@echo Compilation under MacOs not possibile
+else
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
 	$(LDARM) $(LDFLAGS) $^ -o $(HPSSERVER)
+endif
 
 ##SUMMARY: $(TOP)/TakeData/summary.o  $(TOP)lib/libamswire.a
 #SUMMARY: $(TOP)/TakeData/summary.o
@@ -103,9 +102,13 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 
 #Objects
 $(OBJARM)/%.o: $(SRC)/%.c
+ifeq ($(UNAME_S),Darwin)
+	@echo Compilation under MacOs not possibile
+else
 	@echo Compiling $< ...
 	@mkdir -pv $(OBJARM)
 	$(CCARM) $(CFLAGSARM) -c -o $@ $<
+endif
 
 clean:
 	@echo " Cleaning..."
