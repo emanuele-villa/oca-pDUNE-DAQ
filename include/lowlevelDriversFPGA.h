@@ -14,7 +14,7 @@
 extern struct fpgaAddresses baseAddr;
 
 //Generic FIFOs access
-int InitFifo(int FIFO_TYPE, uint32_t AE, uint32_t AF);
+int InitFifo(int FIFO_TYPE, uint32_t aEmptyThr, uint32_t aFullThr, uint8_t interruptEn);
 int WriteFifo(int FIFO_TYPE, uint32_t *data);
 int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst);
 int ReadFifo(int FIFO_TYPE, uint32_t *data);

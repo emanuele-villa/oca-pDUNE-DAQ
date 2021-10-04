@@ -9,35 +9,41 @@
 #include "lowlevelDriversFPGA.h"
 #include "server.h"
 
-
-// Funzione di inizializzazione della FIFO.
-int InitFifo(int FIFO_TYPE, uint32_t AE, uint32_t AF){		// (Selezione della FIFO, Configurazione del livello di "almostempty", Configurazione del livello di "almostfull")
+// FIFO initialization: Set aFull and aEmpty thresholds, disable interrupts,
+// and reset events register
+int InitFifo(int FIFO_TYPE, uint32_t aEmptyThr, uint32_t aFullThr, uint8_t interruptEn) {
 	uint32_t *lw_fifo_event_reg_addr;
 	uint32_t *lw_fifo_almostfull_reg_addr;
 	uint32_t *lw_fifo_almostempty_reg_addr;
+	uint32_t *lw_fifo_ienable_reg_addr;
 
-	// Selezione della FIFO
+	//Select the proper FIFO
 	if (FIFO_TYPE == CONFIG_FIFO){
 		lw_fifo_event_reg_addr = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
+		lw_fifo_ienable_reg_addr = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_IENABLE_REG;
 	}
 	else if (FIFO_TYPE == HK_FIFO){
 		lw_fifo_event_reg_addr = baseAddr.hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = baseAddr.hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = baseAddr.hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
+		lw_fifo_ienable_reg_addr = baseAddr.hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_IENABLE_REG;
 	}
 	else if (FIFO_TYPE == DATA_FIFO){
 		lw_fifo_event_reg_addr = baseAddr.FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = baseAddr.FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = baseAddr.FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
+		lw_fifo_ienable_reg_addr = baseAddr.FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_IENABLE_REG;
 	}
 	else
 		return (1);
 
-	*lw_fifo_event_reg_addr			 &= ALTERA_AVALON_FIFO_EVENT_ALL;	// Reset dell'Event Register della FIFO.
-	*lw_fifo_almostempty_reg_addr	 = AE;								// Configurazione dell'Almostempty della FIFO.
-	*lw_fifo_almostfull_reg_addr	 = AF;								// Configurazione dell'Almostfull della FIFO.
+	//Reset events and set values
+	*lw_fifo_event_reg_addr			 	= ALTERA_AVALON_FIFO_EVENT_ALL_MSK;
+	*lw_fifo_almostempty_reg_addr	= aEmptyThr;
+	*lw_fifo_almostfull_reg_addr	= aFullThr;
+	*lw_fifo_ienable_reg_addr 		= interruptEn & ALTERA_AVALON_FIFO_IENABLE_ALL_MSK;
 
 	return (0);
 }
