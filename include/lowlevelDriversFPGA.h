@@ -18,7 +18,7 @@ int InitFifo(int FIFO_TYPE, uint32_t AE, uint32_t AF);
 int WriteFifo(int FIFO_TYPE, uint32_t *data);
 int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst);
 int ReadFifo(int FIFO_TYPE, uint32_t *data);
-int ReadFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst);
+int ReadFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst, bool flush);
 int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_t *fifo_empty, uint32_t *fifo_almostfull, uint32_t *fifo_almostempty, uint32_t *almostfull_setting, uint32_t *almostempty_setting);
 int ShowStatusFifo(int FIFO_TYPE);
 int OverflowController(int FIFO_TYPE);

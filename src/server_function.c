@@ -9,6 +9,7 @@
 #include <sys/poll.h>
 #include <sys/ioctl.h>
 //#include <sys/mman.h>
+#include <arpa/inet.h>
 
 #include "utility.h"
 
@@ -167,6 +168,7 @@ void *receiver_slow_control(void *args){
     }
 
     current_size = nfds;
+    printf("Current size %d\n", current_size);
     if(fds[0].revents & POLLIN){
 
       struct sockaddr_in cliaddr;
@@ -283,7 +285,7 @@ void* receiver_comandi(int* sockIn){
     perror("Error in accepting socket connection\n");
   }else{
     uint32_t trash;
-    printf("Connection open: socket %d\n", openConn);
+    printf("%s) Connection open: (socket number %d, %s:%d)\n", __METHOD_NAME__, openConn, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     printf("\nRegister array initial content:\n");
     for(int j=0; j<32; j++){
       ReadReg(j, &trash);

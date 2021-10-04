@@ -71,10 +71,9 @@ int main(int argc, char *argv[]){
 
   //Connect to the socket and loop forever to receive commands
   int sock = 0;
-  int sockRet = -1;
   //Open the socket, bind it to the address and listen to the port
   printf("Creating a server socket...\n");
-  sockRet = sockOpener(argv[1], &sock);
+  sockOpener(argv[1], &sock);
   //Accept client connections and receive commands, until client is closed
   while (1) {
     receiver_comandi(&sock);

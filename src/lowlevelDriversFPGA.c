@@ -88,7 +88,7 @@ int ReadFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntator
 
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO)
-		return (1);
+		return (-1);
 	else if (FIFO_TYPE == HK_FIFO){
 		f2h_lw_fifo_output_addr = baseAddr.hkFifo;
 		f2h_lw_fifo_status_reg_addr = baseAddr.hkFifoStatus;
@@ -98,26 +98,27 @@ int ReadFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntator
 		f2h_lw_fifo_status_reg_addr = baseAddr.FastFifoStatus;
 	}
 	else
-		return (1);
+		return (-1);
 
 	fifo_empty = ((*f2h_lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_E_MSK) && 1;	// Lettura del bit di "empty" della FIFO.
 	if (fifo_empty)
-		return (2);								// Se la FIFO è vuota termina la funzione con un errore.
+		return (-2);								// Se la FIFO è vuota termina la funzione con un errore.
 	else{
 		*data = *f2h_lw_fifo_output_addr;		// Altrimenti metti su "data" il valore d'uscita della FIFO e restituisci "0".
-		return (0);
+		return (1);
 	}
 }
 
 // Funzione per la lettura di un burst di dati dalla FIFO.
-int ReadFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezione della FIFO, Indirizzo a partire del quale depositare i dati letti dalla FIFO, Numero di dati che costituisce la raffica)
+int ReadFifoBurst(int FIFO_TYPE, uint32_t* data, int length_burst, bool flush){		// (Selezione della FIFO, Indirizzo a partire del quale depositare i dati letti dalla FIFO, Numero di dati che costituisce la raffica)
 	uint32_t fifo_level;
 	uint32_t *f2h_lw_fifo_level_reg_addr;
 	uint32_t *f2h_lw_fifo_output_addr;
+	int readLen = length_burst;
 
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO)
-		return (1);
+		return (-1);
 	else if (FIFO_TYPE == HK_FIFO){
 		f2h_lw_fifo_output_addr = baseAddr.hkFifo;
 		f2h_lw_fifo_level_reg_addr = baseAddr.hkFifoLevel;
@@ -127,17 +128,20 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezio
 		f2h_lw_fifo_level_reg_addr = baseAddr.FastFifoLevel;
 	}
 	else
-		return (1);
+		return (-1);
 
 	fifo_level = *f2h_lw_fifo_level_reg_addr;		// Lettura del livello di riempimento della FIFO.
-	if (fifo_level < (uint32_t)length_burst)					// Se il livello è minore della lunghezza della raffica, termina la funzione con un errore.
-		return (2);
+	if (flush == true) {
+		readLen = (uint32_t)fifo_level;
+	}
+	if ((uint32_t)readLen > fifo_level)					// Se il livello è minore della lunghezza della raffica, termina la funzione con un errore.
+		return (-2);
 	else{											// Altrimenti, leggi dalla FIFO "length_burst" dati e restituisci il valore "0".
-		for (int i=0; i<length_burst; i++){
+		for (int i=0; i<readLen; i++){
 			data[i] = *f2h_lw_fifo_output_addr;
 		}
 
-		return (0);
+		return (readLen);
 	}
 }
 

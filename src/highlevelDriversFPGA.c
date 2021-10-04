@@ -5,13 +5,25 @@
 #include <pthread.h>
 #include "hwlib.h"
 
+#include "utility.h"
+
 #include "lowlevelDriversFPGA.h"
 #include "highlevelDriversFPGA.h"
 #include "server.h"
 
 // Reset della logica FPGA
 void ResetFpga(){
+	uint32_t* data;
+	int flushErr=0;
+	//Set to high the regArray bits of reset
 	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000003);
+
+	//Flush the FastData Fifo
+	//!@todo Flush also the hk
+	flushErr = ReadFifoBurst(DATA_FIFO, data, 0, true);
+	printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
+
+	//Remove regArray reset
 	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000000);
 }
 
@@ -124,15 +136,15 @@ int getEvent(uint32_t* evt, int* evtLen){
   uint32_t packet[pktLen + 1];
   packet[0] = DATA_SOP;
   packet[1] = pktLen;
-  readErr = ReadFifoBurst(DATA_FIFO, packet + 2, pktLen - 1);
-  if (readErr != 0){
+  readErr = ReadFifoBurst(DATA_FIFO, packet + 2, pktLen - 1, false);
+  if (readErr < 0){
     fprintf(stderr, "Error in reading event\n");
     return 3;
   }
 
   if (baseAddr.verbose > 1){
     printf("Event:\n");
-    for(int i = 0; i < pktLen+1; i++){
+    for(uint32_t i = 0; i < pktLen+1; i++){
       printf("%08x\n", packet[i]);
     }
   }
