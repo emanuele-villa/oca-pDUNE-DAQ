@@ -194,8 +194,8 @@ int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_
 // Funzione che stampa a video lo stato della FIFO.
 int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 	int error;
-	char DIRECTION_FIFO_STRING[13];
-	int FIFO_DEPTH;
+	char fifoName[13];
+	int fifoDepth;
 	uint32_t fifo_level;
 	uint32_t fifo_full;
 	uint32_t fifo_empty;
@@ -206,19 +206,19 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO){
-		strcpy(DIRECTION_FIFO_STRING,"HPS --> FPGA");
-		FIFO_DEPTH = FIFO_HPS_TO_FPGA_IN_CSR_FIFO_DEPTH;
+		strcpy(fifoName,"Config");
+		fifoDepth = FIFO_HPS_TO_FPGA_IN_CSR_FIFO_DEPTH;
 	}
 	else if (FIFO_TYPE == HK_FIFO){
-		strcpy(DIRECTION_FIFO_STRING,"FPGA --> HPS");
-		FIFO_DEPTH = FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH;
+		strcpy(fifoName,"Telemetries");
+		fifoDepth = FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH;
 	}
 	else if (FIFO_TYPE == DATA_FIFO){
-		strcpy(DIRECTION_FIFO_STRING,"FPGA --> HPS");
-		FIFO_DEPTH = FAST_FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH;
+		strcpy(fifoName,"Data");
+		fifoDepth = FAST_FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH;
 	}
 	else
-		strcpy(DIRECTION_FIFO_STRING,"no fifo sel ");
+		strcpy(fifoName,"N.A.");
 
 
 	error = StatusFifo(FIFO_TYPE, &fifo_level, &fifo_full, &fifo_empty, &fifo_almostfull, &fifo_almostempty, &almostfull_setting, &almostempty_setting);		// Estrai lo stato della FIFO.
@@ -226,24 +226,18 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 	if (error)
 		return (1);				// Se l'estrazione dello stato non è avvenuta con usccesso, restitusici un errore.
 	else {
-		printf("\n");			// Altrimenti, mostra a schermo i valori.
-		printf("\n");
-		printf("\n");
-		printf("- S E T U P   D E L L A   F I F O -\n");
-		printf("Direction             :   %s\n",DIRECTION_FIFO_STRING);
-		printf("Depth                 :   %d\n",FIFO_DEPTH);
-		printf("Almostfull threshold  :   %d\n",almostfull_setting);
-		printf("Almostempty threshold :   %d\n",almostempty_setting);
-		printf("\n");
-		printf("- S T A T O   D E L L A   F I F O -\n");
-		printf("Level       :   %d/%d\n",fifo_level,FIFO_DEPTH - 3);
-		printf("Full        :   %d\n",fifo_full);
-		printf("Empty       :   %d\n",fifo_empty);
-		printf("Almostfull  :   %d\n",fifo_almostfull);
-		printf("Almostempty :   %d\n",fifo_almostempty);
-		printf("\n");
+		printf("\n------------------------------------------------\n");
+		printf("FIFO Name   : %s\n", fifoName);
+		printf("A-full thr  : %d\n", almostfull_setting);
+		printf("A-empty thr : %d\n", almostempty_setting);
+		printf("Level       : %d/%d\n", fifo_level, fifoDepth);
+		printf("Full        : %d\n", fifo_full);
+		printf("Empty       : %d\n", fifo_empty);
+		printf("A-full      : %d\n", fifo_almostfull);
+		printf("A-empty     : %d\n", fifo_almostempty);
+		printf("--------------------------------------------------\n");
 
-	return (0);
+		return (0);
 	}
 }
 
