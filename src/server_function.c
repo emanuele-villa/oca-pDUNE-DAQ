@@ -346,7 +346,7 @@ void* receiver_comandi(int* sockIn){
         printf("Send read request...\n");
         ReadReg(regAddr, &regContent);
 
-        sprintf(replyStr, "%s %u: %08x", "[SERVER] Reg", regAddr, regContent);
+        sprintf(replyStr, "%08x", regContent);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if((strcmp(msg, "set delay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
@@ -354,13 +354,13 @@ void* receiver_comandi(int* sockIn){
 
         SetDelay(delay);
 
-        sprintf(replyStr, "%s %d", "[SERVER] Delay: ", delay);
+        sprintf(replyStr, "%08x", delay);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "set mode") == 0){
         uint32_t mode = receiveWordSocket(openConn);
         SetMode(mode);
-        sprintf(replyStr, "%s %d", "[SERVER] Setting mode: ", mode);
+        sprintf(replyStr, "%08x", mode);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "get event number") == 0){
@@ -368,8 +368,7 @@ void* receiver_comandi(int* sockIn){
 
         GetEventNumber(&extTrigCount, &intTrigCount);
 
-        sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
-                    extTrigCount, intTrigCount);
+        sprintf(replyStr, "%08u %08u", extTrigCount, intTrigCount);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "print all event number") == 0){
@@ -377,14 +376,13 @@ void* receiver_comandi(int* sockIn){
 
         GetEventNumber(&extTrigCount, &intTrigCount);
 
-        sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
-                    extTrigCount, intTrigCount);
+        sprintf(replyStr, "%08u %08u", extTrigCount, intTrigCount);
         printf("%s\n",replyStr);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "event reset") == 0){
         EventReset();
-        sprintf(replyStr, "%s", "[SERVER] Reset ok");
+        sprintf(replyStr, "%08x", 1);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "Calibrate") == 0){
@@ -392,15 +390,15 @@ void* receiver_comandi(int* sockIn){
 
         Calibrate(calib);
 
-        sprintf(replyStr, "%s %d", "[SERVER] Calibration enable: ", calib);
+        sprintf(replyStr, "%08x", calib);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "WriteCalibPar") == 0){
-        sprintf(replyStr, "%s", "[SERVER] WriteCalibPar");
+        sprintf(replyStr, "%08x", 0);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "SaveCalibrations") == 0){
-        sprintf(replyStr, "%s", "[SERVER] SaveCalibrations");
+        sprintf(replyStr, "%08x", 0);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "intTriggerPeriod") == 0){
@@ -408,7 +406,7 @@ void* receiver_comandi(int* sockIn){
 
         intTriggerPeriod(period);
 
-        sprintf(replyStr, "%s %08u", "[SERVER] Trigger period: ", period);
+        sprintf(replyStr, "%08x", period);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "selectTrigger") == 0){
@@ -416,7 +414,7 @@ void* receiver_comandi(int* sockIn){
 
         selectTrigger(intTrig);
 
-        sprintf(replyStr, "%s %u", "[SERVER] Trigger enable: ", intTrig);
+        sprintf(replyStr, "%08x", intTrig);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "configureTestUnit") == 0){
@@ -426,8 +424,7 @@ void* receiver_comandi(int* sockIn){
 
         configureTestUnit(tuCfg);
 
-        sprintf(replyStr, "%s %x %u", "[SERVER] Test Unit status: ", \
-                    testUnitCfg, testUnitEn);
+        sprintf(replyStr, "%08x %08u", testUnitCfg, testUnitEn);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "get event") == 0){
@@ -446,8 +443,8 @@ void* receiver_comandi(int* sockIn){
       }
       else {
         char c[strlen(msg)+32]="";
-        sprintf(c, "%s) Unkown message: %s\n", __METHOD_NAME__, msg);
-        printf("%s",c);
+        printf("%s) Unkown message: %s\n", __METHOD_NAME__, msg);
+        sprintf(c, "%08x", 0x000cacca);
         sendSocket(openConn, c, strlen(c));
       }
     }
