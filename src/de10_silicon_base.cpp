@@ -32,12 +32,10 @@ de10_silicon_base::~de10_silicon_base(){
 
 //--------------------------------------------------------------
 int de10_silicon_base::readReg(int regAddr, uint32_t &regCont){
-  char c[sizeof (uint32_t) * 8 + 1];
   char readBack[LEN]="";
   int ret=0;
-  if (client_send("readReg")==0) {
-    sprintf(c, "%x", regAddr);
-    client_send(c);
+  if (SendCmd("readReg")==0) {
+    SendInt((uint32_t)regAddr);
   }
   else {
     ret = 1;
@@ -61,64 +59,42 @@ int de10_silicon_base::Init() {
   uint32_t regContent = 1;
 
   if (verbosity>0) {
-    printf("$s) [>>> initializing (reset everything)]\n");
+    printf("%s) [>>> initializing (reset everything)]\n", __METHOD_NAME__);
   }
-  client_send("init");
+  SendCmd("init");
   client_receive(readBack);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, readBack);
+  }
 
   //Register 1
   regContent = (testUnitCfg&0x00000003) << 8 | (hkEn&0x00000001) << 6 \
                 | testUnitEn | (dataEn&0x00000001);
-  //char *c = (char *)&regContent;
-  sprintf(c, "%x", regContent);
-  client_send(c);
-  changeText(c);
-  bzero(c, sizeof(c));
+  SendInt(regContent);
 
   //Register 2
   regContent = intTrigPeriod|calEn|intTrigEn;
-  //c = (char *)&regContent;
-  sprintf(c, "%x", regContent);
-  client_send(c);
-  changeText(c);
-  bzero(c, sizeof(c));
-
+  SendInt(regContent);
+  
   //Register 3
   regContent = detId&0x000000FF;
-  //c = (char *)&regContent;
-  sprintf(c, "%x", regContent);
-  client_send(c);
-  changeText(c);
-  bzero(c, sizeof(c));
-
+  SendInt(regContent);
+  
   //Register 4
   regContent = pktLen;
-  //c = (char *)&regContent;
-  sprintf(c, "%x", regContent);
-  client_send(c);
-  changeText(c);
-  bzero(c, sizeof(c));
-
+  SendInt(regContent);
+  
   //Register 5
   regContent = ((feClkDuty&0x0000FFFF)<<16) | (feClkDiv&0x0000FFFF);
-  //c = (char *)&regContent;
-  sprintf(c, "%x", regContent);
-  client_send(c);
-  changeText(c);
+  SendInt(regContent);
 
   //Register 6
   regContent = ((adcClkDuty&0x0000FFFF)<<16) | (adcClkDiv&0x0000FFFF);
-  //c = (char *)&regContent;
-  sprintf(c, "%x", regContent);
-  client_send(c);
-  changeText(c);
+  SendInt(regContent);
 
   //Register 7
   regContent  = delay;
-  //c = (char *)&regContent;
-  sprintf(c, "%x", regContent);
-  client_send(c);
-  changeText(c);
+  SendInt(regContent);
 
   return 0;
 }

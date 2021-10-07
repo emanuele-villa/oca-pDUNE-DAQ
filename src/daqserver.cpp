@@ -27,7 +27,7 @@ daqserver::~daqserver(){
   return;
 }
 
-void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portde10[]){
+void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portde10[], int detcmdlenght){
 
   addressdet.clear();
   portdet.clear();
@@ -38,18 +38,62 @@ void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portd
     det.push_back(new de10_silicon_base(addressde10[ii], portde10[ii], kVerbosity));
   }
 
+  SetDetectorsCmdLenght(detcmdlenght);
+  
   return;
 }
 
-void daqserver::ProcessMsgReceived(char* msg){
+void daqserver::SetDetectorsCmdLenght(int detcmdlenght){
+
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetCmdLenght(detcmdlenght);
+  }  
+
+  return;
+}
+
+void daqserver::ProcessCmdReceived(char* msg){
 
   if (kVerbosity>-1) {//FIX ME: >-1 perche' ora non fa niene, poi deve fare quelle sotto
-    printf("%s) %s\n", __METHOD_NAME__, msg);
+    printf("%s) |%s| (lenght = %lu)\n", __METHOD_NAME__, msg, strlen(msg));
   }
 
-  return;
-}
+  if(strstr(msg, "cmd=") != NULL) { //out commands: "cmd=xxxx"
+  
+    if (strcmp(msg, "Init") == 0){
+      Init();
+      //FIX ME: only for now to test
+      for (int ii=0; ii<32; ii++) {
+	ReadReg(ii);
+      }
+    }
+  }
+  else {//possibly a chinese command
+    // command
+    static const char* start ="FF80000800000000EE00000100000000";
+    static const char* stop  ="FF80000800000000EE00000000000000";
+    
+    static const int length=16;
+    char* command_string=new char[2*length];
+    hex2string(msg,length,command_string);
+    
+    //    printf("%s\n", command_string);
 
+    //check the command
+    if(strcmp(start,command_string)==0) {//start daq
+      printf("%s) Start()\n", __METHOD_NAME__);
+      //      Start();
+    }
+    else if(strcmp(stop,command_string)==0) {//stop daq
+      printf("%s) Stop()\n", __METHOD_NAME__);
+      //      Stop();
+    }
+    else {
+      printf("%s) not a valid command: %s\n", __METHOD_NAME__, command_string);
+    }
+    
+  }
+  
 /*
 
   while(1){
@@ -134,6 +178,9 @@ void daqserver::ProcessMsgReceived(char* msg){
 
 */
 
+  return;
+}
+  
 int daqserver::ReadReg(uint32_t regAddr) {
   int ret=0;
   uint32_t regCont=0; //FIX ME Shall be vector
@@ -144,5 +191,18 @@ int daqserver::ReadReg(uint32_t regAddr) {
       printf("%s) Read from DE10 %d: %x\n", __METHOD_NAME__, ii, regCont);
     }
   }
+  return ret;
+}
+
+int daqserver::Init() {
+  int ret = 0;
+  
+  for (uint32_t ii=0; ii<det.size(); ii++) {
+    ret |= (det.at(ii)->Init())<<1;
+    if (kVerbosity>0) {
+      printf("%s) Init of DE10 %d\n", __METHOD_NAME__, ii);
+    }
+  }
+
   return ret;
 }

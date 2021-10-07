@@ -324,7 +324,7 @@ void* receiver_comandi(int* sockIn){
       printf("%s) Client closed the connection\n", __METHOD_NAME__);
     }
     else {
-      if(strcmp(msg, "init") == 0){
+      if(strcmp(msg, "cmd=      init") == 0){
         uint32_t regsContent[14];
 
         sprintf(replyStr, "%s", "[SERVER] Starting Init. Send data...");
@@ -339,7 +339,7 @@ void* receiver_comandi(int* sockIn){
 
         Init(regsContent, 14);
       }
-      else if(strcmp(msg, "readReg") == 0){
+      else if(strcmp(msg, "cmd=   readReg") == 0){
         uint32_t regAddr = receiveWordSocket(openConn);
         uint32_t regContent;
 
@@ -450,7 +450,7 @@ void* receiver_comandi(int* sockIn){
     }
 
     bzero(msg, sizeof(msg));
-    sleep(1);
+    //    sleep(1);
 
   }
 

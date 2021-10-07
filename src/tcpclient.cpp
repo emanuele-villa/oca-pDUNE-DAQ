@@ -17,6 +17,7 @@ tcpclient::tcpclient(const char *address, int port, int verb){
     printf("%s) tcpclient created\n", __METHOD_NAME__);
   }
   client_socket = client_connect(address, port);
+  cmdlenght=8;//in number of char
 }
 
 tcpclient::~tcpclient(){
@@ -71,7 +72,11 @@ int tcpclient::client_connect(const char *address, int port) {
   return client_socket;
 }
 
-int tcpclient::client_send(const char *buffer) {
+int tcpclient::client_send(const char* buffer) {
+  return client_send((void*)buffer, strlen(buffer));
+}
+
+int tcpclient::client_send(void* buffer, int bytesize) {
 
   int result = 0;
 
@@ -79,11 +84,13 @@ int tcpclient::client_send(const char *buffer) {
   if (verbosity>0) {
     printf("%s) message sending\n", __METHOD_NAME__);
   }
-  if ((client_socket != -1) && (buffer)) {
+  if ((client_socket != -1) && buffer) {
     //memset(backup, 0, d_dampe_string_buffer);
     //snprintf(backup, d_dampe_string_buffer, "%s", buffer);
-    if ((write(client_socket, buffer, strlen(buffer)) > 0)) {
-      usleep(250000);
+    //    result = write(client_socket, buffer, strlen(buffer))
+    result = write(client_socket, buffer, bytesize);
+    if (result > 0) {
+      usleep(250000);//FIX ME: really needed?
       if (verbosity>0) {
         printf("%s) [CLIENT] message sent correctly\n", __METHOD_NAME__);
       }
@@ -91,12 +98,12 @@ int tcpclient::client_send(const char *buffer) {
     }
     else {
       fprintf(stderr, "%s) error on sending", __METHOD_NAME__);
-      result = 1;
+      result = -1;
     }
   }
   else {
     fprintf(stderr, "%s) error on socket", __METHOD_NAME__);
-    result = 2;
+    result = -2;
   }
 
   return result;
@@ -175,4 +182,24 @@ int tcpclient::Receive(char* msg) {
   }
 
   return ret;
+}
+
+int tcpclient::Send(const char *buffer) {
+  return client_send(buffer);
+}
+
+int tcpclient::Send(void* buffer, int bytesize) {
+  return client_send(buffer, bytesize);
+}
+
+int tcpclient::SendCmd(const char *buffer){
+  char c[sizeof(char) * 8 * cmdlenght + 1];
+  sprintf(c, "cmd=%10s", buffer);
+  return client_send(c);
+}
+
+int tcpclient::SendInt(uint32_t par){
+  char c[sizeof(uint32_t) * 8 + 1];
+  sprintf(c, "%08x", par);
+  return client_send(c);
 }
