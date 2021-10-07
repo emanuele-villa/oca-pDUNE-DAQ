@@ -14,7 +14,7 @@ public:
   tcpclient(const char *address, int port, int verb=0);
 
   void SetCmdLenght(int lenght) { cmdlenght=lenght; }//in number of char
-  
+
   void SetVerbosity(int verb){ verbosity = verb; }
   int GetVerbosity(){ return verbosity; }
 
@@ -28,8 +28,7 @@ protected:
   int client_connect(const char *address, int port);
   int client_send(const char* buffer);
   int client_send(void* buffer, int bytesize);
-  int client_receive(char* msg, int lentoread = 256);//FIX ME: questo default è per come faceva
-  int client_receive_int();
+  int client_receive(void* msg, int lentoread = 256);//FIX ME: questo default è per come faceva
   int client_socket;
 
 };

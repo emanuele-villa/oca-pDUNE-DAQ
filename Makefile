@@ -72,12 +72,12 @@ hps: $(HPSSERVER)
 $(OCADAQ): $(OBJECTS)
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
-	$(CXX) $^ -o $@ $(ROOTGLIBS)
+	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
 
 $(OCATEST): $(OBJECTSTEST)
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
-	$(CXX) $^ -o $@ $(ROOTGLIBS)
+	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
 
 $(HPSSERVER): $(OBJECTSHPS)
 ifeq ($(UNAME_S),Darwin)

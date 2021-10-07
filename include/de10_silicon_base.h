@@ -29,6 +29,7 @@ private:
   uint32_t adcClkDiv;
   uint32_t delay;
   uint32_t detId;
+  const static uint32_t kevtLen = 652;
 
 public:
   ~de10_silicon_base();
@@ -44,13 +45,14 @@ public:
   int GetEventNumber();
   char* PrintAllEventNumber();
   int EventReset();
-  int GetEvent();
+  int GetEvent(uint32_t* evt);
   int SetCalibrationMode(uint32_t calEnIn);
   int WriteCalibPar();
   int SaveCalibrations();
   int SetIntTriggerPeriod(uint32_t intTrigPeriodIn);
   int SelectTrigger(uint32_t intTrigEnIn);
   int ConfigureTestUnit(uint32_t testUnitEnIn);
+  inline static int getEvtLen(){return kevtLen;};
 };
 
 #endif

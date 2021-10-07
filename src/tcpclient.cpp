@@ -109,36 +109,7 @@ int tcpclient::client_send(void* buffer, int bytesize) {
   return result;
 }
 
-int tcpclient::client_receive_int(){
-
-  int n;
-
-  int cont = 0;
-
-  //FIX ME: verificare se é vero che basta solo questa lunghezza e non *sizeof(int)
-  while(cont < 651){
-    int temp;
-    n = read(client_socket, &temp, sizeof(temp));
-    if(n < 0){
-      perror("reading error: ");
-    }
-    else{
-      char c[9];
-      char msg[256];//FIX ME: unused
-      sprintf(c, "%08x", temp);
-      //sprintf(msg, "ho letto %d", n);
-      //usleep(100000);
-      bzero(c, sizeof(c));
-      cont += n;
-    }
-  }
-
-  //  changeText("fine");
-
-  return n;//FIX ME: tocca ritornare temp
-}
-
-int tcpclient::client_receive(char* msg, int lentoread){
+int tcpclient::client_receive(void* msg, int lentoread){
 
   size_t n = 0;
 
@@ -149,7 +120,7 @@ int tcpclient::client_receive(char* msg, int lentoread){
   n = read(client_socket, msg, lentoread);
 
   if(n < 0){
-    fprintf(stderr, "%s) receiving error\n", __METHOD_NAME__);
+    fprintf(stderr, "%s) Receiving error\n", __METHOD_NAME__);
   }
   else if(n == 0){
     if (verbosity>0) {
@@ -159,8 +130,8 @@ int tcpclient::client_receive(char* msg, int lentoread){
   else{
     //msg[n] = '\0';
     if (verbosity>0) {
-      printf("%s) read: %lu\n", __METHOD_NAME__, n);
-      printf("%s) %s\n", __METHOD_NAME__, msg);
+      printf("%s) Bytes read: %lu\n", __METHOD_NAME__, n);
+      printf("%s) %s\n", __METHOD_NAME__, (char*)msg);
       usleep(100000);
     }
 
@@ -178,7 +149,7 @@ int tcpclient::Receive(char* msg) {
   int ret = client_receive(msg);
 
   if (ret <= 0) {
-    sprintf(msg, "");
+    strcpy(msg, "");
   }
 
   return ret;

@@ -75,15 +75,15 @@ int de10_silicon_base::Init() {
   //Register 2
   regContent = intTrigPeriod|calEn|intTrigEn;
   SendInt(regContent);
-  
+
   //Register 3
   regContent = detId&0x000000FF;
   SendInt(regContent);
-  
+
   //Register 4
   regContent = pktLen;
   SendInt(regContent);
-  
+
   //Register 5
   regContent = ((feClkDuty&0x0000FFFF)<<16) | (feClkDiv&0x0000FFFF);
   SendInt(regContent);
@@ -152,13 +152,18 @@ int de10_silicon_base::EventReset() {
   return 0;
 }
 
-int de10_silicon_base::GetEvent(){
+int de10_silicon_base::GetEvent(uint32_t* evt){
   char readBack[LEN]="";
   client_send("get event");
-  //int ret = 1;
-  //int i = 1;
-  client_receive_int();
-  return 0;
+
+  //Get the event from HPS and loop here until all data are read
+  //FIX ME: make it working with variable lengths
+  uint32_t evtRead = 0;
+  while(evtRead < kevtLen) {
+    evtRead += client_receive(evt, kevtLen-evtRead);
+  }
+
+  return evtRead;
 }
 
 //TO DO: there will be another method, in future to really calibrate: put in cal mode, start the trigger, stop the calibration and let the system compute pedestals, sigmas, etc...
