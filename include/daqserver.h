@@ -2,6 +2,7 @@
 #define DAQSERVER_H
 
 #include <vector>
+#include <pthread.h>
 
 #include "tcpserver.h"
 #include "de10_silicon_base.h"
@@ -13,7 +14,7 @@ private:
   std::vector<int> portdet;
   std::vector<de10_silicon_base*> det;
   const char kdataPath[12] = "../../data/";
-  bool kStart=false;
+  bool kStart;
   pthread_t threadStart;
 
 public:

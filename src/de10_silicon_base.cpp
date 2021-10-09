@@ -96,6 +96,8 @@ int de10_silicon_base::Init() {
   regContent  = delay;
   SendInt(regContent);
 
+  printf("%s) Qui!\n", __METHOD_NAME__);
+  
   return 0;
 }
 

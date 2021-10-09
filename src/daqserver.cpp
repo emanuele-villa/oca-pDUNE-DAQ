@@ -3,7 +3,6 @@
 #include <sys/time.h>
 //#include <TDatime.h>
 #include <ctime>
-#include <pthread.h>
 
 daqserver* singletonDqSrv=NULL;
 void* _Start(void* tid) {
@@ -19,6 +18,8 @@ daqserver::daqserver(int port, int verb):tcpserver(port, verb){
   addressdet.clear();
   portdet.clear();
 
+  kStart=false;
+  
   if(singletonDqSrv==NULL) singletonDqSrv=this;
   else printf("%s) Class already exists\n", __METHOD_NAME__);
   return;
@@ -72,10 +73,12 @@ void daqserver::ProcessCmdReceived(char* msg){
 
   if(strstr(msg, "cmd=") != NULL) { //out commands: "cmd=xxxx"
 
-    if (strcmp(msg, "Init") == 0){
+    if (strcmp(msg, "cmd=Init") == 0){
+      printf("%s) Init()\n", __METHOD_NAME__);
       Init();
       //FIX ME: only for now to test
       for (int ii=0; ii<32; ii++) {
+	printf("%ss) Reading reg %d\n", __METHOD_NAME__, ii);
 	ReadReg(ii);
       }
     }
@@ -95,9 +98,9 @@ void daqserver::ProcessCmdReceived(char* msg){
     if(strcmp(start,command_string)==0) {//start daq
       printf("%s) Start()\n", __METHOD_NAME__);
       //Spawn a thread to read events. Stop() will join the thread
-      if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
-        printf("%s) Error creating thread", __METHOD_NAME__);
-      }
+      // if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
+      //   printf("%s) Error creating thread", __METHOD_NAME__);
+      // }
     }
     else if(strcmp(stop,command_string)==0) {//stop daq
       printf("%s) Stop()\n", __METHOD_NAME__);
@@ -225,10 +228,12 @@ int daqserver::Init() {
 
 //Read the events from all of the DE10 and write them in binary to the .dat file
 int daqserver::recordEvents(FILE* fd) {
-  int readRet, writeRet = 0;
+  int readRet = 0;
+  int writeRet = 0;
   //std::vector<uint32_t*> evts(det.size(), "");
   int evtLen = de10_silicon_base::getEvtLen();
-  uint32_t evt[evtLen] = {};
+  uint32_t evt[evtLen];
+  memset(evt, 0, evtLen*sizeof(uint32_t));
 
   //FIX ME: mandare prima il comando a tutte le DE10 e poi leggere pian piano
 

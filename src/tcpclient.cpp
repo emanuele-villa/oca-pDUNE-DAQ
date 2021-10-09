@@ -165,7 +165,7 @@ int tcpclient::Send(void* buffer, int bytesize) {
 
 int tcpclient::SendCmd(const char *buffer){
   char c[sizeof(char) * 8 * cmdlenght + 1];
-  sprintf(c, "cmd=%10s", buffer);
+  sprintf(c, "cmd=%s", buffer);
   return client_send(c);
 }
 
