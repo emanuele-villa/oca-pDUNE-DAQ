@@ -3,6 +3,7 @@
 #include <sys/time.h>
 //#include <TDatime.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <ctime>
 
 daqserver* singletonDqSrv=NULL;
@@ -98,33 +99,71 @@ void daqserver::ProcessCmdReceived(char* msg){
   }
   else {//possibly a chinese command
     // command
-    static const char* start ="FF80000800000000EE00000100000000";
-    static const char* stop  ="FF80000800000000EE00000000000000";
+    static const char* btcmd ="FF800008";
+    static const char* start ="EE000001";
+    static const char* stop  ="EE000000";
+    static const char* beam  ="0001";
+    static const char* cal   ="0000";
 
     static const int length=16;
     char* command_string=new char[2*length];
-    hex2string(msg,length,command_string);
+    hex2string(msg, length, command_string);
 
     //    printf("%s\n", command_string);
 
-    //check the command
-    if (strcmp(start,command_string)==0) {//start daq
-      printf("%s) Start()\n", __METHOD_NAME__);
-      //Spawn a thread to read events. Stop() will join the thread
-      // if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
-      //   printf("%s) Error creating thread", __METHOD_NAME__);
-      // }
-      //      else {//FIX ME: do we need to wait?
-      ReplyToCmd(msg);
-      //      }
+    char cmdgroup[4][32] = {"", "", "", ""};
+    for (int ii=0; ii<4; ii++) {
+      strncpy(cmdgroup[ii], &command_string[ii*8], 8);
+      if (kVerbosity>-1) {//FIX ME: should be >0
+	printf("%s\n", cmdgroup[ii]);
+      }
     }
-    else if(strcmp(stop,command_string)==0) {//stop daq
-      printf("%s) Stop()\n", __METHOD_NAME__);
-      Stop();
-      ReplyToCmd(msg);
+    
+    //check the command
+    if (strcmp(btcmd, cmdgroup[0])==0) {//is a chinese command
+      if (strcmp(start,cmdgroup[2])==0) {//start daq
+	printf("%s) Start()\n", __METHOD_NAME__);
+	char runtype[32] = "";
+	strncpy(runtype, &cmdgroup[1][4], 4);
+	char sruntype[32] = "";
+	if (strcmp(beam,runtype)==0) sprintf(sruntype, "beam");
+	else if (strcmp(cal,runtype)==0) sprintf(sruntype, "cal");
+	else {
+	  printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
+	  sprintf(sruntype, "????");
+	}
+	char srunnum[32] = "";
+	strncpy(srunnum,  &cmdgroup[1][0], 4);
+	uint32_t runnum = atoi(srunnum);
+	char* ptr;
+	uint32_t unixtime = strtol(cmdgroup[3], &ptr, 16);
+	std::time_t t = unixtime;
+	if (kVerbosity>-1) {//FIX ME: should be >0
+	  printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
+	}
+	//Spawn a thread to read events. Stop() will join the thread
+	// if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
+	//   printf("%s) Error creating thread", __METHOD_NAME__);
+	// }
+	//      else {//FIX ME: do we need to wait?
+	ReplyToCmd(msg);
+	//      }
+      }
+      else if(strcmp(stop,cmdgroup[2])==0) {//stop daq
+	printf("%s) Stop()\n", __METHOD_NAME__);
+	Stop();
+	ReplyToCmd(msg);
+      }
+      else {
+	printf("%s) not a valid sub-command: %s (%s)\n\n", __METHOD_NAME__, cmdgroup[2], command_string);
+	sprintf(msg, "NOT-A-VALID-SUBCMD");
+	ReplyToCmd(msg);
+      }
     }
     else {
-      printf("%s) not a valid command: %s\n", __METHOD_NAME__, command_string);
+      printf("%s) not a valid command: %s\n\n", __METHOD_NAME__, command_string);
+      sprintf(msg, "NOT-A-VALID-CMD");
+      ReplyToCmd(msg);
     }
 
   }
