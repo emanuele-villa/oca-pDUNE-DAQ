@@ -7,9 +7,12 @@
 // const int nde10 = 1;
 // const char* addressde10[nde10] = {"localhost"};
 // int portde10[nde10] = {80};
-const int nde10 = 1;
-const char* addressde10[nde10] = {"192.168.1.3"};
-int portde10[nde10] = {5000};
+//const int nde10 = 1;
+//const char* addressde10[nde10] = {"192.168.1.3"};
+//int portde10[nde10] = {5000};
+const int nde10 = 0;
+const char* addressde10[nde10] = {};
+int portde10[nde10] = {};
 
 int verbosity=0;
 
@@ -46,7 +49,7 @@ int main(int argc, char *argv[]) {
   signal(SIGTERM,StopRun);//killing the PID of the process we call the function StopRun that exits the program in the right way
   signal(SIGINT,StopRun);// sending 'CTRL_C' the program exits in the right way
   signal(SIGQUIT,PrintStatus);//sending 'CTRL \' we print the numbers of taken events
-
+  
   // quando lo usiamo cosi' lui sta in Listen perenne e aspetta dei comandi dal suo master per passarlo alle de10nano 
   daqsrv->ListenCmd();
 

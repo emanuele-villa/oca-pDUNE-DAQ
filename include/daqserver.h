@@ -14,14 +14,16 @@ private:
   std::vector<int> portdet;
   std::vector<de10_silicon_base*> det;
   const char kdataPath[12] = "../../data/";
-  bool kStart;
+  volatile bool kStart;
   pthread_t threadStart;
 
+  void ProcessCmdReceived(char* msg);
+  
+  int recordEvents(FILE* fd);
+  
 public:
   ~daqserver();
   daqserver(int port, int verb=0);
-
-  void ProcessCmdReceived(char* msg);
 
   void SetListDetectors(int nde10, const char* addressde10[], int portde10[], int detcmdlenght);
 
@@ -29,7 +31,6 @@ public:
 
   int ReadReg(uint32_t regAddr);
   int Init();
-  int recordEvents(FILE* fd);
   void* Start();
   void* Stop();
 

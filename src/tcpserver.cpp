@@ -159,7 +159,7 @@ void tcpserver::ListenCmd(){
     bzero(msg, sizeof(msg));
   }
 
-  if (kVerbosity) {
+  if (kVerbosity>0) {
     printf("%s) Stop Listening\n", __METHOD_NAME__);
   }
 
@@ -184,4 +184,20 @@ void tcpserver::StopListening(){
   kListeningOn=false;
 
   return;
+}
+
+int tcpserver::ReplyToCmd(char* msg) {
+
+  int n;
+  n = write(kSocket, msg, cmdlenght);
+  if (n < 0){
+    fprintf(stderr, "%s) Error in writing to the socket\n", __METHOD_NAME__);
+    return 1;
+  }
+  
+  if (kVerbosity>1) {
+    printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  }
+  
+  return 0;
 }

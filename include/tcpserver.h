@@ -11,6 +11,10 @@ protected:
   volatile bool kListeningOn;
 
   void AcceptConnection();
+
+  virtual void ProcessCmdReceived(char* msg);
+  
+  int ReplyToCmd(char* msg);
   
 public:
   virtual ~tcpserver();
@@ -24,7 +28,6 @@ public:
   void StopListening();
   
   virtual void ListenCmd();
-  virtual void ProcessCmdReceived(char* msg);
 };
 
 #endif

@@ -2,6 +2,7 @@
 #include "utility.h"
 #include <sys/time.h>
 //#include <TDatime.h>
+#include <unistd.h>
 #include <ctime>
 
 daqserver* singletonDqSrv=NULL;
@@ -76,12 +77,24 @@ void daqserver::ProcessCmdReceived(char* msg){
     if (strcmp(msg, "cmd=Init") == 0){
       printf("%s) Init()\n", __METHOD_NAME__);
       Init();
+      ReplyToCmd(msg);
       //FIX ME: only for now to test
       for (int ii=0; ii<32; ii++) {
 	printf("%ss) Reading reg %d\n", __METHOD_NAME__, ii);
 	ReadReg(ii);
       }
     }
+    else if (strcmp(msg, "cmd=Wait") == 0){//essentially for test
+      printf("%s) Wait()\n", __METHOD_NAME__);
+      printf("sleeping for 30s: "); fflush(stdout);
+      for (int ii=0; ii<30; ii++) {
+	printf("%d... ", ii); fflush(stdout);
+	sleep(1);
+      }
+      printf("\n");
+      ReplyToCmd(msg);
+    }
+
   }
   else {//possibly a chinese command
     // command
@@ -95,16 +108,20 @@ void daqserver::ProcessCmdReceived(char* msg){
     //    printf("%s\n", command_string);
 
     //check the command
-    if(strcmp(start,command_string)==0) {//start daq
+    if (strcmp(start,command_string)==0) {//start daq
       printf("%s) Start()\n", __METHOD_NAME__);
       //Spawn a thread to read events. Stop() will join the thread
       // if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
       //   printf("%s) Error creating thread", __METHOD_NAME__);
       // }
+      //      else {//FIX ME: do we need to wait?
+      ReplyToCmd(msg);
+      //      }
     }
     else if(strcmp(stop,command_string)==0) {//stop daq
       printf("%s) Stop()\n", __METHOD_NAME__);
-      //      Stop();
+      Stop();
+      ReplyToCmd(msg);
     }
     else {
       printf("%s) not a valid command: %s\n", __METHOD_NAME__, command_string);
