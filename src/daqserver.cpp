@@ -106,7 +106,7 @@ void daqserver::ProcessCmdReceived(char* msg){
     static const char* cal   ="0000";
 
     static const int length=16;
-    char* command_string=new char[2*length];
+    char command_string[2*length] = "";
     hex2string(msg, length, command_string);
 
     //    printf("%s\n", command_string);
