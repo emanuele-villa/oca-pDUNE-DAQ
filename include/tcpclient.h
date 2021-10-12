@@ -27,16 +27,11 @@ public:
   int Receive(char* buffer, int bytesize);//the lenght must be know
   int Receive(void* buffer, int bytesize);
   int ReceiveCmdReply(char* buffer);
-  int ReceiveInt();
+  int ReceiveInt(uint32_t& par);
 
 protected:
   int client_connect(const char* address, int port);
-  
-  int client_send(const char* buffer);
-  int client_send(const char* buffer, int bytesize);
   int client_send(void* buffer, int bytesize);
-
-  int client_receive(char* buffer, int bytesize);//the lenght must be know
   int client_receive(void* buffer, int bytesize);
 
 };

@@ -61,7 +61,7 @@ int de10_silicon_base::Init() {
   uint32_t regContent = 1;
 
   if (verbosity>0) {
-    printf("%s) [>>> initializing (reset everything)]\n", __METHOD_NAME__);
+    printf("%s) initializing (reset everything)\n", __METHOD_NAME__);
   }
   SendCmd("init");
   ReceiveCmdReply(readBack);
@@ -97,8 +97,6 @@ int de10_silicon_base::Init() {
   //Register 7
   regContent  = delay;
   SendInt(regContent);
-
-  printf("%s) Qui!\n", __METHOD_NAME__);
   
   return 0;
 }

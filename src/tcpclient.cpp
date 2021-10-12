@@ -72,14 +72,6 @@ int tcpclient::client_connect(const char *address, int port) {
   return client_socket;
 }
 
-int tcpclient::client_send(const char* buffer) {
-  return client_send((void*)buffer, strlen(buffer));
-}
-
-int tcpclient::client_send(const char* buffer, int bytesize) {
-  return client_send((void*)buffer, bytesize);
-}
-
 int tcpclient::client_send(void* buffer, int bytesize) {
 
   int result = 0;
@@ -96,7 +88,7 @@ int tcpclient::client_send(void* buffer, int bytesize) {
     if (result > 0) {
       usleep(250000);//FIX ME: really needed?
       if (verbosity>0) {
-        printf("%s) [CLIENT] message sent correctly\n", __METHOD_NAME__);
+        printf("%s) message sent correctly\n", __METHOD_NAME__);
       }
       //      changeText("inviato");
     }
@@ -111,10 +103,6 @@ int tcpclient::client_send(void* buffer, int bytesize) {
   }
 
   return result;
-}
-
-int tcpclient::client_receive(char* buffer, int bytesize){//the lenght must be know
-  return client_receive((void*)buffer, bytesize);
 }
 
 int tcpclient::client_receive(void* msg, int bytesize){
@@ -155,48 +143,46 @@ int tcpclient::client_receive(void* msg, int bytesize){
 
 //---------------------------------------------------------------
 
-int tcpclient::Receive(char* buffer, int bytesize){
-  
-  int ret = client_receive(buffer, bytesize);
-  
+int tcpclient::Receive(void* buffer, int bytesize){
+  int ret = client_receive(buffer, bytesize);  
   if (ret <= 0) {
-    strcpy(buffer, "");
+    memset(buffer, 0, bytesize);
   }
-  
   return ret;
 }
 
-int tcpclient::Receive(void* buffer, int bytesize){
-  return client_receive(buffer, bytesize);  
+int tcpclient::Receive(char* buffer, int bytesize){
+  int ret = Receive((void*)buffer, bytesize);  
+  if (ret <= 0) {
+    strcpy(buffer, "");
+  }
+  return ret;
 }
 
 int tcpclient::ReceiveCmdReply(char* buffer){
   return Receive(buffer, (cmdlenght*8)*sizeof(char)+1);
 }
 
-int tcpclient::ReceiveInt(int& receivedint){
-  char readBack[LEN]=""
-  int ret = Receive(readBack, sizeof(uint32_t) * 8 + 1);
-  receivedint = strtoul(readBack, NULL, 16);
-  retrurn ret;
+int tcpclient::ReceiveInt(uint32_t& receivedint){
+  return Receive((void*)&receivedint, 4);
 }
 
-int tcpclient::Send(const char *buffer) {
-  return client_send(buffer);
-}
+//---------------------------------------------------------------
 
 int tcpclient::Send(void* buffer, int bytesize) {
   return client_send(buffer, bytesize);
+}
+
+int tcpclient::Send(const char *buffer) {
+  return Send((void*)buffer, strlen(buffer));
 }
  
 int tcpclient::SendCmd(const char *buffer){
   char c[sizeof(char) * 8 * cmdlenght + 1];
   sprintf(c, "cmd=%s", buffer);
-  return client_send(c);
+  return Send(c);
 }
 
 int tcpclient::SendInt(uint32_t par){
-  char c[sizeof(uint32_t) * 8 + 1];
-  sprintf(c, "%08x", par);
-  return client_send(c);
+  return Send((void*)&c, 4);
 }
