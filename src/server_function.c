@@ -34,18 +34,15 @@ uint32_t receiveWordSocket(int socket){
   }
 }
 
-//Receive a single 32-bit word from socket
+//Generic receive from socket
 int receiveSocket(int socket, void* msg, uint32_t len){
-  char msg[sizeof(uint32_t) * 8 + 1];
-  char *ptr;
-  if(read(socket, msg, sizeof(msg)) < 0){
+  int n;
+  n = read(socket, msg, len);
+  if (n < 0) {
     fprintf(stderr, "Error in reading the socket\n");
     return -1;
-  }else{
-    uint32_t data = strtoul(msg, &ptr, 16);
-    printf("Received %08x\n", data);
-    return data;
   }
+  return 0;
 }
 
 //Send a string to socket
@@ -316,13 +313,16 @@ void* receiver_comandi(int* sockIn){
   // virtual void ProcessMsgReceived(char* msg);
   // che e' specializzato/implementato in hpsserver
 
+  uint32_t okVal  = 0xb01af1ca;
+  uint32_t badVal = 0x000cacca;
   char msg[256]="";
   int bytesRead=0;
   bool kControl = true;
   while(kControl) {
-    char replyStr[256];
+    //Read the command
+    bytesRead=read(openConn, msg, 19);
 
-    bytesRead=read(openConn, msg, sizeof(msg));
+    //Check if the read is ok and process its content
     if(bytesRead < 0) {
       // Error: check for specific errors
       if (EAGAIN==errno || EWOULDBLOCK==errno) {
@@ -341,9 +341,8 @@ void* receiver_comandi(int* sockIn){
       if(strcmp(msg, "cmd=init") == 0){
         uint32_t regsContent[14];
 
-        sprintf(replyStr, "%s", "[SERVER] Starting Init. Send data...");
-        printf("%s\n", replyStr);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        if (baseAddr.verbose > 1) printf("%s) Starting init...\n", __METHOD_NAME__);
+        sendSocket(openConn, &okVal, sizeof(okVal));
 
         //Receive the whole content (apart from reg rGOTO_STATE)
         for(int ii = 0; ii < 7; ii++){
@@ -360,88 +359,72 @@ void* receiver_comandi(int* sockIn){
         printf("Send read request...\n");
         ReadReg(regAddr, &regContent);
 
-        sprintf(replyStr, "%08x", regContent);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &regContent, sizeof(regContent));
       }
-      else if((strcmp(msg, "cmd=setDelay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
+      else if((strcmp(msg, "cmd=setDelay")==0)||(strcmp(msg, "cmd=overWriteDelay")==0)){
         uint32_t delay = receiveWordSocket(openConn);
 
         SetDelay(delay);
 
-        sprintf(replyStr, "%08x", delay);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &delay, sizeof(delay));
       }
       else if(strcmp(msg, "cmd=setMode") == 0){
         uint32_t mode = receiveWordSocket(openConn);
         SetMode(mode);
-        sprintf(replyStr, "%08x", mode);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &mode, sizeof(mode));
       }
       else if(strcmp(msg, "cmd=getEventNumber") == 0){
         uint32_t extTrigCount, intTrigCount;
 
         GetEventNumber(&extTrigCount, &intTrigCount);
 
-        sprintf(replyStr, "%08u", extTrigCount);
-        sendSocket(openConn, replyStr, strlen(replyStr));
-	sprintf(replyStr, "%08u", intTrigCount);
-        sendSocket(openConn, replyStr, strlen(replyStr));
-      }
-      else if(strcmp(msg, "print all event number") == 0){
-        uint32_t extTrigCount, intTrigCount;
-
-        GetEventNumber(&extTrigCount, &intTrigCount);
-
-        sprintf(replyStr, "%08u %08u", extTrigCount, intTrigCount);
-        printf("%s\n",replyStr);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &extTrigCount, sizeof(extTrigCount));
+        sendSocket(openConn, &intTrigCount, sizeof(intTrigCount));
       }
       else if(strcmp(msg, "cmd=eventReset") == 0){
         EventReset();
-        sprintf(replyStr, "%08x", 1);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &okVal , sizeof(okVal));
       }
-      else if(strcmp(msg, "Calibrate") == 0){
+      else if(strcmp(msg, "cmd=calibrate") == 0){
         uint32_t calib = receiveWordSocket(openConn);
 
         Calibrate(calib);
 
-        sprintf(replyStr, "%08x", calib);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &calib, sizeof(calib));
       }
-      else if(strcmp(msg, "WriteCalibPar") == 0){
-        sprintf(replyStr, "%08x", 0);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+      else if(strcmp(msg, "cmd=writeCalibPar") == 0){
+        printf("%s) WriteCalibPar not supported\n", __METHOD_NAME__);
+        sendSocket(openConn, &badVal, sizeof(badVal));
       }
-      else if(strcmp(msg, "SaveCalibrations") == 0){
-        sprintf(replyStr, "%08x", 0);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+      else if(strcmp(msg, "cmd=saveCalib") == 0){
+        printf("%s) SaveCalibrations not supported\n", __METHOD_NAME__);
+        sendSocket(openConn, &badVal, sizeof(badVal));
       }
-      else if(strcmp(msg, "intTriggerPeriod") == 0){
+      else if(strcmp(msg, "cmd=intTrigPeriod") == 0){
         uint32_t period = receiveWordSocket(openConn);
 
         intTriggerPeriod(period);
 
-        sprintf(replyStr, "%08x", period);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &period, sizeof(period));
       }
-      else if(strcmp(msg, "selectTrigger") == 0){
+      else if(strcmp(msg, "cmd=selectTrigger") == 0){
         uint32_t intTrig = receiveWordSocket(openConn);
 
         selectTrigger(intTrig);
 
-        sprintf(replyStr, "%08x", intTrig);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &intTrig, sizeof(intTrig));
       }
-      else if(strcmp(msg, "configureTestUnit") == 0){
+      else if(strcmp(msg, "cmd=configTestUnit") == 0){
         uint32_t tuCfg = receiveWordSocket(openConn);
         char testUnitCfg = ((tuCfg&0x300)>>8);
         char testUnitEn  = ((tuCfg&0x2)>>1);
 
         configureTestUnit(tuCfg);
 
-        sprintf(replyStr, "%08x %08u", testUnitCfg, testUnitEn);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        if (baseAddr.verbose > 1) {
+          printf("Test unit cfg: %d - en: %d", testUnitCfg, testUnitEn);
+        }
+        sendSocket(openConn, &tuCfg, sizeof(tuCfg));
       }
       else if(strcmp(msg, "cmd=getEvent") == 0){
         uint32_t* evt = NULL;
@@ -451,26 +434,22 @@ void* receiver_comandi(int* sockIn){
         int evtErr = getEvent(evt, &evtLen);
         if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
 
-	//Send the eventLen to the socket
-        sendSocket(openConn, evtLen, 1);//in 4-bytes unit 
+        //Send the eventLen to the socket
+        sendSocket(openConn, &evtLen, sizeof(evtLen));
         //Send the event to the socket
-        sendSocket(openConn, evt, evtLen);//in 4-bytes unit 
+        sendSocket(openConn, evt, evtLen*sizeof(uint32_t));
       }
-      else if (strcmp(msg, "quit") == 0) {
+      else if (strcmp(msg, "cmd=quit") == 0) {
         printf("FIX ME: Close connection and socket...\n");
         //kControl=false;
       }
       else {
-        char c[strlen(msg)+32]="";
         printf("%s) Unkown message: %s\n", __METHOD_NAME__, msg);
-        sprintf(c, "%08x", 0x000cacca);
-        sendSocket(openConn, c, strlen(c));
+        sendSocket(openConn, &badVal, sizeof(badVal));
       }
     }
 
-    bzero(msg, sizeof(msg));
-    //    sleep(1);
-
+    //bzero(msg, sizeof(msg));
   }
 
   //-------------------------------------------------
