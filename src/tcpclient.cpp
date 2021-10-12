@@ -184,5 +184,5 @@ int tcpclient::SendCmd(const char *buffer){
 }
 
 int tcpclient::SendInt(uint32_t par){
-  return Send((void*)&c, 4);
+  return Send((void*)&par, 4);
 }

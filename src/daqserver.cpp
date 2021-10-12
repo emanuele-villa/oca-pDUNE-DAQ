@@ -287,16 +287,15 @@ int daqserver::recordEvents(FILE* fd) {
   int readRet = 0;
   int writeRet = 0;
   //std::vector<uint32_t*> evts(det.size(), "");
-  int evtLen = de10_silicon_base::getEvtLen();
-  uint32_t evt[evtLen];
-  memset(evt, 0, evtLen*sizeof(uint32_t));
-
+  uint32_t evtLen = 0;
+  std::vector<uint32_t> evt(652);
+  
   //FIX ME: mandare prima il comando a tutte le DE10 e poi leggere pian piano
 
   for (uint32_t ii=0; ii<det.size(); ii++) {
     //ret += (det.at(ii)->GetEvent(evts[ii]));
-    readRet += (det.at(ii)->GetEvent(evt));
-    writeRet += fwrite(evt, evtLen, 1, fd);
+    readRet += (det.at(ii)->GetEvent(evt, evtLen));
+    writeRet += fwrite(&evt[0], evtLen, 1, fd);
     if (kVerbosity>1) {
       printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
       printf("  Bytes read: %d/%d\n", readRet, evtLen);

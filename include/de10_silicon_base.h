@@ -42,9 +42,8 @@ public:
   int SetDelay(uint32_t delayIn);
   int SetMode(uint8_t modeIn);
   int GetEventNumber();
-  char* PrintAllEventNumber();
   int EventReset();
-  int GetEvent(uint32_t* evt);
+  int GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen);
   int SetCalibrationMode(uint32_t calEnIn);
   int WriteCalibPar();
   int SaveCalibrations();
