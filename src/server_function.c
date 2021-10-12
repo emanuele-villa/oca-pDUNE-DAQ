@@ -342,8 +342,6 @@ void* receiver_comandi(int* sockIn){
         uint32_t regsContent[14];
 
         if (baseAddr.verbose > 1) printf("%s) Starting init...\n", __METHOD_NAME__);
-        sendSocket(openConn, &okVal, sizeof(okVal));
-
         //Receive the whole content (apart from reg rGOTO_STATE)
         for(int ii = 0; ii < 7; ii++){
           regsContent[ii*2]   = receiveWordSocket(openConn);
@@ -351,6 +349,8 @@ void* receiver_comandi(int* sockIn){
         }
 
         Init(regsContent, 14);
+
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=readReg") == 0){
         uint32_t regAddr = receiveWordSocket(openConn);
@@ -366,12 +366,12 @@ void* receiver_comandi(int* sockIn){
 
         SetDelay(delay);
 
-        sendSocket(openConn, &delay, sizeof(delay));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=setMode") == 0){
         uint32_t mode = receiveWordSocket(openConn);
         SetMode(mode);
-        sendSocket(openConn, &mode, sizeof(mode));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=getEventNumber") == 0){
         uint32_t extTrigCount, intTrigCount;
@@ -390,29 +390,29 @@ void* receiver_comandi(int* sockIn){
 
         Calibrate(calib);
 
-        sendSocket(openConn, &calib, sizeof(calib));
+        sendSocket(openConn, &okVal, sizeof(calib));
       }
       else if(strcmp(msg, "cmd=writeCalibPar") == 0){
         printf("%s) WriteCalibPar not supported\n", __METHOD_NAME__);
-        sendSocket(openConn, &badVal, sizeof(badVal));
+        //sendSocket(openConn, &badVal, sizeof(badVal));
       }
       else if(strcmp(msg, "cmd=saveCalib") == 0){
         printf("%s) SaveCalibrations not supported\n", __METHOD_NAME__);
-        sendSocket(openConn, &badVal, sizeof(badVal));
+        //sendSocket(openConn, &badVal, sizeof(badVal));
       }
       else if(strcmp(msg, "cmd=intTrigPeriod") == 0){
         uint32_t period = receiveWordSocket(openConn);
 
         intTriggerPeriod(period);
 
-        sendSocket(openConn, &period, sizeof(period));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=selectTrigger") == 0){
         uint32_t intTrig = receiveWordSocket(openConn);
 
         selectTrigger(intTrig);
 
-        sendSocket(openConn, &intTrig, sizeof(intTrig));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=configTestUnit") == 0){
         uint32_t tuCfg = receiveWordSocket(openConn);
@@ -424,7 +424,7 @@ void* receiver_comandi(int* sockIn){
         if (baseAddr.verbose > 1) {
           printf("Test unit cfg: %d - en: %d", testUnitCfg, testUnitEn);
         }
-        sendSocket(openConn, &tuCfg, sizeof(tuCfg));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=getEvent") == 0){
         uint32_t* evt = NULL;
@@ -438,6 +438,7 @@ void* receiver_comandi(int* sockIn){
         sendSocket(openConn, &evtLen, sizeof(evtLen));
         //Send the event to the socket
         sendSocket(openConn, evt, evtLen*sizeof(uint32_t));
+        if (baseAddr.verbose > 1) printf("%s) Event sent\n", __METHOD_NAME__);
       }
       else if (strcmp(msg, "cmd=quit") == 0) {
         printf("FIX ME: Close connection and socket...\n");
