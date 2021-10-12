@@ -34,6 +34,20 @@ uint32_t receiveWordSocket(int socket){
   }
 }
 
+//Receive a single 32-bit word from socket
+int receiveSocket(int socket, void* msg, uint32_t len){
+  char msg[sizeof(uint32_t) * 8 + 1];
+  char *ptr;
+  if(read(socket, msg, sizeof(msg)) < 0){
+    fprintf(stderr, "Error in reading the socket\n");
+    return -1;
+  }else{
+    uint32_t data = strtoul(msg, &ptr, 16);
+    printf("Received %08x\n", data);
+    return data;
+  }
+}
+
 //Send a string to socket
 int sendSocket(int socket, void* msg, uint32_t len){
   int n;
@@ -349,7 +363,7 @@ void* receiver_comandi(int* sockIn){
         sprintf(replyStr, "%08x", regContent);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
-      else if((strcmp(msg, "set delay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
+      else if((strcmp(msg, "cmd=setDelay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
         uint32_t delay = receiveWordSocket(openConn);
 
         SetDelay(delay);
@@ -357,18 +371,20 @@ void* receiver_comandi(int* sockIn){
         sprintf(replyStr, "%08x", delay);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
-      else if(strcmp(msg, "set mode") == 0){
+      else if(strcmp(msg, "cmd=setMode") == 0){
         uint32_t mode = receiveWordSocket(openConn);
         SetMode(mode);
         sprintf(replyStr, "%08x", mode);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
-      else if(strcmp(msg, "get event number") == 0){
+      else if(strcmp(msg, "cmd=getEventNumber") == 0){
         uint32_t extTrigCount, intTrigCount;
 
         GetEventNumber(&extTrigCount, &intTrigCount);
 
-        sprintf(replyStr, "%08u %08u", extTrigCount, intTrigCount);
+        sprintf(replyStr, "%08u", extTrigCount);
+        sendSocket(openConn, replyStr, strlen(replyStr));
+	sprintf(replyStr, "%08u", intTrigCount);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
       else if(strcmp(msg, "print all event number") == 0){
@@ -380,7 +396,7 @@ void* receiver_comandi(int* sockIn){
         printf("%s\n",replyStr);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
-      else if(strcmp(msg, "event reset") == 0){
+      else if(strcmp(msg, "cmd=eventReset") == 0){
         EventReset();
         sprintf(replyStr, "%08x", 1);
         sendSocket(openConn, replyStr, strlen(replyStr));
@@ -427,7 +443,7 @@ void* receiver_comandi(int* sockIn){
         sprintf(replyStr, "%08x %08u", testUnitCfg, testUnitEn);
         sendSocket(openConn, replyStr, strlen(replyStr));
       }
-      else if(strcmp(msg, "get event") == 0){
+      else if(strcmp(msg, "cmd=getEvent") == 0){
         uint32_t* evt = NULL;
         int evtLen=0;
 
@@ -435,9 +451,12 @@ void* receiver_comandi(int* sockIn){
         int evtErr = getEvent(evt, &evtLen);
         if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
 
+	//Send the eventLen to the socket
+        sendSocket(openConn, evtLen, 1);//in 4-bytes unit 
         //Send the event to the socket
-        sendSocket(openConn, evt, evtLen);
-      } else if (strcmp(msg, "quit") == 0) {
+        sendSocket(openConn, evt, evtLen);//in 4-bytes unit 
+      }
+      else if (strcmp(msg, "quit") == 0) {
         printf("FIX ME: Close connection and socket...\n");
         //kControl=false;
       }

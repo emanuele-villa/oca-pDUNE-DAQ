@@ -27,6 +27,7 @@ public:
   int Receive(char* buffer, int bytesize);//the lenght must be know
   int Receive(void* buffer, int bytesize);
   int ReceiveCmdReply(char* buffer);
+  int ReceiveInt();
 
 protected:
   int client_connect(const char* address, int port);

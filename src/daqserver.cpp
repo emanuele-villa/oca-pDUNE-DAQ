@@ -81,7 +81,7 @@ void daqserver::ProcessCmdReceived(char* msg){
       ReplyToCmd(msg);
       //FIX ME: only for now to test
       for (int ii=0; ii<32; ii++) {
-	printf("%ss) Reading reg %d\n", __METHOD_NAME__, ii);
+	printf("%s) Reading reg %d\n", __METHOD_NAME__, ii);
 	ReadReg(ii);
       }
     }

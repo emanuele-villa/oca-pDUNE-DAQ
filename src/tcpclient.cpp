@@ -174,6 +174,13 @@ int tcpclient::ReceiveCmdReply(char* buffer){
   return Receive(buffer, (cmdlenght*8)*sizeof(char)+1);
 }
 
+int tcpclient::ReceiveInt(int& receivedint){
+  char readBack[LEN]=""
+  int ret = Receive(readBack, sizeof(uint32_t) * 8 + 1);
+  receivedint = strtoul(readBack, NULL, 16);
+  retrurn ret;
+}
+
 int tcpclient::Send(const char *buffer) {
   return client_send(buffer);
 }

@@ -41,7 +41,9 @@ int de10_silicon_base::readReg(int regAddr, uint32_t &regCont){
     ret = 1;
   }
 
-  if (client_receive(readBack)<=0) ret = 1;
+  //  printf("%s) Here!\n", __METHOD_NAME__);
+  
+  if (ReceiveCmdReply(readBack)<=0) ret = 1;
 
   if (verbosity>0) {
     printf("%s) Read: %s\n", __METHOD_NAME__, readBack);
@@ -62,7 +64,7 @@ int de10_silicon_base::Init() {
     printf("%s) [>>> initializing (reset everything)]\n", __METHOD_NAME__);
   }
   SendCmd("init");
-  client_receive(readBack);
+  ReceiveCmdReply(readBack);
   if (verbosity>0) {
     printf("%s) reply: %s\n", __METHOD_NAME__, readBack);
   }
@@ -104,30 +106,26 @@ int de10_silicon_base::Init() {
 int de10_silicon_base::SetDelay(uint32_t delayIn){
   char readBack[LEN]="";
   delay = (delayIn & 0x0000FFFF);
-  client_send("set delay");
-  char c[sizeof (uint32_t) * 8 + 1];
-  sprintf(c, "%x", delay);
-  client_send(c);
-  client_receive(readBack);
+  SendCmd("setDelay");
+  SendInt(delay);
+  ReceiveCmdReply(readBack);
   return 0;
 }
 
 int de10_silicon_base::SetMode(uint8_t modeIn) {
   char readBack[LEN]="";
   mode=(modeIn << 4)&0x00000010;
-  client_send("set mode");
-  char c[sizeof (uint32_t) * 8 + 1];
-  sprintf(c, "%d", mode);
-  client_send(c);
-  client_receive(readBack);
+  SendCmd("setMode");
+  SendInt(mode);
+  ReceiveCmdReply(readBack);
   return 0;
 }
 
 int de10_silicon_base::GetEventNumber() {
-  char readBack[LEN]="";
-  //	printf("[>>> getting events]\n");
-  client_send("get event number");
-  client_receive(readBack);
+  SendCmd("getEventNumber");
+  int exttrigcount = ReceiveInt();
+  int inttrigcount = ReceiveInt();
+  printf("%s) %d %d\n", __METHOD_NAME_);
   return 0;
 }
 
@@ -143,24 +141,23 @@ char* de10_silicon_base::PrintAllEventNumber() {
 }
 
 int de10_silicon_base::EventReset() {
-  // client_send("write -x 020400\n");
-  // client_send("write -x 040700\n");
   char readBack[LEN]="";
   if (verbosity>0) {
-    printf("%s) [>>>>>] resetting events (reinitialize)\n", __METHOD_NAME__);
+    printf("%s) Resetting events (reinitialize)\n", __METHOD_NAME__);
   }
-  client_send("event reset");
-  client_receive(readBack);
+  SendCmd("eventReset");
+  ReceiveCmdReply(readBack);
   return 0;
 }
 
 int de10_silicon_base::GetEvent(uint32_t* evt){
   char readBack[LEN]="";
-  client_send("get event");
+  SendCmd("getEvent");
 
   //Get the event from HPS and loop here until all data are read
-  //FIX ME: make it working with variable lengths
   uint32_t evtRead = 0;
+  int kevtLen = 0;
+  Receive(
   while(evtRead < kevtLen) {
     evtRead += client_receive(evt, kevtLen-evtRead);
   }

@@ -7,12 +7,12 @@
 // const int nde10 = 1;
 // const char* addressde10[nde10] = {"localhost"};
 // int portde10[nde10] = {80};
-//const int nde10 = 1;
-//const char* addressde10[nde10] = {"192.168.1.3"};
-//int portde10[nde10] = {5000};
-const int nde10 = 0;
-const char* addressde10[nde10] = {};
-int portde10[nde10] = {};
+const int nde10 = 1;
+const char* addressde10[nde10] = {"192.168.1.3"};
+int portde10[nde10] = {5000};
+// const int nde10 = 0;
+// const char* addressde10[nde10] = {};
+// int portde10[nde10] = {};
 
 int verbosity=0;
 
