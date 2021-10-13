@@ -6,8 +6,15 @@ uint32_t badVal = 0x000cacca;
 
 de10_silicon_base::de10_silicon_base(const char *address, int port, int _detid, int _cmdlenght, int verb):tcpclient(address, port, verb){
 
-  cmdlenght = _cmdlenght
+  cmdlenght = _cmdlenght;
   SendInt(cmdlenght);//for now is the default value
+  uint32_t reply = 1;
+  ReceiveInt(reply);
+  //let's set as cmd lenght not the one passed but the one received back (hoping they are equal)
+  cmdlenght=reply;//in number of char
+  if (verbosity>0) {
+    printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
+  }
   
   //Initialize and compute configurations
   testUnitCfg = 0;
@@ -40,23 +47,20 @@ de10_silicon_base::~de10_silicon_base(){
 //--------------------------------------------------------------
 
 void de10_silicon_base::SetCmdLenght(int lenght) {
-
-  int ret=0;
-  if (SentCmd("setCmdLenght")>0) {
-    SentInt((uint32_t)lenght);
-  }
-  else {
-    ret = 1;
+  
+  if (SendCmd("setCmdLenght")>0) {
+    SendInt((uint32_t)lenght);
   }
 
+  uint32_t reply = 0;
   ReceiveInt(reply);
   //let's set as cmd lenght not the one passed but the one received back (hoping they are equal)
   cmdlenght=reply;//in number of char
   if (verbosity>0) {
-    printf("%s) Set Cmd Lenght to reply: %s\n", __METHOD_NAME__, reply);
+    printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
   }
 
-  return ret;
+  return;
 }
 
 //--------------------------------------------------------------
