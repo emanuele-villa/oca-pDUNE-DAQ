@@ -27,16 +27,16 @@ int main(int argc, char *argv[]) {
   daqclient* daq = new daqclient(addressdaq, portdaq, verbosity);
   daq->SetCmdLenght(32);
   
-  daq->SendCmd("Init");
-  //  daq->Receive(readBack, 32);//is blocking and this is wanted
-  daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
-  printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, readBack);
+  // daq->SendCmd("Init");
+  // //  daq->Receive(readBack, 32);//is blocking and this is wanted
+  // daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
+  // printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, readBack);
 
-  sleep(3);
+  // sleep(3);
 
-  daq->SendCmd("Wait");
-  daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
-  printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, readBack);
+  // daq->SendCmd("Wait");
+  // daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
+  // printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, readBack);
 
   // sleep(3);
 

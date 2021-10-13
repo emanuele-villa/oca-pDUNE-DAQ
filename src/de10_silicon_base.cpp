@@ -12,25 +12,23 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, int _detid, 
   ReceiveInt(reply);
   //let's set as cmd lenght not the one passed but the one received back (hoping they are equal)
   cmdlenght=reply;//in number of char
-  if (verbosity>0) {
-    printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
-  }
+  printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
   
   //Initialize and compute configurations
   testUnitCfg = 0;
   hkEn = 0;
   ConfigureTestUnit(0);
   dataEn = 1;
-  //  SetIntTriggerPeriod(0x02faf080);
-  //  SetCalibrationMode(0);
-  //  SelectTrigger(0);
+  SetIntTriggerPeriod(0x02faf080);
+  SetCalibrationMode(0);
+  SelectTrigger(0);
   pktLen = 0x0000028A;
   feClkDuty  = 0x00000004;
   feClkDiv   = 0x00000028;
   adcClkDuty = 0x00000004;
   adcClkDiv  = 0x00000002;
-  //  SetDelay(0x00000145);
-  //  SetMode(0);
+  SetDelay(0x00000145);
+  SetMode(0);
   detId = _detid;
 
   changeText("hello");
@@ -56,9 +54,7 @@ void de10_silicon_base::SetCmdLenght(int lenght) {
   ReceiveInt(reply);
   //let's set as cmd lenght not the one passed but the one received back (hoping they are equal)
   cmdlenght=reply;//in number of char
-  if (verbosity>0) {
-    printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
-  }
+  printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
 
   return;
 }

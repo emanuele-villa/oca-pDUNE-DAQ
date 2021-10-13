@@ -297,7 +297,8 @@ void* receiver_comandi(int* sockIn){
   openConn = accept(*sockIn, (struct sockaddr *) &client_addr, (socklen_t *) &addrLen);
   if(openConn < 0){
     perror("Error in accepting socket connection\n");
-  }else{
+  }
+  else{
     uint32_t trash;
     printf("%s) Connection open: (socket number %d, %s:%d)\n", __METHOD_NAME__, openConn, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     printf("\nRegister array initial content:\n");
@@ -309,6 +310,7 @@ void* receiver_comandi(int* sockIn){
   //Handshaking to set the same command length of the client
   int cmdLen = 24;
   receiveSocket(openConn, &cmdLen, sizeof(cmdLen));
+  printf("%s) Updating command length to %d\n", __METHOD_NAME__, cmdLen);
   sendSocket(openConn, &cmdLen, sizeof(cmdLen));
 
   //-----------------------------------------------------
@@ -445,10 +447,9 @@ void* receiver_comandi(int* sockIn){
         if (baseAddr.verbose > 1) printf("%s) Event sent\n", __METHOD_NAME__);
       }
       else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
-        uint32_t length = 24;
-        receiveSocket(openConn, &length, sizeof(length));
-        printf("%s) Updating command length to %d\n", __METHOD_NAME__, length);
-        sendSocket(openConn, &length, sizeof(length));
+        receiveSocket(openConn, &cmdLen, sizeof(cmdLen));
+        printf("%s) Updating command length to %d\n", __METHOD_NAME__, cmdLen);
+        sendSocket(openConn, &cmdLen, sizeof(cmdLen));
       }
       else if (strcmp(msg, "cmd=quit") == 0) {
         printf("FIX ME: Close connection and socket...\n");
@@ -460,7 +461,7 @@ void* receiver_comandi(int* sockIn){
       }
     }
 
-    //bzero(msg, sizeof(msg));
+    bzero(msg, sizeof(msg));
   }
 
   //-------------------------------------------------
