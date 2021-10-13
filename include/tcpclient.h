@@ -14,7 +14,7 @@ public:
   virtual ~tcpclient();
   tcpclient(const char *address, int port, int verb=0);
 
-  void SetCmdLenght(int lenght) { cmdlenght=lenght; }//in number of char
+  virtual void SetCmdLenght(int lenght) { cmdlenght=lenght; }//in number of char
 
   void SetVerbosity(int verb){ verbosity = verb; }
   int GetVerbosity(){ return verbosity; }

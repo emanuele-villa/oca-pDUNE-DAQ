@@ -50,10 +50,8 @@ void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portd
   for (int ii=0; ii<nde10; ii++) {
     addressdet.push_back(addressde10[ii]);
     portdet.push_back(portde10[ii]);
-    det.push_back(new de10_silicon_base(addressde10[ii], portde10[ii], kVerbosity));
+    det.push_back(new de10_silicon_base(addressde10[ii], portde10[ii], ii, detcmdlenght, kVerbosity));
   }
-
-  SetDetectorsCmdLenght(detcmdlenght);
 
   return;
 }
