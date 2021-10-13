@@ -306,6 +306,10 @@ void* receiver_comandi(int* sockIn){
     }
     printf("\n");
   }
+  //Handshaking to set the same command length of the client
+  int cmdLen = 24;
+  receiveSocket(openConn, &cmdLen, sizeof(cmdLen));
+  sendSocket(openConn, &cmdLen, sizeof(cmdLen));
 
   //-----------------------------------------------------
   // questa parte sara' un metodo di hpsserver
@@ -323,7 +327,7 @@ void* receiver_comandi(int* sockIn){
   bool kControl = true;
   while(kControl) {
     //Read the command
-    bytesRead=read(openConn, msg, 19);
+    bytesRead=read(openConn, msg, cmdLen);
 
     //Check if the read is ok and process its content
     if(bytesRead < 0) {
@@ -439,6 +443,12 @@ void* receiver_comandi(int* sockIn){
         //Send the event to the socket
         sendSocket(openConn, evt, evtLen*sizeof(uint32_t));
         if (baseAddr.verbose > 1) printf("%s) Event sent\n", __METHOD_NAME__);
+      }
+      else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
+        uint32_t length = 24;
+        receiveSocket(openConn, &length, sizeof(length));
+        printf("%s) Updating command length to %d\n", __METHOD_NAME__, length);
+        sendSocket(openConn, &length, sizeof(length));
       }
       else if (strcmp(msg, "cmd=quit") == 0) {
         printf("FIX ME: Close connection and socket...\n");
