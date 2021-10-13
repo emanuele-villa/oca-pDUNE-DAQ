@@ -86,7 +86,6 @@ int tcpclient::client_send(void* buffer, int bytesize) {
     //    result = write(client_socket, buffer, strlen(buffer))
     result = write(client_socket, buffer, bytesize);
     if (result > 0) {
-      usleep(250000);//FIX ME: really needed?
       if (verbosity>0) {
         printf("%s) message sent correctly\n", __METHOD_NAME__);
       }

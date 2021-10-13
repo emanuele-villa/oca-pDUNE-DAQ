@@ -43,8 +43,12 @@ int main(int argc, char *argv[]) {
   daqsrv->SetCmdLenght(64);
 
   daqsrv->SetListDetectors(nde10, addressde10, portde10, 24);
-
+  
   daqsrv->Init();
+
+  daqsrv->SetCalibrationMode(1);
+  daqsrv->SelectTrigger(1);
+  daqsrv->ReadAllRegs();
   
   //is not really working, for now: it is killed as a standard CTRL-C
   //the param sent to StopRun is SIGTERM itself and we need that StopRun accepts a param even if cannot use it

@@ -12,6 +12,7 @@
 #define REG_EOP  0xBADC0FEE
 
 extern struct fpgaAddresses baseAddr;
+extern uint32_t kGwV;
 
 //Generic FIFOs access
 inline uint32_t readFifoLevel (uint32_t* fifoLevelAddr);

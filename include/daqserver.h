@@ -16,6 +16,8 @@ private:
   const char kdataPath[12] = "../../data/";
   volatile bool kStart;
   pthread_t threadStart;
+  int calibmode;
+  int trigtype;
 
   void ProcessCmdReceived(char* msg);
   
@@ -29,6 +31,11 @@ public:
 
   void SetDetectorsCmdLenght(int detcmdlenght);
 
+  void SetCalibrationMode(uint32_t mode);
+  void SelectTrigger(uint32_t trig);
+
+  void ReadAllRegs();
+  
   int ReadReg(uint32_t regAddr);
   int Init();
   void* Start();

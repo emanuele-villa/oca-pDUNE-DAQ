@@ -101,7 +101,7 @@ int de10_silicon_base::Init() {
     SendInt(regContent);
     
     //Register 3
-    regContent = detId&0x000000FF;
+    regContent = detId&0x0000FFFF;
     SendInt(regContent);
     
     //Register 4

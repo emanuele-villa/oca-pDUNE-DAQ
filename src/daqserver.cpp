@@ -21,6 +21,9 @@ daqserver::daqserver(int port, int verb):tcpserver(port, verb){
   portdet.clear();
 
   kStart=false;
+
+  calibmode=0;
+  trigtype=0;
   
   if(singletonDqSrv==NULL) singletonDqSrv=this;
   else printf("%s) Class already exists\n", __METHOD_NAME__);
@@ -65,6 +68,28 @@ void daqserver::SetDetectorsCmdLenght(int detcmdlenght){
   return;
 }
 
+void daqserver::SetCalibrationMode(uint32_t mode){
+
+  calibmode = mode;
+  
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetCalibrationMode(calibmode);
+  }
+  
+  return;
+}
+  
+void daqserver::SelectTrigger(uint32_t trig){
+
+  trigtype = trig;
+  
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SelectTrigger(trigtype);
+  }
+
+  return;
+}
+
 void daqserver::ProcessCmdReceived(char* msg){
 
   if (kVerbosity>-1) {//FIX ME: >-1 perche' ora non fa niene, poi deve fare quelle sotto
@@ -78,10 +103,10 @@ void daqserver::ProcessCmdReceived(char* msg){
       Init();
       ReplyToCmd(msg);
       //FIX ME: only for now to test
-      for (int ii=0; ii<32; ii++) {
-      	printf("%s) Reading reg %d\n", __METHOD_NAME__, ii);
-      	ReadReg(ii);
-      }
+      // for (int ii=0; ii<32; ii++) {
+      // 	printf("%s) Reading reg %d\n", __METHOD_NAME__, ii);
+      // 	ReadReg(ii);
+      // }
     }
     else if (strcmp(msg, "cmd=Wait") == 0){//essentially for test
       printf("%s) Wait()\n", __METHOD_NAME__);
@@ -249,6 +274,16 @@ void daqserver::ProcessCmdReceived(char* msg){
   }
 
 */
+
+  return;
+}
+
+void daqserver::ReadAllRegs(){
+
+  for (int ii=0; ii<32; ii++) {
+    printf("%s) Reading reg %d\n", __METHOD_NAME__, ii);
+    ReadReg(ii);
+  }
 
   return;
 }

@@ -20,9 +20,10 @@
 #include "server.h"
 
 struct fpgaAddresses baseAddr;
+uint32_t kGwV = 0;
 
 int main(int argc, char *argv[]){
-  baseAddr.verbose = 3; //@todo pass the verbose as argument
+  baseAddr.verbose = 2; //@todo pass the verbose as argument
   printf("Opening /dev/mem...\n");
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
@@ -50,6 +51,17 @@ int main(int argc, char *argv[]){
   baseAddr.configFifoLevel  = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_LEVEL_REG;
   baseAddr.configFifoStatus = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_STATUS_REG;
 
+  ShowStatusFifo(CONFIG_FIFO);
+  printf("server/main) %p %u\n", (baseAddr.configFifo), *(baseAddr.configFifo));
+  printf("server/main) %p %u\n", (baseAddr.configFifoCsr), *(baseAddr.configFifoCsr));
+  InitFifo(CONFIG_FIFO, 5, 1000, 0);
+  ShowStatusFifo(CONFIG_FIFO);  
+
+  *(baseAddr.configFifo) = 5;
+  printf("server/main) %p %p %p\n", baseAddr.virtual_base, (void*)ALT_LWFPGASLVS_OFST, (void*)FIFO_HPS_TO_FPGA_IN_BASE);
+  printf("server/main) %p %p %p\n", baseAddr.virtual_base, (void*)ALT_LWFPGASLVS_OFST, (void*)FIFO_HPS_TO_FPGA_IN_CSR_BASE);
+  printf("server/main) %p %u\n", (baseAddr.configFifo), *(baseAddr.configFifo));
+  
   //Base addresses of the Data and CSR of the HK FIFO
   baseAddr.hkFifo = (uint32_t*)((unsigned long)baseAddr.virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + FIFO_FPGA_TO_HPS_OUT_BASE) & (unsigned long)(HW_REGS_MASK)));
   baseAddr.hkFifoCsr = (uint32_t*)((unsigned long)baseAddr.virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + FIFO_FPGA_TO_HPS_OUT_CSR_BASE) & (unsigned long)(HW_REGS_MASK)));

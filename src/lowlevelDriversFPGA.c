@@ -86,21 +86,22 @@ int WriteFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntato
 }
 
 // Funzione di scrittura della FIFO con un burst di dati.
-int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezione della FIFO, Indirizzo di partenza dell'array di dati da inviare alla FIFO, Numero di dati che costituisce la raffica)
-
-	if (FIFO_TYPE != CONFIG_FIFO){
-		return (1);
-	}
-
-	if (readFifoAFull(baseAddr.configFifoStatus)) //Check if A-Full before writing
-		return (2);
-	else{														// Altrimenti, carica la FIFO con i dati a partire dall'indirizzo "data" e restituisci il valore "0".
-		for (int i=0; i<length_burst; i++){
-			*baseAddr.configFifo = data[i];
-		}
-
-		return (0);
-	}
+int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){// (Selezione della FIFO, Indirizzo di partenza dell'array di dati da inviare alla FIFO, Numero di dati che costituisce la raffica)
+  
+  if (FIFO_TYPE != CONFIG_FIFO){
+    return (1);
+  }
+  
+  if (readFifoFull(baseAddr.configFifoStatus)) //FIX ME: Should check the A-Full before writing
+    return (2);
+  else
+    {// Altrimenti, carica la FIFO con i dati a partire dall'indirizzo "data" e restituisci il valore "0".
+      for (int i=0; i<length_burst; i++){
+	*baseAddr.configFifo = data[i];
+      }
+      
+      return (0);
+    }
 }
 
 
@@ -240,7 +241,7 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 	error = StatusFifo(FIFO_TYPE, &fifo_level, &fifo_full, &fifo_empty, &fifo_almostfull, &fifo_almostempty, &almostfull_setting, &almostempty_setting);		// Estrai lo stato della FIFO.
 
 	if (error)
-		return (1);				// Se l'estrazione dello stato non è avvenuta con usccesso, restitusici un errore.
+		return (1);				// Se l'estrazione dello stato non è avvenuta con successo, restitusici un errore.
 	else {
 		printf("\n------------------------------------------------\n");
 		printf("FIFO Name   : %s\n", fifoName);
@@ -300,6 +301,7 @@ uint32_t crc_update(uint32_t crc, const void *data, size_t data_len){
         }
         crc &= 0xffffffff;
     }
+    //    printf("[***********************] CRC: %08x\n", crc);
     return crc & 0xffffffff;
 }
 
@@ -369,12 +371,12 @@ int writeReg(uint32_t * pktContent, int pktLen){
   uint32_t packet[pktLen+6];
   uint8_t parityMsb, parityLsb;
   uint32_t pktCrc;
-
+  
   //Create the packet header
   pktCrc = crc_init();
   packet[0] = REG_SOP;
   packet[1] = (uint32_t)pktLen+5;
-  packet[2] = 0; //@todo add FW version
+  packet[2] = kGwV; //@todo fetch the GW version from github and not from FPGA
   pktCrc = crc_update(pktCrc, &packet[2], sizeof(uint32_t));
   packet[3] = REG_HDR1;
   pktCrc = crc_update(pktCrc, &packet[3], sizeof(uint32_t));
@@ -403,6 +405,6 @@ int writeReg(uint32_t * pktContent, int pktLen){
 
   //Send the packet
   WriteFifoBurst(CONFIG_FIFO, packet, pktLen+6);
-
-return 0;
+  
+  return 0;
 }

@@ -56,7 +56,7 @@ int sendSocket(int socket, void* msg, uint32_t len){
     fprintf(stderr, "Error in writing to the socket\n");
     return 1;
   }
-  if (baseAddr.verbose > 1) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  if (baseAddr.verbose > 2) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
   return 0;
 }
 
@@ -292,6 +292,12 @@ void* receiver_comandi(int* sockIn){
   int addrLen, openConn;
   struct sockaddr_in client_addr;
 
+  /* ShowStatusFifo(CONFIG_FIFO); */
+  /* printf("%s) %u\n", __METHOD_NAME__, *(baseAddr.configFifo)); */
+  /* printf("%s) %u\n", __METHOD_NAME__, *(baseAddr.configFifoCsr)); */
+  /* InitFifo(CONFIG_FIFO, 5, 1000, 0); */
+  /* ShowStatusFifo(CONFIG_FIFO); */  
+  
   addrLen = sizeof(client_addr);
   printf("Waiting for a client to connect...\n");
   openConn = accept(*sockIn, (struct sockaddr *) &client_addr, (socklen_t *) &addrLen);
@@ -312,6 +318,10 @@ void* receiver_comandi(int* sockIn){
   receiveSocket(openConn, &cmdLen, sizeof(cmdLen));
   printf("%s) Updating command length to %d\n", __METHOD_NAME__, cmdLen);
   sendSocket(openConn, &cmdLen, sizeof(cmdLen));
+
+  //FIX ME fetch the GW version from gitlab and not from FPGA
+  ReadReg(rGW_VER, &kGwV);
+  
 
   //-----------------------------------------------------
   // questa parte sara' un metodo di hpsserver
@@ -428,7 +438,7 @@ void* receiver_comandi(int* sockIn){
         char testUnitEn  = ((tuCfg&0x2)>>1);
         configureTestUnit(tuCfg);
         if (baseAddr.verbose > 1) {
-          printf("Test unit cfg: %d - en: %d", testUnitCfg, testUnitEn);
+          printf("Test unit cfg: %d - en: %d\n", testUnitCfg, testUnitEn);
         }
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
@@ -467,6 +477,5 @@ void* receiver_comandi(int* sockIn){
   //-------------------------------------------------
 
   //pthread_exit(NULL);
-  void* pippo;
-  return pippo;
+  return nullptr;
 }

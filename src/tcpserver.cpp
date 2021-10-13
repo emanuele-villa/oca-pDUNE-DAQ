@@ -130,7 +130,6 @@ void tcpserver::ListenCmd(){
 
   while (kListeningOn){
     //    printf("%d\n", kListeningOn);
-    usleep(10000);//FIX ME: parametrizzarlo
 
     char msg[LEN];
 
