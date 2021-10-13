@@ -37,14 +37,12 @@ de10_silicon_base::~de10_silicon_base(){
 int de10_silicon_base::readReg(int regAddr, uint32_t &regCont){
 
   int ret=0;
-  if (SendCmd("readReg")==0) {
+  if (SendCmd("readReg")>0) {
     SendInt((uint32_t)regAddr);
   }
   else {
     ret = 1;
   }
-
-  //  printf("%s) Here!\n", __METHOD_NAME__);
   
   if (ReceiveInt(regCont)<=0) ret = 1;
 
@@ -66,7 +64,7 @@ int de10_silicon_base::Init() {
     printf("%s) initializing (reset everything)\n", __METHOD_NAME__);
   }
   
-  if (SendCmd("init")==0) {
+  if (SendCmd("init")>0) {
     //Register 1
     regContent = (testUnitCfg&0x00000003) << 8 | (hkEn&0x00000001) << 6 \
       | testUnitEn | (dataEn&0x00000001);
@@ -112,7 +110,7 @@ int de10_silicon_base::SetDelay(uint32_t delayIn){
   int ret=0;
   uint32_t reply = 1;
   delay = (delayIn & 0x0000FFFF);
-  if (SendCmd("setDelay")==0) {
+  if (SendCmd("setDelay")>0) {
     SendInt(delay);
   }
   else {
@@ -129,7 +127,7 @@ int de10_silicon_base::SetMode(uint8_t modeIn) {
   int ret=0;
   uint32_t reply = 1;
   mode=(modeIn << 4)&0x00000010;
-  if (SendCmd("setMode")==0) {
+  if (SendCmd("setMode")>0) {
     SendInt(mode);
   }
   else {
@@ -144,7 +142,7 @@ int de10_silicon_base::SetMode(uint8_t modeIn) {
 
 int de10_silicon_base::GetEventNumber() {
   int ret=0;
-  if (SendCmd("getEventNumber")) ret = 1;
+  if (SendCmd("getEventNumber")<=0) ret = 1;
   uint32_t exttrigcount = 0;
   ReceiveInt(exttrigcount);
   uint32_t inttrigcount = 0;
@@ -158,7 +156,7 @@ int de10_silicon_base::GetEventNumber() {
 int de10_silicon_base::EventReset() {
   int ret = 0;
   uint32_t reply = 1;
-  if (SendCmd("eventReset")) ret = 1;
+  if (SendCmd("eventReset")<=0) ret = 1;
   ReceiveInt(reply);
   if (verbosity>0) {
     printf("%s) Resetting events (reinitialize): %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
@@ -188,7 +186,7 @@ int de10_silicon_base::SetCalibrationMode(uint32_t calEnIn){
   int ret = 0;
   uint32_t reply = 1;
   calEn = (calEnIn&0x00000001)<<1;
-  if (SendCmd("calibrate")==0){
+  if (SendCmd("calibrate")>0){
     SendInt(calEn);
   }
   else {
@@ -221,7 +219,7 @@ int de10_silicon_base::SetIntTriggerPeriod(uint32_t intTrigPeriodIn){
   int ret=0;
   uint32_t reply = 1;
   intTrigPeriod = intTrigPeriodIn&0xFFFFFFF0;
-  if (SendCmd("intTrigPeriod")==0) {
+  if (SendCmd("intTrigPeriod")>0) {
     SendInt(intTrigPeriod);
   }
   else {
@@ -238,7 +236,7 @@ int de10_silicon_base::SelectTrigger(uint32_t intTrigEnIn){
   int ret=0;
   uint32_t reply = 1;
   intTrigEn = intTrigEnIn&0x00000001;
-  if (SendCmd("selectTrigger")==0) {
+  if (SendCmd("selectTrigger")>0) {
     SendInt(intTrigEn);
   }
   else {
@@ -255,7 +253,7 @@ int de10_silicon_base::ConfigureTestUnit(uint32_t testUnitEnIn){
   int ret=0;
   uint32_t reply = 1;
   testUnitEn = (testUnitEnIn&0x00000001)<<1;
-  if (SendCmd("configTestUnit")==0) {
+  if (SendCmd("configTestUnit")>0) {
     SendInt(testUnitEn);
   }
   else {

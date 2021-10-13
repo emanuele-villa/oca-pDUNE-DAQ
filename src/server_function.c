@@ -20,6 +20,7 @@
 
 // hpsserver.cpp
 
+/*
 //Receive a single 32-bit word from socket
 uint32_t receiveWordSocket(int socket){
   char msg[sizeof(uint32_t) * 8 + 1];
@@ -27,12 +28,14 @@ uint32_t receiveWordSocket(int socket){
   if(read(socket, msg, sizeof(msg)) < 0){
     fprintf(stderr, "Error in reading the socket\n");
     return -1;
-  }else{
+  }
+  else{
     uint32_t data = strtoul(msg, &ptr, 16);
     printf("Received %08x\n", data);
     return data;
   }
 }
+*/
 
 //Generic receive from socket
 int receiveSocket(int socket, void* msg, uint32_t len){
@@ -340,11 +343,13 @@ void* receiver_comandi(int* sockIn){
     else {
       if(strcmp(msg, "cmd=init") == 0){
         uint32_t regsContent[14];
+	uint32_t singleReg = 0;
 
         if (baseAddr.verbose > 1) printf("%s) Starting init...\n", __METHOD_NAME__);
         //Receive the whole content (apart from reg rGOTO_STATE)
         for(int ii = 0; ii < 7; ii++){
-          regsContent[ii*2]   = receiveWordSocket(openConn);
+	  receiveSocket(openConn, &singleReg, sizeof(singleReg));
+          regsContent[ii*2]   = singleReg;
           regsContent[ii*2+1] = (uint32_t)ii;
         }
 
@@ -353,23 +358,22 @@ void* receiver_comandi(int* sockIn){
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=readReg") == 0){
-        uint32_t regAddr = receiveWordSocket(openConn);
+        uint32_t regAddr = 0;
         uint32_t regContent;
-
+	receiveSocket(openConn, &regAddr, sizeof(regAddr));
         printf("Send read request...\n");
         ReadReg(regAddr, &regContent);
-
         sendSocket(openConn, &regContent, sizeof(regContent));
       }
       else if((strcmp(msg, "cmd=setDelay")==0)||(strcmp(msg, "cmd=overWriteDelay")==0)){
-        uint32_t delay = receiveWordSocket(openConn);
-
+        uint32_t delay = 0;
+        receiveSocket(openConn, &delay, sizeof(delay));
         SetDelay(delay);
-
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=setMode") == 0){
-        uint32_t mode = receiveWordSocket(openConn);
+        uint32_t mode = 0;
+	receiveSocket(openConn, &mode, sizeof(mode));
         SetMode(mode);
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
@@ -386,10 +390,9 @@ void* receiver_comandi(int* sockIn){
         sendSocket(openConn, &okVal , sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=calibrate") == 0){
-        uint32_t calib = receiveWordSocket(openConn);
-
+        uint32_t calib = 0;
+	receiveSocket(openConn, &calib, sizeof(calib));
         Calibrate(calib);
-
         sendSocket(openConn, &okVal, sizeof(calib));
       }
       else if(strcmp(msg, "cmd=writeCalibPar") == 0){
@@ -401,26 +404,23 @@ void* receiver_comandi(int* sockIn){
         //sendSocket(openConn, &badVal, sizeof(badVal));
       }
       else if(strcmp(msg, "cmd=intTrigPeriod") == 0){
-        uint32_t period = receiveWordSocket(openConn);
-
+        uint32_t period = 0;
+	receiveSocket(openConn, &period, sizeof(period));
         intTriggerPeriod(period);
-
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=selectTrigger") == 0){
-        uint32_t intTrig = receiveWordSocket(openConn);
-
+        uint32_t intTrig = 0;
+	receiveSocket(openConn, &intTrig, sizeof(intTrig));
         selectTrigger(intTrig);
-
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=configTestUnit") == 0){
-        uint32_t tuCfg = receiveWordSocket(openConn);
+        uint32_t tuCfg = 0;
+	receiveSocket(openConn, &tuCfg, sizeof(tuCfg));
         char testUnitCfg = ((tuCfg&0x300)>>8);
         char testUnitEn  = ((tuCfg&0x2)>>1);
-
         configureTestUnit(tuCfg);
-
         if (baseAddr.verbose > 1) {
           printf("Test unit cfg: %d - en: %d", testUnitCfg, testUnitEn);
         }

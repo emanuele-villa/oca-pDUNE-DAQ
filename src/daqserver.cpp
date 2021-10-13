@@ -81,8 +81,8 @@ void daqserver::ProcessCmdReceived(char* msg){
       ReplyToCmd(msg);
       //FIX ME: only for now to test
       for (int ii=0; ii<32; ii++) {
-	printf("%s) Reading reg %d\n", __METHOD_NAME__, ii);
-	ReadReg(ii);
+      	printf("%s) Reading reg %d\n", __METHOD_NAME__, ii);
+      	ReadReg(ii);
       }
     }
     else if (strcmp(msg, "cmd=Wait") == 0){//essentially for test
@@ -261,8 +261,8 @@ int daqserver::ReadReg(uint32_t regAddr) {
 
   for (uint32_t ii=0; ii<det.size(); ii++) {
     ret |= (det.at(ii)->readReg(regAddr, regCont)<<ii);
-    if (kVerbosity>0) {
-      printf("%s) Read from DE10 %d: %x\n", __METHOD_NAME__, ii, regCont);
+    if (kVerbosity>-1) {
+      printf("%s) Read from DE10 %d: %08x\n", __METHOD_NAME__, ii, regCont);
     }
   }
   return ret;
