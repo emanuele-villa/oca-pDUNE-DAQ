@@ -1,5 +1,6 @@
 ﻿#include "de10_silicon_base.h"
 #include "utility.h"
+#include <unistd.h>
 
 uint32_t okVal = 0xb01af1ca;
 uint32_t badVal = 0x000cacca;
@@ -192,20 +193,18 @@ int de10_silicon_base::EventReset() {
 //FIX ME: this doesn't reply as the others (i.e. 0=OK), but with the size it did read 
 int de10_silicon_base::GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen){
 
-  printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
   SendCmd("getEvent");
-  printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
 
   //Get the event from HPS and loop here until all data are read
   uint32_t evtRead = 0;
   ReceiveInt(evtLen);//in int units
-  printf("%s) Event Lenght = %u\n", __METHOD_NAME__, evtLen);
+  //  printf("%s) Event Lenght = %u\n", __METHOD_NAME__, evtLen);
   if (evt.size()<evtLen) evt.resize(evtLen);
   evtLen*=sizeof(uint32_t);//in byte units
   while (evtRead < evtLen) {
     evtRead += Receive(&evt[evtRead], evtLen-evtRead);
   }
-
+  
   return evtRead;
 }
 

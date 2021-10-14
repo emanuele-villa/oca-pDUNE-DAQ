@@ -94,6 +94,7 @@ void configureTestUnit(uint32_t tuCfg){
 
 //Receive one event from the FastDATA FIFO
 int getEvent(std::vector<uint32_t>& evt, int* evtLen){
+
   int readErr;
   uint32_t pktLen;
 
@@ -109,16 +110,21 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   //Read the status of the FIFO and return if almost-empty
   readErr = StatusFifo(DATA_FIFO, &fifoLevel, &fifoFull, &fifoEmpty, &fifoAFull, &fifoAEmpty, &aFullThr, &aEmptyThr);
   ShowStatusFifo(DATA_FIFO);
+  //  printf("%u\n", fifoLevel);
   if (fifoEmpty==1){
-    printf("Fifo Empty. \n");
-    return 1;
+    *evtLen = 0;
+    evt.clear();
+    if (baseAddr.verbose>2) {
+      printf("Fifo Empty. \n");
+    }
+    return 0;
   }
 
   //Read the first word and make sure it's the SoP
   readErr = ReadFifo(DATA_FIFO, &valueRead);
   if(valueRead != DATA_SOP){
     fprintf(stderr, "First value of event not SoP: %08x\n", valueRead);
-    return 2;
+    return -1;
   }
 
   //Read the packet length
@@ -130,7 +136,7 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   readErr = ReadFifoBurst(DATA_FIFO, packet + 2, pktLen - 1, false);
   if (readErr < 0){
     fprintf(stderr, "Error in reading event\n");
-    return 3;
+    return -1;
   }
 
   if (baseAddr.verbose > 1){
@@ -143,6 +149,6 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   *evtLen = pktLen;
   evt.resize(pktLen+1);
   memcpy(evt.data(), packet, pktLen+1);
-
+  
   return 0;
 }

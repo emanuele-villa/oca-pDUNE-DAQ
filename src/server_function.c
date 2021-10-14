@@ -61,48 +61,6 @@ int sendSocket(int socket, void* msg, uint32_t len){
   return 0;
 }
 
-//Acquire a packet from the FPGA and forward it to the socket
-void *high_priority(void *socket){
-  std::vector<uint32_t> evt;
-  int evtLen=0;
-  int n;
-  int sock = *(int *)socket;
-
-  //Get an event from FPGA
-  int evtErr = getEvent(evt, &evtLen);
-  if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
-
-  //Send the event to the socket
-  n = write(sock, evt.data(), evtLen*sizeof(uint32_t));
-  if(n < 0){
-    perror("Error in writing an event to the socket\n");
-  }else{
-    if (baseAddr.verbose > 1) printf("Sent %d bytes\n", n);
-  }
-
-  //Kill the thread
-  pthread_exit(NULL);
-}
-
-//Spawn a thread to send an event to socket
-void GetEvent(int socket){
-  pthread_t t;
-  pthread_attr_t attr;
-  int new_priority = 20;
-  struct sched_param param;
-
-  pthread_attr_init(&attr);
-  pthread_attr_getschedparam(&attr, &param);
-  param.sched_priority = new_priority;
-
-  if (baseAddr.verbose > 1) printf("socket: %d\n", socket);
-  if(pthread_create(&t, &attr, &high_priority, &socket) < 0){
-    perror("Error in creating high_priority thread\n");
-  }
-  pthread_join(t, 0);
-
-}
-
 //------------------------------------------------------------------------
 
 // hpsserver.cpp
@@ -341,9 +299,9 @@ void* receiver_comandi(int* sockIn){
     int bytesRead=0;
     
     //Read the command
-    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
+    //    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
     bytesRead=read(openConn, msg, cmdLen);
-    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
+    //    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
 
     //Check if the read is ok and process its content
     if(bytesRead < 0) {
@@ -394,9 +352,9 @@ void* receiver_comandi(int* sockIn){
       else if(strcmp(msg, "cmd=setMode") == 0){
         uint32_t mode = 0;
 	receiveSocket(openConn, &mode, sizeof(mode));
-	printf("%s-%d) %d\n", __METHOD_NAME__, __LINE__, mode);
+	//	printf("%s-%d) %d\n", __METHOD_NAME__, __LINE__, mode);
         SetMode(mode);
-	printf("%s-%d) %d\n", __METHOD_NAME__, __LINE__, mode);
+	//	printf("%s-%d) %d\n", __METHOD_NAME__, __LINE__, mode);
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=getEventNumber") == 0){
@@ -449,7 +407,7 @@ void* receiver_comandi(int* sockIn){
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=getEvent") == 0){
-	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
+	//	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
 	std::vector<uint32_t> evt;
         int evtLen=0;
 
@@ -461,7 +419,7 @@ void* receiver_comandi(int* sockIn){
         //Send the eventLen to the socket
         sendSocket(openConn, &evtLen, sizeof(evtLen));
         //Send the event to the socket
-        sendSocket(openConn, evt.data(), evtLen*sizeof(uint32_t));
+        if (evtLen>0) sendSocket(openConn, evt.data(), evtLen*sizeof(uint32_t));
         if (baseAddr.verbose > 1) printf("%s) Event sent\n", __METHOD_NAME__);
       }
       else if (strcmp(msg, "cmd=setCmdLenght") == 0) {

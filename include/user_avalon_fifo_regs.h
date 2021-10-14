@@ -7,12 +7,22 @@
 
 
 // OFFSET per puntare sui registri di stato della FIFO a partire da FIFO_HPS_TO_FPGA_IN_CSR_BASE
+//This definitions would work if doing the pointer arithmetics in byte units (i.e. handling char*)-------------
+/* #define ALTERA_AVALON_FIFO_LEVEL_REG        (0x00000000) */
+/* #define ALTERA_AVALON_FIFO_STATUS_REG       (0x00000004) */
+/* #define ALTERA_AVALON_FIFO_EVENT_REG        (0x00000008) */
+/* #define ALTERA_AVALON_FIFO_IENABLE_REG      (0x0000000c) */
+/* #define ALTERA_AVALON_FIFO_ALMOSTFULL_REG   (0x00000010) */
+/* #define ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG  (0x00000014) */
+//-------------------------------------------------------------------------------------------------------------
+//This definitions would work if doing the pointer arithmetics in 4-byte units (i.e. handling void* or int*)---
 #define ALTERA_AVALON_FIFO_LEVEL_REG        (0x00000000)
-#define ALTERA_AVALON_FIFO_STATUS_REG       (0x00000004)
-#define ALTERA_AVALON_FIFO_EVENT_REG        (0x00000008)
-#define ALTERA_AVALON_FIFO_IENABLE_REG      (0x0000000c)
-#define ALTERA_AVALON_FIFO_ALMOSTFULL_REG   (0x00000010)
-#define ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG  (0x00000014)
+#define ALTERA_AVALON_FIFO_STATUS_REG       (0x00000001)
+#define ALTERA_AVALON_FIFO_EVENT_REG        (0x00000002)
+#define ALTERA_AVALON_FIFO_IENABLE_REG      (0x00000003)
+#define ALTERA_AVALON_FIFO_ALMOSTFULL_REG   (0x00000004)
+#define ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG  (0x00000005)
+//-------------------------------------------------------------------------------------------------------------
 
 //bit dell' EVENT REGISTER
 #define ALTERA_AVALON_FIFO_EVENT_F_MSK    (0x01)

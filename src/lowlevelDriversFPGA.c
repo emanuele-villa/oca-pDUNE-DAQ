@@ -8,6 +8,7 @@
 #include "user_avalon_fifo_regs.h"
 #include "lowlevelDriversFPGA.h"
 #include "server.h"
+#include "utility.h"
 
 //Atomic FIFO methods
 
@@ -205,6 +206,15 @@ int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_
 	*almostfull_setting = *lw_fifo_almostfull_reg_addr;
 	*almostempty_setting = *lw_fifo_almostempty_reg_addr;
 
+	/* printf("%s-%d) %u %u %u %u %u %u %u\n", __METHOD_NAME__, __LINE__, */
+	/*        *fifo_level, */
+	/*        *fifo_full, */
+	/*        *fifo_empty, */
+	/*        *fifo_almostfull, */
+	/*        *fifo_almostempty, */
+	/*        *almostfull_setting, */
+	/*        *almostempty_setting); */
+	
 	return (0);
 }
 

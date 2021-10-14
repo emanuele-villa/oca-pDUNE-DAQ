@@ -340,18 +340,17 @@ int daqserver::recordEvents(FILE* fd) {
   int writeRet = 0;
   //std::vector<uint32_t*> evts(det.size(), "");
   uint32_t evtLen = 0;
+  uint32_t evtLen_tot = 0;
   std::vector<uint32_t> evt(652);
   
   //FIX ME: mandare prima il comando a tutte le DE10 e poi leggere pian piano
 
   for (uint32_t ii=0; ii<det.size(); ii++) {
-    printf("%p\n", det.at(ii));
     //ret += (det.at(ii)->GetEvent(evts[ii]));
-    printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
     readRet += (det.at(ii)->GetEvent(evt, evtLen));
-    printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
+    evtLen_tot += evtLen;
+    sleep(1);
     writeRet += fwrite(evt.data(), evtLen, 1, fd);
-    printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
     if (kVerbosity>1) {
       printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
       printf("  Bytes read: %d/%d\n", readRet, evtLen);
@@ -359,13 +358,20 @@ int daqserver::recordEvents(FILE* fd) {
 
     }
   }
-  printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
 
   //Everything is read and dumped to file
-  if (readRet != (int)(evtLen*det.size()) || writeRet != (int)det.size()) {
-    printf("%s):\n  Bytes read: %d/%lu\n", __METHOD_NAME__, readRet, evtLen*det.size());
-    printf("  Writes performed: %d/%lu\n", writeRet, det.size());
-    return -1;
+  if (evtLen_tot!=0) {
+    if (readRet != evtLen_tot || writeRet != det.size()) {
+      printf("%s):\n", __METHOD_NAME__);
+      printf("    Bytes read: %d/%u\n", readRet, evtLen_tot);
+      printf("    Writes performed: %d/%u\n", writeRet, det.size());
+      return -1;
+    }
+  }
+  else {
+    if (kVerbosity>1) {
+      printf("%s) total event lenght was 0\n", __METHOD_NAME__);
+    }
   }
   return 0;
 }
