@@ -7,12 +7,16 @@
 // const int nde10 = 1;
 // const char* addressde10[nde10] = {"localhost"};
 // int portde10[nde10] = {80};
-const int nde10 = 1;
-const char* addressde10[nde10] = {"192.168.1.3"};
-int portde10[nde10] = {5000};
+// const int nde10 = 1;
+// const char* addressde10[nde10] = {"192.168.1.3"};
+// int portde10[nde10] = {5000};
 // const int nde10 = 0;
 // const char* addressde10[nde10] = {};
 // int portde10[nde10] = {};
+const int nde10 = 6;
+const char* addressde10[nde10] = {"192.168.1.101", "192.168.1.102", "192.168.1.103",
+				  "192.168.1.104", "192.168.1.105", "192.168.1.106",};
+int portde10[nde10] = {5000, 5000, 5000, 5000, 5000, 5000,};
 
 int verbosity=0;
 
@@ -39,7 +43,7 @@ int main(int argc, char *argv[]) {
   }
 
   //this must be done before the `signal` otherwise for StopRun the daqsrv is still NULL
-  daqsrv = new daqserver(9999, verbosity);
+  daqsrv = new daqserver(8888, verbosity);
   daqsrv->SetCmdLenght(64);
 
   daqsrv->SetListDetectors(nde10, addressde10, portde10, 24);

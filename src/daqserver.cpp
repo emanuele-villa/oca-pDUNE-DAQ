@@ -141,7 +141,7 @@ void daqserver::ProcessCmdReceived(char* msg){
     char cmdgroup[4][32] = {"", "", "", ""};
     for (int ii=0; ii<4; ii++) {
       strncpy(cmdgroup[ii], &command_string[ii*8], 8);
-      if (kVerbosity>-1) {//FIX ME: should be >0
+      if (kVerbosity>0) {
 	printf("%s\n", cmdgroup[ii]);
       }
     }
@@ -171,7 +171,7 @@ void daqserver::ProcessCmdReceived(char* msg){
 	uint32_t runnum = strtol(srunnum, &ptr, 16);
 	uint32_t unixtime = strtol(cmdgroup[3], &ptr, 16);
 	std::time_t t = unixtime;
-	if (kVerbosity>-1) {//FIX ME: should be >0
+	if (kVerbosity>0) {
 	  printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
 	}
 	//Spawn a thread to read events. Stop() will join the thread
@@ -399,6 +399,9 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
 
   std::string humanDate = format_human_date(unixtime);
   sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kdataPath, runnum, runtype, humanDate.c_str());
+
+  printf("%s) Opening output file: %s\n", __METHOD_NAME__, dataFileName);
+
   FILE* dataFileD;
   dataFileD = fopen(dataFileName,"w");
   if (dataFileD == nullptr) {
@@ -416,7 +419,7 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
   
   //Close the file and terminate thread
   fclose(dataFileD);
-  if (kVerbosity > 0) printf("%s) File closed\n", __METHOD_NAME__);
+  printf("%s) File %s closed\n", __METHOD_NAME__, dataFileName);
 }
 
 void daqserver::Stop() {
