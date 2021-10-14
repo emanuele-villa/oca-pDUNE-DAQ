@@ -377,17 +377,44 @@ int daqserver::recordEvents(FILE* fd) {
   return 0;
 }
 
+auto format_time_values = [](unsigned int val, size_t ndigits) {
+    std::string sval = std::to_string(val);
+    if (sval.length() < ndigits) {
+        sval = std::string(ndigits - sval.length(), '0').append(sval);
+    }
+    return sval;
+};
+
 void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
   //Open a file in the kdataPath folder and name it with UTC
   char dataFileName[255];
-  // int runnum = time(NULL);
-  //FIX ME:
-  // - use the unixtime and runtype and build the agreed file name
-  // - implement the file header
-  sprintf(dataFileName,"%s/%d.dat", kdataPath, runnum);
+
+  auto format_human_date = [](uint32_t timel){
+      // Construct human-readable date
+      time_t time{timel};
+      auto humanTime = *gmtime(&time);
+
+      std::string dateTime;
+      dateTime.append(std::to_string(humanTime.tm_year + 1900));
+      dateTime.append(format_time_values(humanTime.tm_mon + 1, 2));
+      dateTime.append(format_time_values(humanTime.tm_mday, 2));
+      dateTime.append("_");
+      dateTime.append(format_time_values(humanTime.tm_hour, 2));
+      dateTime.append(format_time_values(humanTime.tm_min, 2));
+      dateTime.append(format_time_values(humanTime.tm_sec, 2));
+
+      return dateTime;
+  };
+
+  // copy runtype and make it all UPPERCASE
+  std::string runtype_upper{runtype};
+  std::transform(begin(runtype_upper), end(runtype_upper), begin(runtype_upper), std::toupper);
+
+  std::string humanDate = format_human_date(unixtime);
+  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kdataPath, runnum, runtype, humanDate.c_str());
   FILE* dataFileD;
   dataFileD = fopen(dataFileName,"w");
-  if (dataFileD == NULL) {
+  if (dataFileD == nullptr) {
     printf("%s) Error: file %s could not be created. Do the data dir %s exist?\n", __METHOD_NAME__, dataFileName, kdataPath);
     return;
   }
