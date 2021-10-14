@@ -2,7 +2,7 @@
 #define DAQSERVER_H
 
 #include <vector>
-#include <pthread.h>
+#include <thread>
 
 #include "tcpserver.h"
 #include "de10_silicon_base.h"
@@ -15,7 +15,7 @@ private:
   std::vector<de10_silicon_base*> det;
   const char kdataPath[12] = "../../data/";
   volatile bool kStart;
-  pthread_t threadStart;
+  std::thread _3d;
   int calibmode;
   int mode;
   int trigtype;
@@ -40,8 +40,8 @@ public:
   
   int ReadReg(uint32_t regAddr);
   int Init();
-  void* Start();
-  void* Stop();
+  void Start(char* runtype, uint32_t runnum, uint32_t unixtime);
+  void Stop();
 
 };
 

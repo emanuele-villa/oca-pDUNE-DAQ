@@ -48,7 +48,7 @@ INCLUDEARM += $(INCLUDE)
 CFLAGS := -g -Wall -Wextra -pthread #-fsanitize=address
 LDFLAGS := -g -Wall -Wextra -pthread #-fsanitize=address
 
-CPPFLAGS := $(CFLAGS) $(INCLUDE)
+CPPFLAGS := $(CFLAGS) -std=c++11 $(INCLUDE)
 CFLAGSARM := $(CFLAGS) $(INCLUDEARM) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
 
 # Objects and sources:

@@ -109,9 +109,14 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
 
   //Read the status of the FIFO and return if almost-empty
   readErr = StatusFifo(DATA_FIFO, &fifoLevel, &fifoFull, &fifoEmpty, &fifoAFull, &fifoAEmpty, &aFullThr, &aEmptyThr);
-  ShowStatusFifo(DATA_FIFO);
+  //  ShowStatusFifo(DATA_FIFO);
   //  printf("%u\n", fifoLevel);
   if (fifoEmpty==1){
+    uint32_t regContent;
+    ReadReg(21, &regContent);
+    printf("Registro 21: %08x\n", regContent);
+    ReadReg(22, &regContent);
+    printf("Registro 22: %08x\n", regContent);    
     *evtLen = 0;
     evt.clear();
     if (baseAddr.verbose>2) {

@@ -7,9 +7,9 @@
 #include <ctime>
 
 daqserver* singletonDqSrv=NULL;
-void* _Start(void* tid) {
-  singletonDqSrv->Start();
-  return NULL;
+void _Start(char* runtype, uint32_t runnum, uint32_t unixtime){
+  singletonDqSrv->Start(runtype, runnum, unixtime);
+  return;
 }
 
 daqserver::daqserver(int port, int verb):tcpserver(port, verb){
@@ -183,12 +183,13 @@ void daqserver::ProcessCmdReceived(char* msg){
 	  printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
 	}
 	//Spawn a thread to read events. Stop() will join the thread
-	if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
-	  printf("%s) Error creating thread", __METHOD_NAME__);
-	}
-	else {
-	  ReplyToCmd(msg);
-	}
+	// if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
+	//   printf("%s) Error creating thread", __METHOD_NAME__);
+        // }
+	// else {
+	_3d = std::thread(&daqserver::Start, this, runtype, runnum, unixtime);
+	ReplyToCmd(msg);
+	//	}
       }
       else if(strcmp(stop,cmdgroup[2])==0) {//stop daq
 	printf("%s) Stop()\n", __METHOD_NAME__);
@@ -361,10 +362,10 @@ int daqserver::recordEvents(FILE* fd) {
 
   //Everything is read and dumped to file
   if (evtLen_tot!=0) {
-    if (readRet != evtLen_tot || writeRet != det.size()) {
+    if (readRet != (int)evtLen_tot || writeRet != (int)(det.size())) {
       printf("%s):\n", __METHOD_NAME__);
       printf("    Bytes read: %d/%u\n", readRet, evtLen_tot);
-      printf("    Writes performed: %d/%u\n", writeRet, det.size());
+      printf("    Writes performed: %d/%d\n", writeRet, (int)(det.size()));
       return -1;
     }
   }
@@ -376,16 +377,19 @@ int daqserver::recordEvents(FILE* fd) {
   return 0;
 }
 
-void* daqserver::Start() {
+void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
   //Open a file in the kdataPath folder and name it with UTC
   char dataFileName[255];
-  int runnum = time(NULL);
+  // int runnum = time(NULL);
+  //FIX ME:
+  // - use the unixtime and runtype and build the agreed file name
+  // - implement the file header
   sprintf(dataFileName,"%s/%d.dat", kdataPath, runnum);
   FILE* dataFileD;
   dataFileD = fopen(dataFileName,"w");
   if (dataFileD == NULL) {
     printf("%s) Error: file %s could not be created. Do the data dir %s exist?\n", __METHOD_NAME__, dataFileName, kdataPath);
-    return NULL;
+    return;
   }
 
   SetMode(1);
@@ -399,14 +403,11 @@ void* daqserver::Start() {
   //Close the file and terminate thread
   fclose(dataFileD);
   if (kVerbosity > 0) printf("%s) File closed\n", __METHOD_NAME__);
-
-  pthread_exit(NULL);
 }
 
-void* daqserver::Stop() {
-
+void daqserver::Stop() {
   kStart = false;
-  pthread_join(threadStart, 0);
+  _3d.join();
 
   SetMode(0);
   sleep(10);
@@ -414,5 +415,4 @@ void* daqserver::Stop() {
   //FIX ME: metterci un while che fa N GetEvent()
   
   if (kVerbosity > 0) printf("%s) Thread stopped succesfully\n", __METHOD_NAME__);
-  return NULL;
 }
