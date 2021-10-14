@@ -6,12 +6,6 @@
 #include <stdlib.h>
 #include <ctime>
 
-daqserver* singletonDqSrv=NULL;
-void _Start(char* runtype, uint32_t runnum, uint32_t unixtime){
-  singletonDqSrv->Start(runtype, runnum, unixtime);
-  return;
-}
-
 daqserver::daqserver(int port, int verb):tcpserver(port, verb){
   if (kVerbosity>0){
     printf("%s) daqserver created\n", __METHOD_NAME__);
@@ -26,8 +20,6 @@ daqserver::daqserver(int port, int verb):tcpserver(port, verb){
   mode=0;
   trigtype=0;
   
-  if(singletonDqSrv==NULL) singletonDqSrv=this;
-  else printf("%s) Class already exists\n", __METHOD_NAME__);
   return;
 }
 
@@ -162,11 +154,11 @@ void daqserver::ProcessCmdReceived(char* msg){
 	strncpy(runtype, &cmdgroup[1][4], 4);
 	char sruntype[32] = "";
 	if (strcmp(beam,runtype)==0) {
-	  sprintf(sruntype, "beam");
+	  sprintf(sruntype, "BEAM");
 	  SetCalibrationMode(0);
 	}
 	else if (strcmp(cal,runtype)==0) {
-	  sprintf(sruntype, "cal");
+	  sprintf(sruntype, "CAL");
 	  SetCalibrationMode(1);
 	}
 	else {
@@ -183,11 +175,7 @@ void daqserver::ProcessCmdReceived(char* msg){
 	  printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
 	}
 	//Spawn a thread to read events. Stop() will join the thread
-	// if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
-	//   printf("%s) Error creating thread", __METHOD_NAME__);
-        // }
-	// else {
-	_3d = std::thread(&daqserver::Start, this, runtype, runnum, unixtime);
+	_3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
 	ReplyToCmd(msg);
 	//	}
       }
@@ -350,7 +338,6 @@ int daqserver::recordEvents(FILE* fd) {
     //ret += (det.at(ii)->GetEvent(evts[ii]));
     readRet += (det.at(ii)->GetEvent(evt, evtLen));
     evtLen_tot += evtLen;
-    sleep(1);
     writeRet += fwrite(evt.data(), evtLen, 1, fd);
     if (kVerbosity>1) {
       printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
@@ -406,9 +393,9 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
       return dateTime;
   };
 
-  // copy runtype and make it all UPPERCASE
-  std::string runtype_upper{runtype};
-  std::transform(begin(runtype_upper), end(runtype_upper), begin(runtype_upper), std::toupper);
+  // // copy runtype and make it all UPPERCASE
+  // std::string runtype_upper{runtype};
+  // std::transform(begin(runtype_upper), end(runtype_upper), begin(runtype_upper), std::toupper);
 
   std::string humanDate = format_human_date(unixtime);
   sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kdataPath, runnum, runtype, humanDate.c_str());
