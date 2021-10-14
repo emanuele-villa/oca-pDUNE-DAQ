@@ -255,8 +255,8 @@ void* receiver_comandi(int* sockIn){
   /* printf("%s) %u\n", __METHOD_NAME__, *(baseAddr.configFifo)); */
   /* printf("%s) %u\n", __METHOD_NAME__, *(baseAddr.configFifoCsr)); */
   /* InitFifo(CONFIG_FIFO, 5, 1000, 0); */
-  /* ShowStatusFifo(CONFIG_FIFO); */  
-  
+  /* ShowStatusFifo(CONFIG_FIFO); */
+
   addrLen = sizeof(client_addr);
   printf("Waiting for a client to connect...\n");
   openConn = accept(*sockIn, (struct sockaddr *) &client_addr, (socklen_t *) &addrLen);
@@ -266,11 +266,11 @@ void* receiver_comandi(int* sockIn){
   else{
     uint32_t trash;
     printf("%s) Connection open: (socket number %d, %s:%d)\n", __METHOD_NAME__, openConn, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-    printf("\nRegister array initial content:\n");
-    for(int j=0; j<32; j++){
-      ReadReg(j, &trash);
-    }
-    printf("\n");
+    // printf("\nRegister array initial content:\n");
+    // for(int j=0; j<32; j++){
+    //   ReadReg(j, &trash);
+    // }
+    // printf("\n");
   }
   //Handshaking to set the same command length of the client
   int cmdLen = 24;
@@ -280,7 +280,7 @@ void* receiver_comandi(int* sockIn){
 
   //FIX ME fetch the GW version from gitlab and not from FPGA
   ReadReg(rGW_VER, &kGwV);
-  
+
 
   //-----------------------------------------------------
   // questa parte sara' un metodo di hpsserver
@@ -297,7 +297,7 @@ void* receiver_comandi(int* sockIn){
   while(kControl) {
     char msg[256]="";
     int bytesRead=0;
-    
+
     //Read the command
     //    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
     bytesRead=read(openConn, msg, cmdLen);
@@ -310,7 +310,7 @@ void* receiver_comandi(int* sockIn){
         printf("%s) errno: %d\n", __METHOD_NAME__, errno);
       }
       else {
-        printf("%s) Read error (%d)\n", __METHOD_NAME__, bytesRead);
+        printf("%s) Read error: (%d)\n", __METHOD_NAME__, errno);
         perror("Read error");
       }
     }
@@ -412,15 +412,14 @@ void* receiver_comandi(int* sockIn){
         int evtLen=0;
 
         //Get an event from FPGA
-	if (baseAddr.verbose > 1) printf("Read 1 event from FPGA\n");
         int evtErr = getEvent(evt, &evtLen);
-        if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
+        if (baseAddr.verbose > 2) printf("getEvent result: %d\n", evtErr);
 
         //Send the eventLen to the socket
         sendSocket(openConn, &evtLen, sizeof(evtLen));
         //Send the event to the socket
         if (evtLen>0) sendSocket(openConn, evt.data(), evtLen*sizeof(uint32_t));
-        if (baseAddr.verbose > 1) printf("%s) Event sent\n", __METHOD_NAME__);
+        if (baseAddr.verbose > 2) printf("%s) Event sent\n", __METHOD_NAME__);
       }
       else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
         receiveSocket(openConn, &cmdLen, sizeof(cmdLen));

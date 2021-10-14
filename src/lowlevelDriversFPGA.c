@@ -88,11 +88,11 @@ int WriteFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntato
 
 // Funzione di scrittura della FIFO con un burst di dati.
 int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){// (Selezione della FIFO, Indirizzo di partenza dell'array di dati da inviare alla FIFO, Numero di dati che costituisce la raffica)
-  
+
   if (FIFO_TYPE != CONFIG_FIFO){
     return (1);
   }
-  
+
   if (readFifoFull(baseAddr.configFifoStatus)) //FIX ME: Should check the A-Full before writing
     return (2);
   else
@@ -100,7 +100,7 @@ int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){// (Selezion
       for (int i=0; i<length_burst; i++){
 	*baseAddr.configFifo = data[i];
       }
-      
+
       return (0);
     }
 }
@@ -139,7 +139,7 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t* data, int length_burst, bool flush){	
   uint32_t *f2h_lw_fifo_level_reg_addr = nullptr;
   uint32_t *f2h_lw_fifo_output_addr = nullptr;
   int readLen = length_burst;
-  
+
   // Selezione della FIFO
   if (FIFO_TYPE == CONFIG_FIFO)
     return (-1);
@@ -153,7 +153,7 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t* data, int length_burst, bool flush){	
   }
   else
     return (-1);
-  
+
   fifo_level = readFifoLevel(f2h_lw_fifo_level_reg_addr);		// Lettura del livello di riempimento della FIFO.
   if (flush == true) {
     readLen = (uint32_t)fifo_level;
@@ -164,7 +164,7 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t* data, int length_burst, bool flush){	
     for (int i=0; i<readLen; i++){
       data[i] = *f2h_lw_fifo_output_addr;
     }
-    
+
     return (readLen);
   }
 }
@@ -214,7 +214,7 @@ int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_
 	/*        *fifo_almostempty, */
 	/*        *almostfull_setting, */
 	/*        *almostempty_setting); */
-	
+
 	return (0);
 }
 
@@ -311,7 +311,6 @@ uint32_t crc_update(uint32_t crc, const void *data, size_t data_len){
         }
         crc &= 0xffffffff;
     }
-    //    printf("[***********************] CRC: %08x\n", crc);
     return crc & 0xffffffff;
 }
 
@@ -363,7 +362,7 @@ void ReadReg(int regAddr, uint32_t *data){
 	//Read the register content
 	*data = *baseAddr.fpgaRegCont;
 
-  if(baseAddr.verbose > 0){
+  if(baseAddr.verbose > 2){
     printf("ReadREG: Register addr: %d - content: %08x\n", regAddr, *data);
   }
 }
@@ -381,7 +380,7 @@ int writeReg(uint32_t * pktContent, int pktLen){
   uint32_t packet[pktLen+6];
   uint8_t parityMsb, parityLsb;
   uint32_t pktCrc;
-  
+
   //Create the packet header
   pktCrc = crc_init();
   packet[0] = REG_SOP;
@@ -406,7 +405,7 @@ int writeReg(uint32_t * pktContent, int pktLen){
   pktCrc = crc_finalize(pktCrc);
   packet[pktLen+5] = pktCrc;
 
-  if (baseAddr.verbose > 1){
+  if (baseAddr.verbose > 2){
     printf("\nwriteReg: Packet Content:\n");
     for (int jj=0; jj<pktLen+6;jj++){
       printf("%08x\n", packet[jj]);
@@ -415,6 +414,6 @@ int writeReg(uint32_t * pktContent, int pktLen){
 
   //Send the packet
   WriteFifoBurst(CONFIG_FIFO, packet, pktLen+6);
-  
+
   return 0;
 }
