@@ -23,7 +23,7 @@ struct fpgaAddresses baseAddr;
 uint32_t kGwV = 0;
 
 int main(int argc, char *argv[]){
-  baseAddr.verbose = 2; //@todo pass the verbose as argument
+  baseAddr.verbose = 1; //@todo pass the verbose as argument
   printf("Opening /dev/mem...\n");
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
   //if the pointer is void* summing 1 (pointer + 1) means actually summing 4 (since the compiler knows that you have to move of 4 bytes)
   //if the pointer is char* summing 1 (pointer + 1) means actually summing 1 (since the compiler knows that you have to move of 1 bytes)
   //this arithmetics bust be coompatible with the offset defined
-  
+
   //Base address of the RegisterArray address
   // the shifts are in units of bytes ----
   baseAddr.fpgaRegAddr = (uint32_t*)((unsigned long)baseAddr.virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + REGADDR_PIO_BASE) & (unsigned long)(HW_REGS_MASK)));
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
   baseAddr.configFifoLevel  = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_LEVEL_REG;
   baseAddr.configFifoStatus = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_STATUS_REG;
   //--------------------------------------
-  
+
   //Base addresses of the Data and CSR of the HK FIFO
   // the shifts are in units of bytes ----
   baseAddr.hkFifo = (uint32_t*)((unsigned long)baseAddr.virtual_base + ((unsigned long)(ALT_LWFPGASLVS_OFST + FIFO_FPGA_TO_HPS_OUT_BASE) & (unsigned long)(HW_REGS_MASK)));
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
 
   //---- only for debug -------------------------------------------------------
   /* sleep(3); */
-  
+
   /* int pippoint[2] = { 10, 11}; */
   /* double pippodouble[2] = { 4.3, 5.4}; */
   /* bool pippobool[2] {true, false}; */
@@ -97,17 +97,10 @@ int main(int argc, char *argv[]){
 
   InitFifo(CONFIG_FIFO, 3, 1000, 0);
   InitFifo(HK_FIFO, 3, 1000, 0);
-  InitFifo(DATA_FIFO, 650, 3443, 0);
+  InitFifo(DATA_FIFO, 646, 3442, 0);
   /* ShowStatusFifo(CONFIG_FIFO); */
   /* ShowStatusFifo(HK_FIFO); */
   /* ShowStatusFifo(DATA_FIFO); */
-  
-  //@todo Create a dedicated thread infrastructure
-  //@todo e.g., add a semaphore to use the shared resources
-  //printf("Creating threads...\n");
-  //pthread_t threads;
-  //pthread_create(&threads, NULL, receiver_comandi, argv[1]);
-  //pthread_create(&threads, NULL, receiver_slow_control, argv[2]);
 
   //Connect to the socket and loop forever to receive commands
   int sock = 0;
@@ -121,10 +114,5 @@ int main(int argc, char *argv[]){
   //Everything done, close the socket
   close(sock);
 
-  //while(1){
-  //  //FIX ME: cosi'?
-  //}
-
-  //pthread_join(threads, 0);
   return 0;
 }

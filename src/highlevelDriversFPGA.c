@@ -21,7 +21,7 @@ void ResetFpga(){
 	//Flush the FastData Fifo
 	//!@todo Flush also the hk
 	flushErr = ReadFifoBurst(DATA_FIFO, data, 0, true);
-	printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
+	if(baseAddr.verbose > 0) printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
 
 	//Remove regArray reset
 	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000000);
@@ -94,41 +94,28 @@ void configureTestUnit(uint32_t tuCfg){
 
 //Receive one event from the FastDATA FIFO
 int getEvent(std::vector<uint32_t>& evt, int* evtLen){
+  int readErr = 0;
+  uint32_t pktLen = 0;
+	uint32_t sopWord= 0;
 
-  int readErr;
-  uint32_t pktLen;
-
-  uint32_t valueRead=0;  //First value in output of the FIFO
-  uint32_t fifoLevel=0;  //FIFO used words
-  uint32_t fifoFull=0;   //Full flag
-  uint32_t fifoEmpty=0;  //Empty flag
-  uint32_t fifoAFull=0;  //Almost-Full flag
-  uint32_t fifoAEmpty=0; //Almost-Empty flag
-  uint32_t aFullThr=0;   //Almost-Full threshold
-  uint32_t aEmptyThr=0;  //Almost-Empty threshold
-
-  //Read the status of the FIFO and return if almost-empty
-  readErr = StatusFifo(DATA_FIFO, &fifoLevel, &fifoFull, &fifoEmpty, &fifoAFull, &fifoAEmpty, &aFullThr, &aEmptyThr);
-  //  ShowStatusFifo(DATA_FIFO);
-  //  printf("%u\n", fifoLevel);
-  if (fifoEmpty==1){
-    uint32_t regContent;
-    ReadReg(21, &regContent);
-    printf("Registro 21: %08x\n", regContent);
-    ReadReg(22, &regContent);
-    printf("Registro 22: %08x\n", regContent);    
+  if (readFifoAEmpty(baseAddr.FastFifoStatus)==true){
     *evtLen = 0;
     evt.clear();
     if (baseAddr.verbose>2) {
-      printf("Fifo Empty. \n");
+			uint32_t regContent;
+			printf("Fifo Empty.\n");
+			ReadReg(21, &regContent);
+			printf("Register 21: %08x\n", regContent);
+			ReadReg(22, &regContent);
+			printf("Register 22: %08x\n", regContent);
     }
     return 0;
   }
 
   //Read the first word and make sure it's the SoP
-  readErr = ReadFifo(DATA_FIFO, &valueRead);
-  if(valueRead != DATA_SOP){
-    fprintf(stderr, "First value of event not SoP: %08x\n", valueRead);
+  readErr = ReadFifo(DATA_FIFO, &sopWord);
+  if(sopWord != DATA_SOP){
+    fprintf(stderr, "First value of event not SoP: %08x\n", sopWord);
     return -1;
   }
 
@@ -144,7 +131,7 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
     return -1;
   }
 
-  if (baseAddr.verbose > 1){
+  if (baseAddr.verbose > 3){
     printf("Event:\n");
     for(uint32_t i = 0; i < pktLen+1; i++){
       printf("%08x\n", packet[i]);
@@ -154,6 +141,6 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   *evtLen = pktLen;
   evt.resize(pktLen+1);
   memcpy(evt.data(), packet, pktLen+1);
-  
+
   return 0;
 }
