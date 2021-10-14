@@ -175,8 +175,8 @@ void daqserver::ProcessCmdReceived(char* msg){
 	}
 	char srunnum[32] = "";
 	strncpy(srunnum,  &cmdgroup[1][0], 4);
-	uint32_t runnum = atoi(srunnum);
 	char* ptr;
+	uint32_t runnum = strtol(srunnum, &ptr, 16);
 	uint32_t unixtime = strtol(cmdgroup[3], &ptr, 16);
 	std::time_t t = unixtime;
 	if (kVerbosity>-1) {//FIX ME: should be >0
