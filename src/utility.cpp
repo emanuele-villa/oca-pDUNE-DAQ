@@ -27,7 +27,7 @@ void exit_if(bool r, const char* format, ...) {
   return;
 }
 
-void* hex2string(char *pt, int length,char* pt_string) {
+void* hex2string(char *pt, int length, char* pt_string) {
   int i=0;
 
   for(i=0;i<(2*length);i++) {	

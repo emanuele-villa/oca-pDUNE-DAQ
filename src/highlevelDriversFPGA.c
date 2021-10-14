@@ -13,7 +13,7 @@
 
 // Reset della logica FPGA
 void ResetFpga(){
-	uint32_t* data;
+	uint32_t data[4096];
 	int flushErr=0;
 	//Set to high the regArray bits of reset
 	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000003);
@@ -46,17 +46,7 @@ void SetDelay(uint32_t delayIn){
 
 //Configura la modalità: Stop(0), Run(1)
 void SetMode(uint32_t modeIn){
-	uint32_t regContent;
-
-	if(modeIn == 0){
-		regContent = 0x00000000;
-	}
-	else if(modeIn == 1){
-		ResetFpga();
-		regContent = 0x00000010;
-	}
-
-	singleWriteReg(rGOTO_STATE, regContent);
+  singleWriteReg(rGOTO_STATE, modeIn);
 }
 
 //Cattura il valore del trigger counter interno ed esterno
@@ -103,21 +93,22 @@ void configureTestUnit(uint32_t tuCfg){
 }
 
 //Receive one event from the FastDATA FIFO
-int getEvent(uint32_t* evt, int* evtLen){
+int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   int readErr;
   uint32_t pktLen;
 
-  uint32_t valueRead;  //First value in output of the FIFO
-  uint32_t fifoLevel;  //FIFO used words
-  uint32_t fifoFull;   //Full flag
-  uint32_t fifoEmpty;  //Empty flag
-  uint32_t fifoAFull;  //Almost-Full flag
-  uint32_t fifoAEmpty; //Almost-Empty flag
-  uint32_t aFullThr;   //Almost-Full threshold
-  uint32_t aEmptyThr;  //Almost-Empty threshold
+  uint32_t valueRead=0;  //First value in output of the FIFO
+  uint32_t fifoLevel=0;  //FIFO used words
+  uint32_t fifoFull=0;   //Full flag
+  uint32_t fifoEmpty=0;  //Empty flag
+  uint32_t fifoAFull=0;  //Almost-Full flag
+  uint32_t fifoAEmpty=0; //Almost-Empty flag
+  uint32_t aFullThr=0;   //Almost-Full threshold
+  uint32_t aEmptyThr=0;  //Almost-Empty threshold
 
   //Read the status of the FIFO and return if almost-empty
   readErr = StatusFifo(DATA_FIFO, &fifoLevel, &fifoFull, &fifoEmpty, &fifoAFull, &fifoAEmpty, &aFullThr, &aEmptyThr);
+  ShowStatusFifo(DATA_FIFO);
   if (fifoEmpty==1){
     printf("Fifo Empty. \n");
     return 1;
@@ -150,7 +141,8 @@ int getEvent(uint32_t* evt, int* evtLen){
   }
 
   *evtLen = pktLen;
-  evt = packet;
+  evt.resize(pktLen+1);
+  memcpy(evt.data(), packet, pktLen+1);
 
   return 0;
 }

@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
   //------------------------------------------------
   char readBack[LEN]="";
   static const int length=16;
-  char* command_string=new char[2*length];
+  char* command_string=new char[2*length+1];
   //------------------------------------------------
   
   if (verbosity>0) {
@@ -52,6 +52,8 @@ int main(int argc, char *argv[]) {
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
+
+  return 0;
   
   sleep(30);
 

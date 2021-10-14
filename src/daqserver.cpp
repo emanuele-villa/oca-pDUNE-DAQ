@@ -23,6 +23,7 @@ daqserver::daqserver(int port, int verb):tcpserver(port, verb){
   kStart=false;
 
   calibmode=0;
+  mode=0;
   trigtype=0;
   
   if(singletonDqSrv==NULL) singletonDqSrv=this;
@@ -78,6 +79,17 @@ void daqserver::SetCalibrationMode(uint32_t mode){
   
   return;
 }
+
+void daqserver::SetMode(uint8_t _mode){
+
+  mode = _mode;
+  
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetMode(mode);
+  }
+  
+  return;
+}
   
 void daqserver::SelectTrigger(uint32_t trig){
 
@@ -129,7 +141,7 @@ void daqserver::ProcessCmdReceived(char* msg){
     static const char* cal   ="0000";
 
     static const int length=16;
-    char command_string[2*length] = "";
+    char command_string[2*length+1] = "";
     hex2string(msg, length, command_string);
 
     //    printf("%s\n", command_string);
@@ -149,8 +161,14 @@ void daqserver::ProcessCmdReceived(char* msg){
 	char runtype[32] = "";
 	strncpy(runtype, &cmdgroup[1][4], 4);
 	char sruntype[32] = "";
-	if (strcmp(beam,runtype)==0) sprintf(sruntype, "beam");
-	else if (strcmp(cal,runtype)==0) sprintf(sruntype, "cal");
+	if (strcmp(beam,runtype)==0) {
+	  sprintf(sruntype, "beam");
+	  SetCalibrationMode(0);
+	}
+	else if (strcmp(cal,runtype)==0) {
+	  sprintf(sruntype, "cal");
+	  SetCalibrationMode(1);
+	}
 	else {
 	  printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
 	  sprintf(sruntype, "????");
@@ -165,12 +183,12 @@ void daqserver::ProcessCmdReceived(char* msg){
 	  printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
 	}
 	//Spawn a thread to read events. Stop() will join the thread
-	// if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
-	//   printf("%s) Error creating thread", __METHOD_NAME__);
-	// }
-	//      else {//FIX ME: do we need to wait?
-	ReplyToCmd(msg);
-	//      }
+	if (pthread_create(&threadStart, NULL, _Start, (void*)0)) {
+	  printf("%s) Error creating thread", __METHOD_NAME__);
+	}
+	else {
+	  ReplyToCmd(msg);
+	}
       }
       else if(strcmp(stop,cmdgroup[2])==0) {//stop daq
 	printf("%s) Stop()\n", __METHOD_NAME__);
@@ -317,6 +335,7 @@ int daqserver::Init() {
 
 //Read the events from all of the DE10 and write them in binary to the .dat file
 int daqserver::recordEvents(FILE* fd) {
+  
   int readRet = 0;
   int writeRet = 0;
   //std::vector<uint32_t*> evts(det.size(), "");
@@ -326,9 +345,13 @@ int daqserver::recordEvents(FILE* fd) {
   //FIX ME: mandare prima il comando a tutte le DE10 e poi leggere pian piano
 
   for (uint32_t ii=0; ii<det.size(); ii++) {
+    printf("%p\n", det.at(ii));
     //ret += (det.at(ii)->GetEvent(evts[ii]));
+    printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
     readRet += (det.at(ii)->GetEvent(evt, evtLen));
-    writeRet += fwrite(&evt[0], evtLen, 1, fd);
+    printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
+    writeRet += fwrite(evt.data(), evtLen, 1, fd);
+    printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
     if (kVerbosity>1) {
       printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
       printf("  Bytes read: %d/%d\n", readRet, evtLen);
@@ -336,6 +359,7 @@ int daqserver::recordEvents(FILE* fd) {
 
     }
   }
+  printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
 
   //Everything is read and dumped to file
   if (readRet != (int)(evtLen*det.size()) || writeRet != (int)det.size()) {
@@ -358,12 +382,14 @@ void* daqserver::Start() {
     return NULL;
   }
 
+  SetMode(1);
+  
   //Dump events to the file until Stop is received
   kStart = true;
   while(kStart) {
     recordEvents(dataFileD);
   }
-
+  
   //Close the file and terminate thread
   fclose(dataFileD);
   if (kVerbosity > 0) printf("%s) File closed\n", __METHOD_NAME__);
@@ -372,8 +398,15 @@ void* daqserver::Start() {
 }
 
 void* daqserver::Stop() {
+
   kStart = false;
   pthread_join(threadStart, 0);
+
+  SetMode(0);
+  sleep(10);
+
+  //FIX ME: metterci un while che fa N GetEvent()
+  
   if (kVerbosity > 0) printf("%s) Thread stopped succesfully\n", __METHOD_NAME__);
   return NULL;
 }

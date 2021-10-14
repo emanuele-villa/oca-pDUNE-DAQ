@@ -17,6 +17,7 @@ private:
   volatile bool kStart;
   pthread_t threadStart;
   int calibmode;
+  int mode;
   int trigtype;
 
   void ProcessCmdReceived(char* msg);
@@ -32,6 +33,7 @@ public:
   void SetDetectorsCmdLenght(int detcmdlenght);
 
   void SetCalibrationMode(uint32_t mode);
+  void SetMode(uint8_t mode);
   void SelectTrigger(uint32_t trig);
 
   void ReadAllRegs();

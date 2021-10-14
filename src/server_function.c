@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 //#include <sys/mman.h>
 #include <arpa/inet.h>
+#include <vector>
 
 #include "utility.h"
 
@@ -62,17 +63,17 @@ int sendSocket(int socket, void* msg, uint32_t len){
 
 //Acquire a packet from the FPGA and forward it to the socket
 void *high_priority(void *socket){
-  uint32_t evt;
+  std::vector<uint32_t> evt;
   int evtLen=0;
   int n;
   int sock = *(int *)socket;
 
   //Get an event from FPGA
-  int evtErr = getEvent(&evt, &evtLen);
+  int evtErr = getEvent(evt, &evtLen);
   if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
 
   //Send the event to the socket
-  n = write(sock, &evt, evtLen);
+  n = write(sock, evt.data(), evtLen*sizeof(uint32_t));
   if(n < 0){
     perror("Error in writing an event to the socket\n");
   }else{
@@ -334,12 +335,15 @@ void* receiver_comandi(int* sockIn){
 
   uint32_t okVal  = 0xb01af1ca;
   uint32_t badVal = 0x000cacca;
-  char msg[256]="";
-  int bytesRead=0;
   bool kControl = true;
   while(kControl) {
+    char msg[256]="";
+    int bytesRead=0;
+    
     //Read the command
+    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
     bytesRead=read(openConn, msg, cmdLen);
+    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
 
     //Check if the read is ok and process its content
     if(bytesRead < 0) {
@@ -366,7 +370,7 @@ void* receiver_comandi(int* sockIn){
         for(int ii = 0; ii < 7; ii++){
 	  receiveSocket(openConn, &singleReg, sizeof(singleReg));
           regsContent[ii*2]   = singleReg;
-          regsContent[ii*2+1] = (uint32_t)ii;
+          regsContent[ii*2+1] = (uint32_t)ii+1;
         }
 
         Init(regsContent, 14);
@@ -390,7 +394,9 @@ void* receiver_comandi(int* sockIn){
       else if(strcmp(msg, "cmd=setMode") == 0){
         uint32_t mode = 0;
 	receiveSocket(openConn, &mode, sizeof(mode));
+	printf("%s-%d) %d\n", __METHOD_NAME__, __LINE__, mode);
         SetMode(mode);
+	printf("%s-%d) %d\n", __METHOD_NAME__, __LINE__, mode);
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=getEventNumber") == 0){
@@ -443,17 +449,19 @@ void* receiver_comandi(int* sockIn){
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=getEvent") == 0){
-        uint32_t* evt = NULL;
+	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
+	std::vector<uint32_t> evt;
         int evtLen=0;
 
         //Get an event from FPGA
+	if (baseAddr.verbose > 1) printf("Read 1 event from FPGA\n");
         int evtErr = getEvent(evt, &evtLen);
         if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
 
         //Send the eventLen to the socket
         sendSocket(openConn, &evtLen, sizeof(evtLen));
         //Send the event to the socket
-        sendSocket(openConn, evt, evtLen*sizeof(uint32_t));
+        sendSocket(openConn, evt.data(), evtLen*sizeof(uint32_t));
         if (baseAddr.verbose > 1) printf("%s) Event sent\n", __METHOD_NAME__);
       }
       else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
@@ -470,8 +478,6 @@ void* receiver_comandi(int* sockIn){
         sendSocket(openConn, &badVal, sizeof(badVal));
       }
     }
-
-    bzero(msg, sizeof(msg));
   }
 
   //-------------------------------------------------

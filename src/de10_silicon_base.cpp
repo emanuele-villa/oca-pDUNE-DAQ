@@ -31,7 +31,6 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, int _detid, 
   SetMode(0);
   detId = _detid;
 
-  changeText("hello");
   if (verbosity>0) {
     printf("%s) de10 silicon created\n", __METHOD_NAME__);
   }
@@ -160,7 +159,7 @@ int de10_silicon_base::SetMode(uint8_t modeIn) {
     ret = 1;
   }
   ReceiveInt(reply);
-  if (verbosity>0) {
+  if (verbosity>-1) {//FIX ME
     printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
   }  
   return ret;
@@ -193,11 +192,14 @@ int de10_silicon_base::EventReset() {
 //FIX ME: this doesn't reply as the others (i.e. 0=OK), but with the size it did read 
 int de10_silicon_base::GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen){
 
+  printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
   SendCmd("getEvent");
+  printf("%s) QUI %d PORCO IL PAPA\n", __METHOD_NAME__, __LINE__);
 
   //Get the event from HPS and loop here until all data are read
   uint32_t evtRead = 0;
   ReceiveInt(evtLen);//in int units
+  printf("%s) Event Lenght = %u\n", __METHOD_NAME__, evtLen);
   if (evt.size()<evtLen) evt.resize(evtLen);
   evtLen*=sizeof(uint32_t);//in byte units
   while (evtRead < evtLen) {
