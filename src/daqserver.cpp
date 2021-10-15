@@ -10,7 +10,7 @@
 #include <chrono>
 #include <algorithm>
 
-daqserver::daqserver(int port, int verb):tcpserver(port, verb){
+daqserver::daqserver(int port, int verb) : tcpserver(port, verb), m_evt(652){
   if (kVerbosity>0){
     printf("%s) daqserver created\n", __METHOD_NAME__);
   }
@@ -23,7 +23,7 @@ daqserver::daqserver(int port, int verb):tcpserver(port, verb){
   calibmode=0;
   mode=0;
   trigtype=0;
-  
+
   return;
 }
 
@@ -68,29 +68,29 @@ void daqserver::SetDetectorsCmdLenght(int detcmdlenght){
 void daqserver::SetCalibrationMode(uint32_t mode){
 
   calibmode = mode;
-  
+
   for (int ii=0; ii<(int)(det.size()); ii++) {
     det[ii]->SetCalibrationMode(calibmode);
   }
-  
+
   return;
 }
 
 void daqserver::SetMode(uint8_t _mode){
 
   mode = _mode;
-  
+
   for (int ii=0; ii<(int)(det.size()); ii++) {
     det[ii]->SetMode(mode);
   }
-  
+
   return;
 }
-  
+
 void daqserver::SelectTrigger(uint32_t trig){
 
   trigtype = trig;
-  
+
   for (int ii=0; ii<(int)(det.size()); ii++) {
     det[ii]->SelectTrigger(trigtype);
   }
@@ -149,7 +149,7 @@ void daqserver::ProcessCmdReceived(char* msg){
 	printf("%s\n", cmdgroup[ii]);
       }
     }
-    
+
     //check the command
     if (strcmp(btcmd, cmdgroup[0])==0) {//is a chinese command
       if (strcmp(start,cmdgroup[2])==0) {//start daq
@@ -251,50 +251,49 @@ int daqserver::Init() {
 
 
 //Read the events from all of the DE10 and write them in binary to the .dat file
-int daqserver::recordEvents(FILE* fd) {
-  
+int daqserver::recordEvents() {
+
   int readRet = 0;
   int writeRet = 0;
   //std::vector<uint32_t*> evts(det.size(), "");
   uint32_t evtLen = 0;
   uint32_t evtLen_tot = 0;
-  std::vector<uint32_t> evt(652);
 
   // FIX ME: at most 64 DE10
   std::bitset<64> replied{0};
-  
+
   constexpr uint32_t pippo = 0xfa4af1ca;
   bool headerWritten = false;
 
   // FIX ME: replace kStart with proper timeout
   do {
-    for (uint32_t ii=0; ii<det.size(); ii++) {
-      if(!replied[ii]){
-	det.at(ii)->AskEvent();
+    for (uint32_t ii = 0; ii < det.size(); ii++) {
+      if (!replied[ii]) {
+        det.at(ii)->AskEvent();
       }
-    }    
-    
-    for (uint32_t ii=0; ii<det.size(); ii++) {
-      if(!replied[ii]){
-	readRet += (det.at(ii)->GetEvent(evt, evtLen));
-	if(evtLen){
-	  replied[ii] = true;
-	}    
-	evtLen_tot += evtLen;
+    }
 
-	// only write the header when the first board replies
-	if(replied.count() == 1 && !headerWritten){
-	  ++nEvents;
-	  fwrite(&pippo, 4, 1, fd);	  
-	  headerWritten = true;
-	}
-	writeRet += fwrite(evt.data(), evtLen, 1, fd);
+    for (uint32_t ii = 0; ii < det.size(); ii++) {
+      if (!replied[ii]) {
+        readRet += (det.at(ii)->GetEvent(m_evt, evtLen));
+        if (evtLen) {
+          replied[ii] = true;
+        }
+        evtLen_tot += evtLen;
 
-	if (kVerbosity>0) {
-	  printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
-	  printf("  Bytes read: %d/%d\n", readRet, evtLen);
-	  printf("  Writes performed: %d/%lu\n", writeRet, det.size());
-	}
+        // only write the header when the first board replies
+        if (replied.count() == 1 && !headerWritten) {
+          ++nEvents;
+          QueueForWrite({pippo});
+          headerWritten = true;
+        }
+        // 	writeRet += fwrite(m_evt.data(), evtLen, 1, fd);
+        QueueForWrite(m_evt);
+
+        if (kVerbosity > 0) {
+          printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
+          printf("  Bytes read: %d/%d\n", readRet, evtLen);
+        }
       }
     }
   } while (replied.count() && (replied.count() != det.size()) && kStart);
@@ -362,14 +361,16 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
   }
 
   SetMode(1);
-  
+
   //Dump events to the file until Stop is received
   kStart = true;
   unsigned int lastNEvents = 0;
+  altro_3d = std::thread(&daqserver::WriteEvents, this, dataFileD);
+
   while(kStart) {
     usleep(10);
     auto start = std::chrono::high_resolution_clock::now();
-    recordEvents(dataFileD);
+    recordEvents();
     auto stop = std::chrono::high_resolution_clock::now();
 
     if(nEvents != lastNEvents){
@@ -378,7 +379,7 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
     }
   }
   std::cout << '\n';
-  
+
   //Close the file and terminate thread
   fclose(dataFileD);
   printf("%s) File %s closed\n", __METHOD_NAME__, dataFileName);
@@ -387,8 +388,9 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
 void daqserver::Stop() {
   if(kStart){
     kStart = false;
-    printf("Joining thread...\n");
+    printf("Joining threads...\n");
     _3d.join();
+    altro_3d.join();
     printf("...joined\n");
   }
 
@@ -396,6 +398,24 @@ void daqserver::Stop() {
   sleep(10);
 
   //FIX ME: metterci un while che fa N GetEvent()
-  
+
   if (kVerbosity > 0) printf("%s) Thread stopped succesfully\n", __METHOD_NAME__);
 }
+
+void daqserver::QueueForWrite(const std::vector<uint32_t> &data) {
+  std::lock_guard<std::mutex> lock{m_evtWriteMtx};
+  std::copy(begin(data), end(data), std::back_inserter(m_evtWriteBuffer));
+}
+
+void daqserver::WriteEvents(FILE *fd) {
+
+  do {
+    {
+      std::lock_guard<std::mutex> lock{m_evtWriteMtx};
+      fwrite(m_evtWriteBuffer.data(), m_evtWriteBuffer.size() * sizeof(decltype(m_evtWriteBuffer)::value_type), 1, fd);
+      m_evtWriteBuffer.clear();
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+  } while(kStart || !m_evtWriteBuffer.empty());
+}
+
