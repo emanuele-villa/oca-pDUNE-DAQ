@@ -190,11 +190,12 @@ int de10_silicon_base::EventReset() {
   return ret;
 }
 
+void de10_silicon_base::AskEvent(){
+  SendCmd("getEvent");
+}
+
 //FIX ME: this doesn't reply as the others (i.e. 0=OK), but with the size it did read 
 int de10_silicon_base::GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen){
-
-  SendCmd("getEvent");
-
   //Get the event from HPS and loop here until all data are read
   uint32_t evtRead = 0;
   ReceiveInt(evtLen);//in int units
@@ -202,9 +203,17 @@ int de10_silicon_base::GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen){
   if (evt.size()<evtLen) evt.resize(evtLen);
   evtLen*=sizeof(uint32_t);//in byte units
   while (evtRead < evtLen) {
-    evtRead += Receive(&evt[evtRead], evtLen-evtRead);
+    //    printf("%s) %d %d %d\n", __METHOD_NAME__, evtRead/sizeof(uint32_t), evtLen, evtRead);
+    evtRead += Receive(&evt[evtRead/sizeof(uint32_t)], evtLen-evtRead);
   }
-  
+
+  // if (evtLen) {
+  //   printf("%s) %d %d %d\n", __METHOD_NAME__, evtRead/sizeof(uint32_t), evtLen, evtRead);
+  //   printf("%s) Length: %d\n",__METHOD_NAME__, evtLen);
+  //   for (uint32_t jj=0; jj<(evtLen/4); jj++) {
+  //     printf("%s)******%d %08x\n",__METHOD_NAME__, jj, evt[jj]);
+  //   }
+  //  }
   return evtRead;
 }
 

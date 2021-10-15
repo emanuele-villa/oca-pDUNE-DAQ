@@ -96,18 +96,16 @@ void configureTestUnit(uint32_t tuCfg){
 int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   int readErr = 0;
   uint32_t pktLen = 0;
-	uint32_t sopWord= 0;
+  uint32_t sopWord= 0;
 
   if (readFifoAEmpty(baseAddr.FastFifoStatus)==true){
-    *evtLen = 0;
-    evt.clear();
     if (baseAddr.verbose>2) {
-			uint32_t regContent;
-			printf("Fifo Empty.\n");
-			ReadReg(21, &regContent);
-			printf("Register 21: %08x\n", regContent);
-			ReadReg(22, &regContent);
-			printf("Register 22: %08x\n", regContent);
+      uint32_t regContent;
+      printf("Fifo A-Empty.\n");
+      ReadReg(21, &regContent);
+      printf("Register 21: %08x\n", regContent);
+      ReadReg(22, &regContent);
+      printf("Register 22: %08x\n", regContent);
     }
     return 0;
   }
@@ -125,7 +123,7 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   uint32_t packet[pktLen + 1];
   packet[0] = DATA_SOP;
   packet[1] = pktLen;
-  readErr = ReadFifoBurst(DATA_FIFO, packet + 2, pktLen - 1, false);
+  readErr = ReadFifoBurst(DATA_FIFO, &packet[2], pktLen - 1, false);
   if (readErr < 0){
     fprintf(stderr, "Error in reading event\n");
     return -1;
@@ -138,9 +136,9 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
     }
   }
 
-  *evtLen = pktLen;
+  *evtLen = pktLen+1;
   evt.resize(pktLen+1);
-  memcpy(evt.data(), packet, pktLen+1);
+  memcpy(evt.data(), packet, sizeof(uint32_t)*(pktLen+1));
 
   return 0;
 }

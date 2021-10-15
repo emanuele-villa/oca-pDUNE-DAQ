@@ -19,7 +19,8 @@ private:
   int calibmode;
   int mode;
   int trigtype;
-
+  unsigned int nEvents = 0;
+  
   void ProcessCmdReceived(char* msg);
   
   int recordEvents(FILE* fd);

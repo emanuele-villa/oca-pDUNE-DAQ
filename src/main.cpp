@@ -14,9 +14,12 @@
 // const char* addressde10[nde10] = {};
 // int portde10[nde10] = {};
 const int nde10 = 6;
-const char* addressde10[nde10] = {"192.168.1.101", "192.168.1.102", "192.168.1.103",
-				  "192.168.1.104", "192.168.1.105", "192.168.1.106",};
+const char* addressde10[nde10] = {"192.168.2.101", "192.168.2.102", "192.168.2.103",
+				  "192.168.2.104", "192.168.2.105", "192.168.2.106",};
 int portde10[nde10] = {5000, 5000, 5000, 5000, 5000, 5000,};
+// const int nde10 = 1;
+// const char* addressde10[nde10] = {"192.168.2.101"};
+// int portde10[nde10] = {5000};
 
 int verbosity=0;
 
@@ -51,8 +54,9 @@ int main(int argc, char *argv[]) {
   daqsrv->Init();
 
   daqsrv->SetCalibrationMode(1);
-  daqsrv->SelectTrigger(1);
-  daqsrv->ReadAllRegs();
+  daqsrv->SelectTrigger(0);
+  //  daqsrv->ReadAllRegs();
+  daqsrv->ReadReg(31);
   
   //is not really working, for now: it is killed as a standard CTRL-C
   //the param sent to StopRun is SIGTERM itself and we need that StopRun accepts a param even if cannot use it

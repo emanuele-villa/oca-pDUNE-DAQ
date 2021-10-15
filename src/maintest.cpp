@@ -5,7 +5,7 @@
 #include "utility.h"
 
 const char* addressdaq = "localhost";
-const int portdaq = 9999;
+const int portdaq = 8888;
 
 int verbosity=0;
 
@@ -52,8 +52,10 @@ int main(int argc, char *argv[]) {
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
+
+  return 0;
   
-  sleep(60);
+  sleep(10);
 
   // old format
   // //  const char* stop  ="FF80000800000000EE00000000000000";
@@ -76,7 +78,7 @@ int main(int argc, char *argv[]) {
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
 
-  sleep(60);
+  sleep(10);
 
   uint32_t stop2[4] = {0x080080FF, 0x00001600, 0x000000EE, 0x5B8D6181};
   daq->Send((void*)stop2, 4*sizeof(uint32_t));
@@ -84,7 +86,7 @@ int main(int argc, char *argv[]) {
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
   
-  daq->SendCmd("fava");
+  // daq->SendCmd("fava");
   
   return 0;
 }

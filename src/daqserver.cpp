@@ -5,6 +5,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctime>
+#include <bitset>
+#include <iostream>
+#include <chrono>
+#include <algorithm>
 
 daqserver::daqserver(int port, int verb):tcpserver(port, verb){
   if (kVerbosity>0){
@@ -165,6 +169,13 @@ void daqserver::ProcessCmdReceived(char* msg){
 	  printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
 	  sprintf(sruntype, "????");
 	}
+
+	// ignore consecutive Start commands
+	if(kStart){
+	  ReplyToCmd("Consecutive starts received. Ignoring last command.");
+	  return;
+	}
+
 	char srunnum[32] = "";
 	strncpy(srunnum,  &cmdgroup[1][0], 4);
 	char* ptr;
@@ -175,6 +186,7 @@ void daqserver::ProcessCmdReceived(char* msg){
 	  printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
 	}
 	//Spawn a thread to read events. Stop() will join the thread
+	nEvents = 0;
 	_3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
 	ReplyToCmd(msg);
 	//	}
@@ -197,90 +209,6 @@ void daqserver::ProcessCmdReceived(char* msg){
     }
 
   }
-
-/*
-
-  while(1){
-
-    char msg[LEN];
-
-    if(read(new_socket, msg, sizeof(msg)) < 0){
-      perror("errore nella read\n");
-    }
-    else{
-      if(strcmp(msg, "init") == 0){
-	Init(new_socket);
-      }
-      if(strcmp(msg, "set delay") == 0){
-	SetDelay(new_socket);
-      }
-
-      if(strcmp(msg, "get event") == 0){
-
-	GetEvent(new_socket);
-      }
-
-      if(strcmp(msg, "set mode") == 0){
-
-	SetMode(new_socket);
-      }
-
-      if(strcmp(msg, "get event number") == 0){
-
-	GetEventNumber(new_socket);
-      }
-
-      if(strcmp(msg, "print all event number") == 0){
-
-	PrintAllEventNumber(new_socket);
-      }
-
-      if(strcmp(msg, "event reset") == 0){
-
-	EventReset(new_socket);
-      }
-
-      if(strcmp(msg, "OverWriteDelay") == 0){
-
-	OverWriteDelay(new_socket);
-      }
-
-      if(strcmp(msg, "Calibrate") == 0){
-
-	Calibrate(new_socket);
-      }
-
-      if(strcmp(msg, "WriteCalibPar") == 0){
-
-	WriteCalibPar(new_socket);
-      }
-
-      if(strcmp(msg, "SaveCalibrations") == 0){
-
-	SaveCalibrations(new_socket);
-      }
-
-      if(strcmp(msg, "intTriggerPeriod") == 0){
-
-	intTriggerPeriod(new_socket);
-      }
-
-      if(strcmp(msg, "selectTrigger") == 0){
-
-	selectTrigger(new_socket);
-      }
-
-      if(strcmp(msg, "configureTestUnit") == 0){
-
-	configureTestUnit(new_socket);
-      }
-    }
-
-    bzero(msg, sizeof(msg));
-
-  }
-
-*/
 
   return;
 }
@@ -331,21 +259,45 @@ int daqserver::recordEvents(FILE* fd) {
   uint32_t evtLen = 0;
   uint32_t evtLen_tot = 0;
   std::vector<uint32_t> evt(652);
+
+  // FIX ME: at most 64 DE10
+  std::bitset<64> replied{0};
   
-  //FIX ME: mandare prima il comando a tutte le DE10 e poi leggere pian piano
+  constexpr uint32_t pippo = 0xfa4af1ca;
+  bool headerWritten = false;
 
-  for (uint32_t ii=0; ii<det.size(); ii++) {
-    //ret += (det.at(ii)->GetEvent(evts[ii]));
-    readRet += (det.at(ii)->GetEvent(evt, evtLen));
-    evtLen_tot += evtLen;
-    writeRet += fwrite(evt.data(), evtLen, 1, fd);
-    if (kVerbosity>1) {
-      printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
-      printf("  Bytes read: %d/%d\n", readRet, evtLen);
-      printf("  Writes performed: %d/1\n", writeRet);
+  // FIX ME: replace kStart with proper timeout
+  do {
+    for (uint32_t ii=0; ii<det.size(); ii++) {
+      if(!replied[ii]){
+	det.at(ii)->AskEvent();
+      }
+    }    
+    
+    for (uint32_t ii=0; ii<det.size(); ii++) {
+      if(!replied[ii]){
+	readRet += (det.at(ii)->GetEvent(evt, evtLen));
+	if(evtLen){
+	  replied[ii] = true;
+	}    
+	evtLen_tot += evtLen;
 
+	// only write the header when the first board replies
+	if(replied.count() == 1 && !headerWritten){
+	  ++nEvents;
+	  fwrite(&pippo, 4, 1, fd);	  
+	  headerWritten = true;
+	}
+	writeRet += fwrite(evt.data(), evtLen, 1, fd);
+
+	if (kVerbosity>0) {
+	  printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
+	  printf("  Bytes read: %d/%d\n", readRet, evtLen);
+	  printf("  Writes performed: %d/%lu\n", writeRet, det.size());
+	}
+      }
     }
-  }
+  } while (replied.count() && (replied.count() != det.size()) && kStart);
 
   //Everything is read and dumped to file
   if (evtLen_tot!=0) {
@@ -413,9 +365,19 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
   
   //Dump events to the file until Stop is received
   kStart = true;
+  unsigned int lastNEvents = 0;
   while(kStart) {
+    usleep(10);
+    auto start = std::chrono::high_resolution_clock::now();
     recordEvents(dataFileD);
+    auto stop = std::chrono::high_resolution_clock::now();
+
+    if(nEvents != lastNEvents){
+      std::cout << "\rEvent " << nEvents << " last recordEvents took " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " us                            " << std::flush;
+      lastNEvents = nEvents;
+    }
   }
+  std::cout << '\n';
   
   //Close the file and terminate thread
   fclose(dataFileD);
@@ -423,8 +385,12 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
 }
 
 void daqserver::Stop() {
-  kStart = false;
-  _3d.join();
+  if(kStart){
+    kStart = false;
+    printf("Joining thread...\n");
+    _3d.join();
+    printf("...joined\n");
+  }
 
   SetMode(0);
   sleep(10);
