@@ -53,8 +53,6 @@ int main(int argc, char *argv[]) {
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
 
-  return 0;
-  
   sleep(10);
 
   // old format

@@ -45,8 +45,8 @@ ifdef ROOTSYS
 endif
 INCLUDEARM += $(INCLUDE)
 
-CFLAGS := -O3 -Wall -Wextra -pthread #-fsanitize=address
-LDFLAGS := -O3 -Wall -Wextra -pthread #-fsanitize=address
+CFLAGS := -Wall -Wextra -pthread #-fsanitize=address
+LDFLAGS := -Wall -Wextra -pthread #-fsanitize=address
 
 CPPFLAGS := $(CFLAGS) -std=c++11 $(INCLUDE)
 CFLAGSARM := $(CFLAGS) $(INCLUDEARM) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
@@ -72,12 +72,12 @@ hps: $(HPSSERVER)
 $(OCADAQ): $(OBJECTS)
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
-	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
+	$(CXX) $(CPPFLAGS) -O3 $^ -o $@ $(ROOTGLIBS)
 
 $(OCATEST): $(OBJECTSTEST)
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
-	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
+	$(CXX) $(CPPFLAGS) -O3 $^ -o $@ $(ROOTGLIBS)
 
 $(HPSSERVER): $(OBJECTSHPS)
 ifeq ($(UNAME_S),Darwin)
@@ -107,7 +107,7 @@ ifeq ($(UNAME_S),Darwin)
 else
 	@echo Compiling $< ...
 	@mkdir -pv $(OBJARM)
-	$(CCARM) $(CFLAGSARM) -c -o $@ $<
+	$(CCARM) $(CFLAGSARM) -O2 -c -o $@ $<
 endif
 
 clean:

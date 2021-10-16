@@ -409,6 +409,7 @@ void* receiver_comandi(int* sockIn){
       else if(strcmp(msg, "cmd=getEvent") == 0){
 	//	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
 	std::vector<uint32_t> evt;
+	
         int evtLen=0;
 
         //Get an event from FPGA

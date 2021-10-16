@@ -98,6 +98,13 @@ void daqserver::SelectTrigger(uint32_t trig){
   return;
 }
 
+void daqserver::ResetBoards(){
+  printf("%s) Resetting boards counters...\n", __METHOD_NAME__);
+  for(auto de10 : det){
+    de10->EventReset();
+  }
+}
+
 void daqserver::ProcessCmdReceived(char* msg){
 
   if (kVerbosity>-1) {//FIX ME: >-1 perche' ora non fa niene, poi deve fare quelle sotto
@@ -361,6 +368,7 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
     return;
   }
 
+  ResetBoards();
   SetMode(1);
   
   //Dump events to the file until Stop is received

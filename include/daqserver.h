@@ -37,6 +37,8 @@ public:
   void SetMode(uint8_t mode);
   void SelectTrigger(uint32_t trig);
 
+  void ResetBoards();
+
   void ReadAllRegs();
   
   int ReadReg(uint32_t regAddr);
