@@ -23,6 +23,11 @@ struct fpgaAddresses baseAddr;
 uint32_t kGwV = 0;
 
 int main(int argc, char *argv[]){
+  if (argc < 2) {
+    printf("Usage:\n\tPAPERO <socket port>\n");
+    return 0;
+  }
+
   baseAddr.verbose = 1; //@todo pass the verbose as argument
   printf("Opening /dev/mem...\n");
 	int fd;
@@ -94,7 +99,11 @@ int main(int argc, char *argv[]){
   /* printf("%d %d\n", *(&pippoint[0]), *(&pippoint[0]+1)); */
   /* printf("%d %d\n", *(&pippoint[0]), *((int*)(((char*)&pippoint[0])+1))); */
     //---------------------------------------------------------------------------
-
+  uint32_t piumone = 0;
+  ReadReg(rGW_VER, &kGwV);
+  ReadReg(rPIUMONE, &piumone);
+  printf("\n/*--- GateWare SHA: %08x ----------------------*/\n", kGwV);
+  printf("/*--- Piumone (it must be 0xC1A0C1A0): %08x ---*/\n\n", piumone);
   InitFifo(CONFIG_FIFO, 3, 1000, 0);
   InitFifo(HK_FIFO, 3, 1000, 0);
   InitFifo(DATA_FIFO, 646, 3442, 0);
