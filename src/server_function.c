@@ -11,6 +11,8 @@
 //#include <sys/mman.h>
 #include <arpa/inet.h>
 #include <vector>
+#include <iostream>
+#include <chrono>
 
 #include "utility.h"
 
@@ -294,14 +296,15 @@ void* receiver_comandi(int* sockIn){
   uint32_t okVal  = 0xb01af1ca;
   uint32_t badVal = 0x000cacca;
   bool kControl = true;
+  uint32_t evtCount = 0;
+  using clock_type = std::chrono::system_clock;
+  auto startRunTime = clock_type::now();
   while(kControl) {
     char msg[256]="";
     int bytesRead=0;
 
     //Read the command
-    //    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
     bytesRead=read(openConn, msg, cmdLen);
-    //    printf("%s-%d) msg = %s, cmdLen = %d\n", __METHOD_NAME__, __LINE__, msg, cmdLen);
 
     //Check if the read is ok and process its content
     if(bytesRead < 0) {
@@ -338,7 +341,7 @@ void* receiver_comandi(int* sockIn){
       else if(strcmp(msg, "cmd=readReg") == 0){
         uint32_t regAddr = 0;
         uint32_t regContent;
-	receiveSocket(openConn, &regAddr, sizeof(regAddr));
+        receiveSocket(openConn, &regAddr, sizeof(regAddr));
         printf("Send read request...\n");
         ReadReg(regAddr, &regContent);
         sendSocket(openConn, &regContent, sizeof(regContent));
@@ -351,10 +354,8 @@ void* receiver_comandi(int* sockIn){
       }
       else if(strcmp(msg, "cmd=setMode") == 0){
         uint32_t mode = 0;
-	receiveSocket(openConn, &mode, sizeof(mode));
-	//	printf("%s-%d) %d\n", __METHOD_NAME__, __LINE__, mode);
+        receiveSocket(openConn, &mode, sizeof(mode));
         SetMode(mode);
-	//	printf("%s-%d) %d\n", __METHOD_NAME__, __LINE__, mode);
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
       else if(strcmp(msg, "cmd=getEventNumber") == 0){
@@ -366,6 +367,8 @@ void* receiver_comandi(int* sockIn){
         sendSocket(openConn, &intTrigCount, sizeof(intTrigCount));
       }
       else if(strcmp(msg, "cmd=eventReset") == 0){
+        evtCount = 0;
+        startRunTime = clock_type::now();
         EventReset();
         sendSocket(openConn, &okVal , sizeof(okVal));
       }
@@ -409,7 +412,7 @@ void* receiver_comandi(int* sockIn){
       else if(strcmp(msg, "cmd=getEvent") == 0){
 	//	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
 	std::vector<uint32_t> evt;
-	
+
         int evtLen=0;
 
         //Get an event from FPGA
@@ -419,7 +422,14 @@ void* receiver_comandi(int* sockIn){
         //Send the eventLen to the socket
         sendSocket(openConn, &evtLen, sizeof(evtLen));
         //Send the event to the socket
-        if (evtLen>0) sendSocket(openConn, evt.data(), evtLen*sizeof(uint32_t));
+        if (evtLen>0) {
+          sendSocket(openConn, evt.data(), evtLen*sizeof(uint32_t));
+          evtCount++;
+          if (evtCount % 1000 == 0) {
+            auto evt1000 = clock_type::now();
+            std::cout << "Event count : " << evtCount << " in " << std::chrono::duration_cast<std::chrono::seconds>(evt1000 - startRunTime).count() << " s\n";
+          }
+        }
         if (baseAddr.verbose > 2) printf("%s) Event sent\n", __METHOD_NAME__);
       }
       else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
