@@ -51,6 +51,11 @@ LDFLAGS := -Wall -Wextra -pthread #-fsanitize=address
 CPPFLAGS := $(CFLAGS) -std=c++11 $(INCLUDE)
 CFLAGSARM := $(CFLAGS) $(INCLUDEARM) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
 
+OCAOPTFLAG := -g
+HPSOPTFLAG := -g
+# OCAOPTFLAG := -O3
+# HPSOPTFLAG := -O2
+
 # Objects and sources:
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
@@ -72,12 +77,12 @@ hps: $(HPSSERVER)
 $(OCADAQ): $(OBJECTS)
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
-	$(CXX) $(CPPFLAGS) -O3 $^ -o $@ $(ROOTGLIBS)
+	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
 
 $(OCATEST): $(OBJECTSTEST)
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
-	$(CXX) $(CPPFLAGS) -O3 $^ -o $@ $(ROOTGLIBS)
+	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
 
 $(HPSSERVER): $(OBJECTSHPS)
 ifeq ($(UNAME_S),Darwin)
@@ -98,7 +103,7 @@ endif
 $(OBJ)/%.o: $(SRC)/%.cpp
 	@echo Compiling $< ...
 	@mkdir -pv $(OBJ)
-	$(CXX) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(CPPFLAGS) $(OCAOPTFLAG) -c -o $@ $<
 
 #Objects
 $(OBJARM)/%.o: $(SRC)/%.c
@@ -107,7 +112,7 @@ ifeq ($(UNAME_S),Darwin)
 else
 	@echo Compiling $< ...
 	@mkdir -pv $(OBJARM)
-	$(CCARM) $(CFLAGSARM) -O2 -c -o $@ $<
+	$(CCARM) $(CFLAGSARM) $(HPSOPTFLAG) -c -o $@ $<
 endif
 
 clean:

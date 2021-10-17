@@ -18,6 +18,10 @@ void ResetFpga(){
 	//Set to high the regArray bits of reset
 	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000003);
 
+	//// FIXME: remove later!
+	//uint32_t dummy;
+	//ReadReg(0, &dummy);
+	
 	//Flush the FastData Fifo
 	//!@todo Flush also the hk
 	flushErr = ReadFifoBurst(DATA_FIFO, data, 0, true);
@@ -25,6 +29,9 @@ void ResetFpga(){
 
 	//Remove regArray reset
 	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000000);
+	//// FIXME: remove later!
+	//ReadReg(0, &dummy);
+	
 }
 
 //Inizializza l'array di registri e resetta la logica FPGA
@@ -47,6 +54,9 @@ void SetDelay(uint32_t delayIn){
 //Configura la modalità: Stop(0), Run(1)
 void SetMode(uint32_t modeIn){
   singleWriteReg(rGOTO_STATE, modeIn);
+  ////FIXME: remove later!
+  //uint32_t dummy;
+  //ReadReg(0, &dummy);
 }
 
 //Cattura il valore del trigger counter interno ed esterno
@@ -99,7 +109,7 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   uint32_t sopWord= 0;
 
   if (readFifoAEmpty(baseAddr.FastFifoStatus)==true){
-    if (baseAddr.verbose>2) {
+    if (baseAddr.verbose>3) {
       uint32_t regContent;
       printf("Fifo A-Empty.\n");
       ReadReg(21, &regContent);

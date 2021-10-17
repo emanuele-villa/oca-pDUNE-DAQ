@@ -7,23 +7,25 @@
 // const int nde10 = 1;
 // const char* addressde10[nde10] = {"localhost"};
 // int portde10[nde10] = {80};
-// const int nde10 = 1;
-// const char* addressde10[nde10] = {"192.168.1.3"};
-// int portde10[nde10] = {5000};
+//const int nde10 = 1;
+//const char* addressde10[nde10] = {"192.168.2.101"};
+//int portde10[nde10] = {5000};
 // const int nde10 = 0;
 // const char* addressde10[nde10] = {};
 // int portde10[nde10] = {};
-const int nde10 = 6;
-const char* addressde10[nde10] = {"192.168.2.101", "192.168.2.102", "192.168.2.103",
-				  "192.168.2.104", "192.168.2.105", "192.168.2.106",};
-int portde10[nde10] = {5000, 5000, 5000, 5000, 5000, 5000,};
+ const int nde10 = 6;
+ const char* addressde10[nde10] = {"192.168.2.101", "192.168.2.102", "192.168.2.103",
+ 				  "192.168.2.104", "192.168.2.105", "192.168.2.106",
+ };
+ int portde10[nde10] = {5000, 5000, 5000, 5000, 5000, 5000,
+ };
 // const int nde10 = 1;
 // const char* addressde10[nde10] = {"192.168.2.101"};
 // int portde10[nde10] = {5000};
 
 int verbosity=0;
 
-daqserver* daqsrv = NULL;
+daqserver* daqsrv = nullptr;
 int ControlOn=1;
 int StatusOn=0;
 

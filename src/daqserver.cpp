@@ -283,7 +283,8 @@ int daqserver::recordEvents(FILE* fd) {
     
     for (uint32_t ii=0; ii<det.size(); ii++) {
       if(!replied[ii]){
-	readRet += (det.at(ii)->GetEvent(evt, evtLen));
+	uint32_t readSingle = (det.at(ii)->GetEvent(evt, evtLen));
+	readRet += readSingle;
 	if(evtLen){
 	  replied[ii] = true;
 	}    
@@ -299,7 +300,7 @@ int daqserver::recordEvents(FILE* fd) {
 
 	if (kVerbosity>0) {
 	  printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
-	  printf("  Bytes read: %d/%d\n", readRet, evtLen);
+	  printf("  Bytes read: %d/%d\n", readSingle, evtLen);
 	  printf("  Writes performed: %d/%lu\n", writeRet, det.size());
 	}
       }

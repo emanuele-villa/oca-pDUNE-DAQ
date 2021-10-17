@@ -59,7 +59,7 @@ int sendSocket(int socket, void* msg, uint32_t len){
     fprintf(stderr, "Error in writing to the socket\n");
     return 1;
   }
-  if (baseAddr.verbose > 2) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  if (baseAddr.verbose > 3) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
   return 0;
 }
 
@@ -417,7 +417,7 @@ void* receiver_comandi(int* sockIn){
 
         //Get an event from FPGA
         int evtErr = getEvent(evt, &evtLen);
-        if (baseAddr.verbose > 2) printf("getEvent result: %d\n", evtErr);
+        if (baseAddr.verbose > 3) printf("getEvent result: %d\n", evtErr);
 
         //Send the eventLen to the socket
         sendSocket(openConn, &evtLen, sizeof(evtLen));
@@ -430,7 +430,7 @@ void* receiver_comandi(int* sockIn){
             std::cout << "Event count : " << evtCount << " in " << std::chrono::duration_cast<std::chrono::seconds>(evt1000 - startRunTime).count() << " s\n";
           }
         }
-        if (baseAddr.verbose > 2) printf("%s) Event sent\n", __METHOD_NAME__);
+        if (baseAddr.verbose > 3) printf("%s) Event sent\n", __METHOD_NAME__);
       }
       else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
         receiveSocket(openConn, &cmdLen, sizeof(cmdLen));

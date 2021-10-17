@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
-
+  
   sleep(10);
 
   // old format
