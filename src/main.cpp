@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
   
   daqsrv->Init();
 
+  
   daqsrv->SetCalibrationMode(1);
   daqsrv->SelectTrigger(0);
   //  daqsrv->ReadAllRegs();

@@ -51,7 +51,7 @@ tcpserver::tcpserver(int port, int verb){
 }
 
 void tcpserver::AcceptConnection(){
-
+  
   if (kSocket!=-1) {
     shutdown(kSocket, SHUT_RDWR);
     kSocket = -1;
@@ -84,14 +84,18 @@ void tcpserver::AcceptConnection(){
     if (kVerbosity>2) {
       printf("%s) %d\n", __METHOD_NAME__, kListeningOn);
     }
-    if (!kListeningOn) return;
+    if (!kListeningOn){
+      return;
+    }
     
-    if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
-    else {
+    if (errno == EAGAIN || errno == EWOULDBLOCK){
+      usleep(100);
+      continue;
+    } else {
       exit_if(kSocket<0, "%s) Negotiation error:", __METHOD_NAME__);
     }
       
-    usleep(1000000);
+    sleep(1);
   }
   
   //------------ make the read(socket) non-blocking ---------
@@ -129,7 +133,7 @@ void tcpserver::ListenCmd(){
   kListeningOn=true;
 
   while (kListeningOn){
-    //    printf("%d\n", kListeningOn);
+    // printf("%d\n", kListeningOn);
 
     char msg[LEN];
 

@@ -374,11 +374,13 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
   //Dump events to the file until Stop is received
   kStart = true;
   unsigned int lastNEvents = 0;
+  using clock_type = std::chrono::system_clock;
+  // using clock_type = std::chrono::high_resolution_clock;
   while(kStart) {
-    usleep(10);
-    auto start = std::chrono::high_resolution_clock::now();
+    usleep(200);
+    auto start = clock_type::now();
     recordEvents(dataFileD);
-    auto stop = std::chrono::high_resolution_clock::now();
+    auto stop = clock_type::now();
 
     if(nEvents != lastNEvents){
       std::cout << "\rEvent " << nEvents << " last recordEvents took " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " us                            " << std::flush;
