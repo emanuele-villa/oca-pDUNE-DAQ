@@ -57,3 +57,4 @@ objarm/
 exe/
 build*
 *.user
+bin/

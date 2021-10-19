@@ -11,6 +11,7 @@
 #include "socal/socal.h"
 #include "socal/hps.h"
 #include "socal/alt_gpio.h"
+#include <iostream>
 
 #include "hps_0.h"
 #include "user_avalon_fifo_regs.h"
@@ -23,6 +24,8 @@ struct fpgaAddresses baseAddr;
 uint32_t kGwV = 0;
 
 int main(int argc, char *argv[]){
+  std::cout<<"hash="<<GIT_HASH<<", time="<<COMPILE_TIME<<", branch="<<GIT_BRANCH<<std::endl;
+  
   if (argc < 2) {
     printf("Usage:\n\tPAPERO <socket port>\n");
     return 0;

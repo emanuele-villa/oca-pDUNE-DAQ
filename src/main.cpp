@@ -1,5 +1,6 @@
 #include <signal.h>
 #include <unistd.h>
+#include <iostream>
 
 #include "daqserver.h"
 #include "utility.h"
@@ -46,28 +47,28 @@ int main(int argc, char *argv[]) {
     printf("OCA:\n");
     printf("--------------------------------\n");
   }
-
+  std::cout<<"hash="<<GIT_HASH<<", time="<<COMPILE_TIME<<", branch="<<GIT_BRANCH<<std::endl;
   //this must be done before the `signal` otherwise for StopRun the daqsrv is still NULL
   daqsrv = new daqserver(8888, verbosity);
   daqsrv->SetCmdLenght(64);
 
   daqsrv->SetListDetectors(nde10, addressde10, portde10, 24);
-  
+
   daqsrv->Init();
 
-  
+
   daqsrv->SetCalibrationMode(1);
   daqsrv->SelectTrigger(0);
   //  daqsrv->ReadAllRegs();
   daqsrv->ReadReg(31);
-  
+
   //is not really working, for now: it is killed as a standard CTRL-C
   //the param sent to StopRun is SIGTERM itself and we need that StopRun accepts a param even if cannot use it
   signal(SIGTERM,StopRun);//killing the PID of the process we call the function StopRun that exits the program in the right way
   signal(SIGINT,StopRun);// sending 'CTRL_C' the program exits in the right way
   signal(SIGQUIT,PrintStatus);//sending 'CTRL \' we print the numbers of taken events
-  
-  // quando lo usiamo cosi' lui sta in Listen perenne e aspetta dei comandi dal suo master per passarlo alle de10nano 
+
+  // quando lo usiamo cosi' lui sta in Listen perenne e aspetta dei comandi dal suo master per passarlo alle de10nano
   daqsrv->ListenCmd();
 
   // quando invece lo usiamo cosi' lui è master della acquisizione, non e' server di nulla e puo' essere utilizzato per mandare comandi in sequenza

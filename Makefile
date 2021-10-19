@@ -1,9 +1,17 @@
+GIT_HASH=`git describe --always --dirty`
+COMPILE_TIME=`date -u +'%Y-%m-%d %H:%M:%S UTC'`
+COMPILE_TS=`date -u +'%Y%m%d%H%M'`
+GIT_BRANCH=`git branch | grep "^\*" | sed 's/^..//'`
+export VERSION_FLAGS=-DGIT_HASH="\"$(GIT_HASH)\"" -DCOMPILE_TIME="\"$(COMPILE_TIME)\"" -DGIT_BRANCH="\"$(GIT_BRANCH)\""
+
+
 # Folder structure:
 OBJ := obj
 OBJARM := objarm
 SRC := src
 INC := include
 EXE := exe
+BIN := bin/$(GIT_HASH)_$(COMPILE_TS)/
 
 # Compilers:
 ifndef ROOTSYS
@@ -63,34 +71,40 @@ OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utili
 OBJECTSHPS := $(OBJARM)/server.o $(OBJARM)/server_function.o $(OBJARM)/highlevelDriversFPGA.o $(OBJARM)/lowlevelDriversFPGA.o
 
 # Executables:
-HPSSERVER := $(EXE)/PAPERO
+PAPERO := $(EXE)/PAPERO
 OCADAQ := $(EXE)/OCA
 OCATEST := $(EXE)/testOCA
 
 # Rules:
-all: $(OCADAQ) $(OCATEST) $(HPSSERVER)
+all: clean $(OCADAQ) $(OCATEST) $(PAPERO)
 
-daq: $(OCADAQ) $(OCATEST)
+oca: cleanoca $(OCADAQ) $(OCATEST)
 
-hps: $(HPSSERVER)
+papero: cleanpapero $(PAPERO)
 
 $(OCADAQ): $(OBJECTS)
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
+	@mkdir -pv $(BIN)
 	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
+	@cp -v $(OCADAQ) $(BIN)/
 
 $(OCATEST): $(OBJECTSTEST)
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
+	@mkdir -pv $(BIN)
 	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
+	@cp -v $(OCATEST) $(BIN)/
 
-$(HPSSERVER): $(OBJECTSHPS)
+$(PAPERO): $(OBJECTSHPS)
 ifeq ($(UNAME_S),Darwin)
 	@echo Compilation under MacOs not possibile
 else
 	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
-	$(LDARM) $(LDFLAGS) $^ -o $(HPSSERVER)
+	@mkdir -pv $(BIN)
+	$(LDARM) $(LDFLAGS) $^ -o $(PAPERO)
+	@cp -v $(PAPERO) $(BIN)/
 endif
 
 ##SUMMARY: $(TOP)/TakeData/summary.o  $(TOP)lib/libamswire.a
@@ -103,7 +117,7 @@ endif
 $(OBJ)/%.o: $(SRC)/%.cpp
 	@echo Compiling $< ...
 	@mkdir -pv $(OBJ)
-	$(CXX) $(CPPFLAGS) $(OCAOPTFLAG) -c -o $@ $<
+	$(CXX) $(CPPFLAGS) $(OCAOPTFLAG) $(VERSION_FLAGS) -c -o $@ $<
 
 #Objects
 $(OBJARM)/%.o: $(SRC)/%.c
@@ -112,15 +126,25 @@ ifeq ($(UNAME_S),Darwin)
 else
 	@echo Compiling $< ...
 	@mkdir -pv $(OBJARM)
-	$(CCARM) $(CFLAGSARM) $(HPSOPTFLAG) -c -o $@ $<
+	$(CCARM) $(CFLAGSARM) $(HPSOPTFLAG) $(VERSION_FLAGS) -c -o $@ $<
 endif
 
 clean:
-	@echo " Cleaning..."
+	@echo " Cleaning all..."
 	@$(RM) -Rfv $(OBJ)
+	@$(RM) -Rfv $(OCADAQ)
 	@$(RM) -Rfv $(OBJARM)
 	@$(RM) -Rfv $(EXE)
-#	@$(RM) -fv ./SUMMARY
-#	@$(RM) -fv ./SUMMARY_MUTE
 
-.PHONY: clean
+cleanoca:
+	@echo " Cleaning OCA..."
+	@$(RM) -Rfv $(OBJ)
+	@$(RM) -Rfv $(OCADAQ)
+
+cleanpapero:
+	@echo " Cleaning PAPERO..."
+	@$(RM) -Rfv $(OBJARM)
+	@$(RM) -Rfv $(PAPERO)
+
+
+.PHONY: clean cleanoca cleanpapero
