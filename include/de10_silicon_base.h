@@ -32,19 +32,24 @@ private:
 
 public:
   ~de10_silicon_base();
-  de10_silicon_base(const char *address, int port, int verb=0);
+  de10_silicon_base(const char *address, int port, int _detid, int _cmdlenght, int verb=0);
 
-  virtual void changeText(const std::string& new_text) {};
-  virtual void sendData(std::vector<double> event) {};
+  // virtual void changeText(const std::string& new_text) {};
+  // virtual void sendData(std::vector<double> event) {};
 
+  virtual void SetCmdLenght(int lenght);//overrides the mothers' one
+
+  void SetDetId(uint32_t _detid){ detId = _detid; }//FIX ME: not effective until an Init is sent
+  void SetPacketLen(uint32_t _pktLen){ pktLen = _pktLen; }//FIX ME: not effective until an Init is sent
+  
   int readReg(int regAddr, uint32_t &regCont);
   int Init();
   int SetDelay(uint32_t delayIn);
   int SetMode(uint8_t modeIn);
   int GetEventNumber();
-  char* PrintAllEventNumber();
   int EventReset();
-  int GetEvent();
+  void AskEvent();
+  int GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen);
   int SetCalibrationMode(uint32_t calEnIn);
   int WriteCalibPar();
   int SaveCalibrations();

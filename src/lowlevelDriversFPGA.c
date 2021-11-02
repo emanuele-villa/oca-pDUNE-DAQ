@@ -8,81 +8,106 @@
 #include "user_avalon_fifo_regs.h"
 #include "lowlevelDriversFPGA.h"
 #include "server.h"
+#include "utility.h"
 
+//Atomic FIFO methods
 
-// Funzione di inizializzazione della FIFO.
-int InitFifo(int FIFO_TYPE, uint32_t AE, uint32_t AF){		// (Selezione della FIFO, Configurazione del livello di "almostempty", Configurazione del livello di "almostfull")
+uint32_t readFifoLevel (uint32_t* fifoLevelAddr) {
+	return *fifoLevelAddr;
+}
+
+bool readFifoFull (uint32_t* fifoStatusAddr) {
+	return (*fifoStatusAddr & ALTERA_AVALON_FIFO_STATUS_F_MSK) && 1;
+}
+
+bool readFifoAFull (uint32_t* fifoStatusAddr) {
+	return (*fifoStatusAddr & ALTERA_AVALON_FIFO_STATUS_AF_MSK) && 1;
+}
+
+bool readFifoEmpty (uint32_t* fifoStatusAddr) {
+	return (*fifoStatusAddr & ALTERA_AVALON_FIFO_STATUS_E_MSK) && 1;
+}
+
+bool readFifoAEmpty (uint32_t* fifoStatusAddr) {
+	return (*fifoStatusAddr & ALTERA_AVALON_FIFO_STATUS_AE_MSK) && 1;
+}
+
+// FIFO initialization: Set aFull and aEmpty thresholds, disable interrupts,
+// and reset events register
+int InitFifo(int FIFO_TYPE, uint32_t aEmptyThr, uint32_t aFullThr, uint8_t interruptEn) {
 	uint32_t *lw_fifo_event_reg_addr;
 	uint32_t *lw_fifo_almostfull_reg_addr;
 	uint32_t *lw_fifo_almostempty_reg_addr;
+	uint32_t *lw_fifo_ienable_reg_addr;
 
-	// Selezione della FIFO
+	//Select the proper FIFO
 	if (FIFO_TYPE == CONFIG_FIFO){
 		lw_fifo_event_reg_addr = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
+		lw_fifo_ienable_reg_addr = baseAddr.configFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_IENABLE_REG;
 	}
 	else if (FIFO_TYPE == HK_FIFO){
 		lw_fifo_event_reg_addr = baseAddr.hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = baseAddr.hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = baseAddr.hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
+		lw_fifo_ienable_reg_addr = baseAddr.hkFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_IENABLE_REG;
 	}
 	else if (FIFO_TYPE == DATA_FIFO){
 		lw_fifo_event_reg_addr = baseAddr.FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_EVENT_REG;
 		lw_fifo_almostfull_reg_addr = baseAddr.FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTFULL_REG;
 		lw_fifo_almostempty_reg_addr = baseAddr.FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_ALMOSTEMPTY_REG;
+		lw_fifo_ienable_reg_addr = baseAddr.FastFifoCsr + (unsigned long)ALTERA_AVALON_FIFO_IENABLE_REG;
 	}
 	else
 		return (1);
 
-	*lw_fifo_event_reg_addr			 &= ALTERA_AVALON_FIFO_EVENT_ALL;	// Reset dell'Event Register della FIFO.
-	*lw_fifo_almostempty_reg_addr	 = AE;								// Configurazione dell'Almostempty della FIFO.
-	*lw_fifo_almostfull_reg_addr	 = AF;								// Configurazione dell'Almostfull della FIFO.
+	//Reset events and set values
+	*lw_fifo_event_reg_addr			 	= ALTERA_AVALON_FIFO_EVENT_ALL_MSK;
+	*lw_fifo_almostempty_reg_addr	= aEmptyThr;
+	*lw_fifo_almostfull_reg_addr	= aFullThr;
+	*lw_fifo_ienable_reg_addr 		= interruptEn & ALTERA_AVALON_FIFO_IENABLE_ALL_MSK;
 
 	return (0);
 }
 
 // Funzione di scrittura della FIFO.
 int WriteFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntatore alla Word da inviare alla FIFO)
-	uint32_t fifo_level;
 
 	if (FIFO_TYPE != CONFIG_FIFO){
 		return (1);
 	}
 
-	fifo_level = *baseAddr.configFifoLevel;		// Lettura del livello di riempimento della FIFO.
-	if (fifo_level > FIFO_HPS_TO_FPGA_IN_CSR_FIFO_DEPTH - 4)				// Se il livello è > FIFO_DEPTH - 4, termina la funzione con un errore.
+	if (readFifoFull(baseAddr.configFifoStatus)) //Check if Full before writing
 		return (2);
-	else{											// Altrimenti, carica la FIFO col valore "data" e restituisci il valore "0".
+	else{
 		*baseAddr.configFifo = *data;
 		return (0);
 	}
 }
 
 // Funzione di scrittura della FIFO con un burst di dati.
-int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){		// (Selezione della FIFO, Indirizzo di partenza dell'array di dati da inviare alla FIFO, Numero di dati che costituisce la raffica)
-	uint32_t fifo_level;
+int WriteFifoBurst(int FIFO_TYPE, uint32_t *data, int length_burst){// (Selezione della FIFO, Indirizzo di partenza dell'array di dati da inviare alla FIFO, Numero di dati che costituisce la raffica)
 
-	if (FIFO_TYPE != CONFIG_FIFO){
-		return (1);
-	}
+  if (FIFO_TYPE != CONFIG_FIFO){
+    return (1);
+  }
 
-	fifo_level = *baseAddr.configFifoLevel;					// Lettura del livello di riempimento della FIFO.
-	if ((FIFO_HPS_TO_FPGA_IN_CSR_FIFO_DEPTH - 3) - fifo_level < (uint32_t)length_burst)			// Se lo spazio a disposizione è minore della lunghezza della raffica, termina la funzione con un errore.
-		return (2);
-	else{														// Altrimenti, carica la FIFO con i dati a partire dall'indirizzo "data" e restituisci il valore "0".
-		for (int i=0; i<length_burst; i++){
-			*baseAddr.configFifo = data[i];
-		}
+  if (readFifoFull(baseAddr.configFifoStatus)) //FIX ME: Should check the A-Full before writing
+    return (2);
+  else
+    {// Altrimenti, carica la FIFO con i dati a partire dall'indirizzo "data" e restituisci il valore "0".
+      for (int i=0; i<length_burst; i++){
+	*baseAddr.configFifo = data[i];
+      }
 
-		return (0);
-	}
+      return (0);
+    }
 }
 
 
 // Funzione di lettura della FIFO.
 int ReadFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntatore alla Word letta dalla FIFO)
-	uint32_t fifo_empty;
 	uint32_t *f2h_lw_fifo_status_reg_addr;
 	uint32_t *f2h_lw_fifo_output_addr;
 
@@ -100,49 +125,58 @@ int ReadFifo(int FIFO_TYPE, uint32_t *data){		// (Selezione della FIFO, puntator
 	else
 		return (-1);
 
-	fifo_empty = ((*f2h_lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_E_MSK) && 1;	// Lettura del bit di "empty" della FIFO.
-	if (fifo_empty)
-		return (-2);								// Se la FIFO è vuota termina la funzione con un errore.
+	if (readFifoEmpty(f2h_lw_fifo_status_reg_addr)) //Check if Empty before reading
+		return (-2);
 	else{
-		*data = *f2h_lw_fifo_output_addr;		// Altrimenti metti su "data" il valore d'uscita della FIFO e restituisci "0".
+		*data = *f2h_lw_fifo_output_addr;
 		return (1);
 	}
 }
 
 // Funzione per la lettura di un burst di dati dalla FIFO.
 int ReadFifoBurst(int FIFO_TYPE, uint32_t* data, int length_burst, bool flush){		// (Selezione della FIFO, Indirizzo a partire del quale depositare i dati letti dalla FIFO, Numero di dati che costituisce la raffica)
-	uint32_t fifo_level;
-	uint32_t *f2h_lw_fifo_level_reg_addr;
-	uint32_t *f2h_lw_fifo_output_addr;
-	int readLen = length_burst;
+  uint32_t fifo_level = 0;
+  uint32_t *f2h_lw_fifo_level_reg_addr = nullptr;
+  uint32_t *f2h_lw_fifo_output_addr = nullptr;
+  int readLen = length_burst;
 
-	// Selezione della FIFO
-	if (FIFO_TYPE == CONFIG_FIFO)
-		return (-1);
-	else if (FIFO_TYPE == HK_FIFO){
-		f2h_lw_fifo_output_addr = baseAddr.hkFifo;
-		f2h_lw_fifo_level_reg_addr = baseAddr.hkFifoLevel;
-	}
-	else if (FIFO_TYPE == DATA_FIFO){
-		f2h_lw_fifo_output_addr = baseAddr.FastFifo;
-		f2h_lw_fifo_level_reg_addr = baseAddr.FastFifoLevel;
-	}
-	else
-		return (-1);
+  // Selezione della FIFO
+  if (FIFO_TYPE == CONFIG_FIFO)
+    return (-1);
+  else if (FIFO_TYPE == HK_FIFO){
+    f2h_lw_fifo_output_addr = baseAddr.hkFifo;
+    f2h_lw_fifo_level_reg_addr = baseAddr.hkFifoLevel;
+  }
+  else if (FIFO_TYPE == DATA_FIFO){
+    f2h_lw_fifo_output_addr = baseAddr.FastFifo;
+    f2h_lw_fifo_level_reg_addr = baseAddr.FastFifoLevel;
+  }
+  else
+    return (-1);
 
-	fifo_level = *f2h_lw_fifo_level_reg_addr;		// Lettura del livello di riempimento della FIFO.
-	if (flush == true) {
-		readLen = (uint32_t)fifo_level;
-	}
-	if ((uint32_t)readLen > fifo_level)					// Se il livello è minore della lunghezza della raffica, termina la funzione con un errore.
-		return (-2);
-	else{											// Altrimenti, leggi dalla FIFO "length_burst" dati e restituisci il valore "0".
-		for (int i=0; i<readLen; i++){
-			data[i] = *f2h_lw_fifo_output_addr;
-		}
+  fifo_level = readFifoLevel(f2h_lw_fifo_level_reg_addr);		// Lettura del livello di riempimento della FIFO.
+  if (flush == true) {
+    readLen = (uint32_t)fifo_level;
+  }
+  if ((uint32_t)readLen > fifo_level) {// Se il livello è minore della lunghezza della raffica, termina la funzione con un errore.
+    if(baseAddr.verbose > 3){
+      printf("We tried to read %d, while the fifo level was %d\n", readLen, (int)(fifo_level));
+      uint32_t regContent;
+      ReadReg(21, &regContent);
+      printf("Register 21: %08x\n", regContent);
+      ReadReg(22, &regContent);
+      printf("Register 22: %08x\n", regContent);
+      //      sleep(3);
+    }
+    return (-2);
+  }
+  else{											// Altrimenti, leggi dalla FIFO "length_burst" dati e restituisci il valore "0".
+    for (int i=0; i<readLen; i++){
+      data[i] = *f2h_lw_fifo_output_addr;
+    }
 
-		return (readLen);
-	}
+    return (readLen);
+  }
 }
 
 // Funzione di lettura dello stato della FIFO.
@@ -174,13 +208,22 @@ int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_
 	else
 		return (1);
 
-	*fifo_level = *lw_fifo_level_reg_addr;
-	*fifo_full = ((*lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_F_MSK) && 1;
-	*fifo_empty = ((*lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_E_MSK) && 1;
-	*fifo_almostfull = ((*lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_AF_MSK) && 1;
-	*fifo_almostempty = ((*lw_fifo_status_reg_addr) & ALTERA_AVALON_FIFO_STATUS_AE_MSK) && 1;
+	*fifo_level = readFifoLevel(lw_fifo_level_reg_addr);
+	*fifo_full = readFifoFull(lw_fifo_status_reg_addr);
+	*fifo_empty = readFifoEmpty(lw_fifo_status_reg_addr);
+	*fifo_almostfull = readFifoAFull(lw_fifo_status_reg_addr);
+	*fifo_almostempty = readFifoAEmpty(lw_fifo_status_reg_addr);
 	*almostfull_setting = *lw_fifo_almostfull_reg_addr;
 	*almostempty_setting = *lw_fifo_almostempty_reg_addr;
+
+	/* printf("%s-%d) %u %u %u %u %u %u %u\n", __METHOD_NAME__, __LINE__, */
+	/*        *fifo_level, */
+	/*        *fifo_full, */
+	/*        *fifo_empty, */
+	/*        *fifo_almostfull, */
+	/*        *fifo_almostempty, */
+	/*        *almostfull_setting, */
+	/*        *almostempty_setting); */
 
 	return (0);
 }
@@ -188,8 +231,8 @@ int StatusFifo(int FIFO_TYPE, uint32_t *fifo_level, uint32_t *fifo_full, uint32_
 // Funzione che stampa a video lo stato della FIFO.
 int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 	int error;
-	char DIRECTION_FIFO_STRING[13];
-	int FIFO_DEPTH;
+	char fifoName[13];
+	int fifoDepth;
 	uint32_t fifo_level;
 	uint32_t fifo_full;
 	uint32_t fifo_empty;
@@ -200,44 +243,38 @@ int ShowStatusFifo(int FIFO_TYPE){		// (Selezione della FIFO)
 
 	// Selezione della FIFO
 	if (FIFO_TYPE == CONFIG_FIFO){
-		strcpy(DIRECTION_FIFO_STRING,"HPS --> FPGA");
-		FIFO_DEPTH = FIFO_HPS_TO_FPGA_IN_CSR_FIFO_DEPTH;
+		strcpy(fifoName,"Config");
+		fifoDepth = FIFO_HPS_TO_FPGA_IN_CSR_FIFO_DEPTH;
 	}
 	else if (FIFO_TYPE == HK_FIFO){
-		strcpy(DIRECTION_FIFO_STRING,"FPGA --> HPS");
-		FIFO_DEPTH = FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH;
+		strcpy(fifoName,"Telemetries");
+		fifoDepth = FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH;
 	}
 	else if (FIFO_TYPE == DATA_FIFO){
-		strcpy(DIRECTION_FIFO_STRING,"FPGA --> HPS");
-		FIFO_DEPTH = FAST_FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH;
+		strcpy(fifoName,"Data");
+		fifoDepth = FAST_FIFO_FPGA_TO_HPS_OUT_CSR_FIFO_DEPTH;
 	}
 	else
-		strcpy(DIRECTION_FIFO_STRING,"no fifo sel ");
+		strcpy(fifoName,"N.A.");
 
 
 	error = StatusFifo(FIFO_TYPE, &fifo_level, &fifo_full, &fifo_empty, &fifo_almostfull, &fifo_almostempty, &almostfull_setting, &almostempty_setting);		// Estrai lo stato della FIFO.
 
 	if (error)
-		return (1);				// Se l'estrazione dello stato non è avvenuta con usccesso, restitusici un errore.
+		return (1);				// Se l'estrazione dello stato non è avvenuta con successo, restitusici un errore.
 	else {
-		printf("\n");			// Altrimenti, mostra a schermo i valori.
-		printf("\n");
-		printf("\n");
-		printf("- S E T U P   D E L L A   F I F O -\n");
-		printf("Direction             :   %s\n",DIRECTION_FIFO_STRING);
-		printf("Depth                 :   %d\n",FIFO_DEPTH);
-		printf("Almostfull threshold  :   %d\n",almostfull_setting);
-		printf("Almostempty threshold :   %d\n",almostempty_setting);
-		printf("\n");
-		printf("- S T A T O   D E L L A   F I F O -\n");
-		printf("Level       :   %d/%d\n",fifo_level,FIFO_DEPTH - 3);
-		printf("Full        :   %d\n",fifo_full);
-		printf("Empty       :   %d\n",fifo_empty);
-		printf("Almostfull  :   %d\n",fifo_almostfull);
-		printf("Almostempty :   %d\n",fifo_almostempty);
-		printf("\n");
+		printf("\n------------------------------------------------\n");
+		printf("FIFO Name   : %s\n", fifoName);
+		printf("A-full thr  : %d\n", almostfull_setting);
+		printf("A-empty thr : %d\n", almostempty_setting);
+		printf("Level       : %d/%d\n", fifo_level, fifoDepth);
+		printf("Full        : %d\n", fifo_full);
+		printf("Empty       : %d\n", fifo_empty);
+		printf("A-full      : %d\n", fifo_almostfull);
+		printf("A-empty     : %d\n", fifo_almostempty);
+		printf("--------------------------------------------------\n");
 
-	return (0);
+		return (0);
 	}
 }
 
@@ -335,7 +372,7 @@ void ReadReg(int regAddr, uint32_t *data){
 	//Read the register content
 	*data = *baseAddr.fpgaRegCont;
 
-  if(baseAddr.verbose > 0){
+  if(baseAddr.verbose > 2){
     printf("ReadREG: Register addr: %d - content: %08x\n", regAddr, *data);
   }
 }
@@ -358,7 +395,7 @@ int writeReg(uint32_t * pktContent, int pktLen){
   pktCrc = crc_init();
   packet[0] = REG_SOP;
   packet[1] = (uint32_t)pktLen+5;
-  packet[2] = 0; //@todo add FW version
+  packet[2] = kGwV; //@todo fetch the GW version from github and not from FPGA
   pktCrc = crc_update(pktCrc, &packet[2], sizeof(uint32_t));
   packet[3] = REG_HDR1;
   pktCrc = crc_update(pktCrc, &packet[3], sizeof(uint32_t));
@@ -378,7 +415,7 @@ int writeReg(uint32_t * pktContent, int pktLen){
   pktCrc = crc_finalize(pktCrc);
   packet[pktLen+5] = pktCrc;
 
-  if (baseAddr.verbose > 1){
+  if (baseAddr.verbose > 2){
     printf("\nwriteReg: Packet Content:\n");
     for (int jj=0; jj<pktLen+6;jj++){
       printf("%08x\n", packet[jj]);
@@ -388,5 +425,5 @@ int writeReg(uint32_t * pktContent, int pktLen){
   //Send the packet
   WriteFifoBurst(CONFIG_FIFO, packet, pktLen+6);
 
-return 0;
+  return 0;
 }

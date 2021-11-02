@@ -1,6 +1,8 @@
 #ifndef _HIGHLEVEL_DRIVERS_FPGA_H_
 #define _HIGHLEVEL_DRIVERS_FPGA_H_
 
+#include <vector>
+
 #define DATA_SOP 0xBABA1A9A
 
 extern struct fpgaAddresses baseAddr;
@@ -15,6 +17,6 @@ void Calibrate(uint32_t calibIn);
 void intTriggerPeriod(uint32_t periodIn);
 void selectTrigger(uint32_t intTrigIn);
 void configureTestUnit(uint32_t tuCfg);
-int getEvent(uint32_t* evt, int* evtLen);
+int getEvent(std::vector<uint32_t>& evt, int* evtLen);
 
 #endif //_HIGHLEVEL_DRIVERS_FPGA_H_

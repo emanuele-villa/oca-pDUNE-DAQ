@@ -13,18 +13,25 @@
 
 // Reset della logica FPGA
 void ResetFpga(){
-	uint32_t* data;
+	uint32_t data[4096];
 	int flushErr=0;
 	//Set to high the regArray bits of reset
 	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000003);
 
+	//// FIXME: remove later!
+	//uint32_t dummy;
+	//ReadReg(0, &dummy);
+	
 	//Flush the FastData Fifo
 	//!@todo Flush also the hk
 	flushErr = ReadFifoBurst(DATA_FIFO, data, 0, true);
-	printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
+	if(baseAddr.verbose > 0) printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
 
 	//Remove regArray reset
 	singleWriteReg((uint32_t)rGOTO_STATE, 0x00000000);
+	//// FIXME: remove later!
+	//ReadReg(0, &dummy);
+	
 }
 
 //Inizializza l'array di registri e resetta la logica FPGA
@@ -46,17 +53,10 @@ void SetDelay(uint32_t delayIn){
 
 //Configura la modalità: Stop(0), Run(1)
 void SetMode(uint32_t modeIn){
-	uint32_t regContent;
-
-	if(modeIn == 0){
-		regContent = 0x00000000;
-	}
-	else if(modeIn == 1){
-		ResetFpga();
-		regContent = 0x00000010;
-	}
-
-	singleWriteReg(rGOTO_STATE, regContent);
+  singleWriteReg(rGOTO_STATE, modeIn);
+  ////FIXME: remove later!
+  //uint32_t dummy;
+  //ReadReg(0, &dummy);
 }
 
 //Cattura il valore del trigger counter interno ed esterno
@@ -103,54 +103,68 @@ void configureTestUnit(uint32_t tuCfg){
 }
 
 //Receive one event from the FastDATA FIFO
-int getEvent(uint32_t* evt, int* evtLen){
-  int readErr;
-  uint32_t pktLen;
+int getEvent(std::vector<uint32_t>& evt, int* evtLen){
+  int readErr = 0;
+  uint32_t pktLen = 0;
+  uint32_t sopWord= 0;
 
-  uint32_t valueRead;  //First value in output of the FIFO
-  uint32_t fifoLevel;  //FIFO used words
-  uint32_t fifoFull;   //Full flag
-  uint32_t fifoEmpty;  //Empty flag
-  uint32_t fifoAFull;  //Almost-Full flag
-  uint32_t fifoAEmpty; //Almost-Empty flag
-  uint32_t aFullThr;   //Almost-Full threshold
-  uint32_t aEmptyThr;  //Almost-Empty threshold
-
-  //Read the status of the FIFO and return if almost-empty
-  readErr = StatusFifo(DATA_FIFO, &fifoLevel, &fifoFull, &fifoEmpty, &fifoAFull, &fifoAEmpty, &aFullThr, &aEmptyThr);
-  if (fifoEmpty==1){
-    printf("Fifo Empty. \n");
-    return 1;
+  if (readFifoAEmpty(baseAddr.FastFifoStatus)==true){
+    if (baseAddr.verbose>3) {
+      uint32_t regContent;
+      printf("Fifo A-Empty.\n");
+      ReadReg(21, &regContent);
+      printf("Register 21: %08x\n", regContent);
+      ReadReg(22, &regContent);
+      printf("Register 22: %08x\n", regContent);
+    }
+    return 0;
   }
 
+  bool dampeladder = false;
+  {
+    uint32_t regContent;
+    ReadReg(3, &regContent);
+    if (baseAddr.verbose>3) {
+      printf("Detector ID (Register 3): %d\n", regContent);
+    }
+    if (regContent>255) dampeladder=true;
+  }
+  
   //Read the first word and make sure it's the SoP
-  readErr = ReadFifo(DATA_FIFO, &valueRead);
-  if(valueRead != DATA_SOP){
-    fprintf(stderr, "First value of event not SoP: %08x\n", valueRead);
-    return 2;
+  readErr = ReadFifo(DATA_FIFO, &sopWord);
+  if(sopWord != DATA_SOP){
+    fprintf(stderr, "First value of event not SoP: %08x\n", sopWord);
+    return -1;
   }
 
   //Read the packet length
   readErr = ReadFifo(DATA_FIFO, &pktLen);
-
+  if (baseAddr.verbose>3){
+    printf("PacketLen: %08x\n", pktLen);
+  }
+  
   uint32_t packet[pktLen + 1];
   packet[0] = DATA_SOP;
   packet[1] = pktLen;
-  readErr = ReadFifoBurst(DATA_FIFO, packet + 2, pktLen - 1, false);
+  readErr = ReadFifoBurst(DATA_FIFO, &packet[2], pktLen - 1, false);
   if (readErr < 0){
     fprintf(stderr, "Error in reading event\n");
-    return 3;
+    return -1;
   }
 
-  if (baseAddr.verbose > 1){
+  if (baseAddr.verbose > 3){
     printf("Event:\n");
     for(uint32_t i = 0; i < pktLen+1; i++){
       printf("%08x\n", packet[i]);
     }
   }
 
-  *evtLen = pktLen;
-  evt = packet;
+  *evtLen = pktLen+1;
+  if (dampeladder) {//FIX ME: hacking to avoid big latency in case of smaller events. To be fully understood why
+    *evtLen = 651;//as for a standard FOOT event (650 + 1)
+  }
+  evt.resize(*evtLen);//resize to the full Len
+  memcpy(evt.data(), packet, sizeof(uint32_t)*(pktLen+1));//better to use pktLen (not modified by the hacking)
 
   return 0;
 }

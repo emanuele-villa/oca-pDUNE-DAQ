@@ -10,6 +10,9 @@
 #include <sys/ioctl.h>
 //#include <sys/mman.h>
 #include <arpa/inet.h>
+#include <vector>
+#include <iostream>
+#include <chrono>
 
 #include "utility.h"
 
@@ -20,6 +23,7 @@
 
 // hpsserver.cpp
 
+/*
 //Receive a single 32-bit word from socket
 uint32_t receiveWordSocket(int socket){
   char msg[sizeof(uint32_t) * 8 + 1];
@@ -27,11 +31,24 @@ uint32_t receiveWordSocket(int socket){
   if(read(socket, msg, sizeof(msg)) < 0){
     fprintf(stderr, "Error in reading the socket\n");
     return -1;
-  }else{
+  }
+  else{
     uint32_t data = strtoul(msg, &ptr, 16);
     printf("Received %08x\n", data);
     return data;
   }
+}
+*/
+
+//Generic receive from socket
+int receiveSocket(int socket, void* msg, uint32_t len){
+  int n;
+  n = read(socket, msg, len);
+  if (n < 0) {
+    fprintf(stderr, "Error in reading the socket\n");
+    return -1;
+  }
+  return 0;
 }
 
 //Send a string to socket
@@ -42,50 +59,8 @@ int sendSocket(int socket, void* msg, uint32_t len){
     fprintf(stderr, "Error in writing to the socket\n");
     return 1;
   }
-  if (baseAddr.verbose > 1) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  if (baseAddr.verbose > 3) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
   return 0;
-}
-
-//Acquire a packet from the FPGA and forward it to the socket
-void *high_priority(void *socket){
-  uint32_t evt;
-  int evtLen=0;
-  int n;
-  int sock = *(int *)socket;
-
-  //Get an event from FPGA
-  int evtErr = getEvent(&evt, &evtLen);
-  if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
-
-  //Send the event to the socket
-  n = write(sock, &evt, evtLen);
-  if(n < 0){
-    perror("Error in writing an event to the socket\n");
-  }else{
-    if (baseAddr.verbose > 1) printf("Sent %d bytes\n", n);
-  }
-
-  //Kill the thread
-  pthread_exit(NULL);
-}
-
-//Spawn a thread to send an event to socket
-void GetEvent(int socket){
-  pthread_t t;
-  pthread_attr_t attr;
-  int new_priority = 20;
-  struct sched_param param;
-
-  pthread_attr_init(&attr);
-  pthread_attr_getschedparam(&attr, &param);
-  param.sched_priority = new_priority;
-
-  if (baseAddr.verbose > 1) printf("socket: %d\n", socket);
-  if(pthread_create(&t, &attr, &high_priority, &socket) < 0){
-    perror("Error in creating high_priority thread\n");
-  }
-  pthread_join(t, 0);
-
 }
 
 //------------------------------------------------------------------------
@@ -278,20 +253,36 @@ void* receiver_comandi(int* sockIn){
   int addrLen, openConn;
   struct sockaddr_in client_addr;
 
+  /* ShowStatusFifo(CONFIG_FIFO); */
+  /* printf("%s) %u\n", __METHOD_NAME__, *(baseAddr.configFifo)); */
+  /* printf("%s) %u\n", __METHOD_NAME__, *(baseAddr.configFifoCsr)); */
+  /* InitFifo(CONFIG_FIFO, 5, 1000, 0); */
+  /* ShowStatusFifo(CONFIG_FIFO); */
+
   addrLen = sizeof(client_addr);
   printf("Waiting for a client to connect...\n");
   openConn = accept(*sockIn, (struct sockaddr *) &client_addr, (socklen_t *) &addrLen);
   if(openConn < 0){
     perror("Error in accepting socket connection\n");
-  }else{
+  }
+  else{
     uint32_t trash;
     printf("%s) Connection open: (socket number %d, %s:%d)\n", __METHOD_NAME__, openConn, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-    printf("\nRegister array initial content:\n");
-    for(int j=0; j<32; j++){
-      ReadReg(j, &trash);
-    }
-    printf("\n");
+    // printf("\nRegister array initial content:\n");
+    // for(int j=0; j<32; j++){
+    //   ReadReg(j, &trash);
+    // }
+    // printf("\n");
   }
+  //Handshaking to set the same command length of the client
+  int cmdLen = 24;
+  receiveSocket(openConn, &cmdLen, sizeof(cmdLen));
+  printf("%s) Updating command length to %d\n", __METHOD_NAME__, cmdLen);
+  sendSocket(openConn, &cmdLen, sizeof(cmdLen));
+
+  //FIX ME fetch the GW version from gitlab and not from FPGA
+  ReadReg(rGW_VER, &kGwV);
+
 
   //-----------------------------------------------------
   // questa parte sara' un metodo di hpsserver
@@ -302,20 +293,27 @@ void* receiver_comandi(int* sockIn){
   // virtual void ProcessMsgReceived(char* msg);
   // che e' specializzato/implementato in hpsserver
 
-  char msg[256]="";
-  int bytesRead=0;
+  uint32_t okVal  = 0xb01af1ca;
+  uint32_t badVal = 0x000cacca;
   bool kControl = true;
+  uint32_t evtCount = 0;
+  using clock_type = std::chrono::system_clock;
+  auto startRunTime = clock_type::now();
   while(kControl) {
-    char replyStr[256];
+    char msg[256]="";
+    int bytesRead=0;
 
-    bytesRead=read(openConn, msg, sizeof(msg));
+    //Read the command
+    bytesRead=read(openConn, msg, cmdLen);
+
+    //Check if the read is ok and process its content
     if(bytesRead < 0) {
       // Error: check for specific errors
       if (EAGAIN==errno || EWOULDBLOCK==errno) {
         printf("%s) errno: %d\n", __METHOD_NAME__, errno);
       }
       else {
-        printf("%s) Read error (%d)\n", __METHOD_NAME__, bytesRead);
+        printf("%s) Read error: (%d)\n", __METHOD_NAME__, errno);
         perror("Read error");
       }
     }
@@ -324,142 +322,135 @@ void* receiver_comandi(int* sockIn){
       printf("%s) Client closed the connection\n", __METHOD_NAME__);
     }
     else {
-      if(strcmp(msg, "init") == 0){
+      if(strcmp(msg, "cmd=init") == 0){
         uint32_t regsContent[14];
+	uint32_t singleReg = 0;
 
-        sprintf(replyStr, "%s", "[SERVER] Starting Init. Send data...");
-        printf("%s\n", replyStr);
-        sendSocket(openConn, replyStr, strlen(replyStr));
-
+        if (baseAddr.verbose > 1) printf("%s) Starting init...\n", __METHOD_NAME__);
         //Receive the whole content (apart from reg rGOTO_STATE)
         for(int ii = 0; ii < 7; ii++){
-          regsContent[ii*2]   = receiveWordSocket(openConn);
-          regsContent[ii*2+1] = (uint32_t)ii;
+	  receiveSocket(openConn, &singleReg, sizeof(singleReg));
+          regsContent[ii*2]   = singleReg;
+          regsContent[ii*2+1] = (uint32_t)ii+1;
         }
 
         Init(regsContent, 14);
-      }
-      else if(strcmp(msg, "readReg") == 0){
-        uint32_t regAddr = receiveWordSocket(openConn);
-        uint32_t regContent;
 
+        sendSocket(openConn, &okVal, sizeof(okVal));
+      }
+      else if(strcmp(msg, "cmd=readReg") == 0){
+        uint32_t regAddr = 0;
+        uint32_t regContent;
+        receiveSocket(openConn, &regAddr, sizeof(regAddr));
         printf("Send read request...\n");
         ReadReg(regAddr, &regContent);
-
-        sprintf(replyStr, "%s %u: %08x", "[SERVER] Reg", regAddr, regContent);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &regContent, sizeof(regContent));
       }
-      else if((strcmp(msg, "set delay")==0)||(strcmp(msg, "OverWriteDelay")==0)){
-        uint32_t delay = receiveWordSocket(openConn);
-
+      else if((strcmp(msg, "cmd=setDelay")==0)||(strcmp(msg, "cmd=overWriteDelay")==0)){
+        uint32_t delay = 0;
+        receiveSocket(openConn, &delay, sizeof(delay));
         SetDelay(delay);
-
-        sprintf(replyStr, "%s %d", "[SERVER] Delay: ", delay);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
-      else if(strcmp(msg, "set mode") == 0){
-        uint32_t mode = receiveWordSocket(openConn);
+      else if(strcmp(msg, "cmd=setMode") == 0){
+        uint32_t mode = 0;
+        receiveSocket(openConn, &mode, sizeof(mode));
         SetMode(mode);
-        sprintf(replyStr, "%s %d", "[SERVER] Setting mode: ", mode);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
-      else if(strcmp(msg, "get event number") == 0){
+      else if(strcmp(msg, "cmd=getEventNumber") == 0){
         uint32_t extTrigCount, intTrigCount;
 
         GetEventNumber(&extTrigCount, &intTrigCount);
 
-        sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
-                    extTrigCount, intTrigCount);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &extTrigCount, sizeof(extTrigCount));
+        sendSocket(openConn, &intTrigCount, sizeof(intTrigCount));
       }
-      else if(strcmp(msg, "print all event number") == 0){
-        uint32_t extTrigCount, intTrigCount;
-
-        GetEventNumber(&extTrigCount, &intTrigCount);
-
-        sprintf(replyStr, "%s %08u %08u", "[SERVER] Events number (int, ext): ", \
-                    extTrigCount, intTrigCount);
-        printf("%s\n",replyStr);
-        sendSocket(openConn, replyStr, strlen(replyStr));
-      }
-      else if(strcmp(msg, "event reset") == 0){
+      else if(strcmp(msg, "cmd=eventReset") == 0){
+        evtCount = 0;
+        startRunTime = clock_type::now();
         EventReset();
-        sprintf(replyStr, "%s", "[SERVER] Reset ok");
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &okVal , sizeof(okVal));
       }
-      else if(strcmp(msg, "Calibrate") == 0){
-        uint32_t calib = receiveWordSocket(openConn);
-
+      else if(strcmp(msg, "cmd=calibrate") == 0){
+        uint32_t calib = 0;
+	receiveSocket(openConn, &calib, sizeof(calib));
         Calibrate(calib);
-
-        sprintf(replyStr, "%s %d", "[SERVER] Calibration enable: ", calib);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &okVal, sizeof(calib));
       }
-      else if(strcmp(msg, "WriteCalibPar") == 0){
-        sprintf(replyStr, "%s", "[SERVER] WriteCalibPar");
-        sendSocket(openConn, replyStr, strlen(replyStr));
+      else if(strcmp(msg, "cmd=writeCalibPar") == 0){
+        printf("%s) WriteCalibPar not supported\n", __METHOD_NAME__);
+        //sendSocket(openConn, &badVal, sizeof(badVal));
       }
-      else if(strcmp(msg, "SaveCalibrations") == 0){
-        sprintf(replyStr, "%s", "[SERVER] SaveCalibrations");
-        sendSocket(openConn, replyStr, strlen(replyStr));
+      else if(strcmp(msg, "cmd=saveCalib") == 0){
+        printf("%s) SaveCalibrations not supported\n", __METHOD_NAME__);
+        //sendSocket(openConn, &badVal, sizeof(badVal));
       }
-      else if(strcmp(msg, "intTriggerPeriod") == 0){
-        uint32_t period = receiveWordSocket(openConn);
-
+      else if(strcmp(msg, "cmd=intTrigPeriod") == 0){
+        uint32_t period = 0;
+	receiveSocket(openConn, &period, sizeof(period));
         intTriggerPeriod(period);
-
-        sprintf(replyStr, "%s %08u", "[SERVER] Trigger period: ", period);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
-      else if(strcmp(msg, "selectTrigger") == 0){
-        uint32_t intTrig = receiveWordSocket(openConn);
-
+      else if(strcmp(msg, "cmd=selectTrigger") == 0){
+        uint32_t intTrig = 0;
+	receiveSocket(openConn, &intTrig, sizeof(intTrig));
         selectTrigger(intTrig);
-
-        sprintf(replyStr, "%s %u", "[SERVER] Trigger enable: ", intTrig);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
-      else if(strcmp(msg, "configureTestUnit") == 0){
-        uint32_t tuCfg = receiveWordSocket(openConn);
+      else if(strcmp(msg, "cmd=configTestUnit") == 0){
+        uint32_t tuCfg = 0;
+	receiveSocket(openConn, &tuCfg, sizeof(tuCfg));
         char testUnitCfg = ((tuCfg&0x300)>>8);
         char testUnitEn  = ((tuCfg&0x2)>>1);
-
         configureTestUnit(tuCfg);
-
-        sprintf(replyStr, "%s %x %u", "[SERVER] Test Unit status: ", \
-                    testUnitCfg, testUnitEn);
-        sendSocket(openConn, replyStr, strlen(replyStr));
+        if (baseAddr.verbose > 1) {
+          printf("Test unit cfg: %d - en: %d\n", testUnitCfg, testUnitEn);
+        }
+        sendSocket(openConn, &okVal, sizeof(okVal));
       }
-      else if(strcmp(msg, "get event") == 0){
-        uint32_t* evt = NULL;
+      else if(strcmp(msg, "cmd=getEvent") == 0){
+	//	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
+	static std::vector<uint32_t> evt;//so that the size (changed inside getEvent) is not changing continuosly
+	//	std::vector<uint32_t> evt;
+
         int evtLen=0;
 
         //Get an event from FPGA
         int evtErr = getEvent(evt, &evtLen);
-        if (baseAddr.verbose > 1) printf("getEvent result: %d\n", evtErr);
+        if (baseAddr.verbose > 3) printf("getEvent result: %d\n", evtErr);
 
+        //Send the eventLen to the socket
+        sendSocket(openConn, &evtLen, sizeof(evtLen));
         //Send the event to the socket
-        sendSocket(openConn, evt, evtLen);
-      } else if (strcmp(msg, "quit") == 0) {
+        if (evtLen>0) {
+          sendSocket(openConn, evt.data(), evtLen*sizeof(uint32_t));
+          evtCount++;
+          if (evtCount % 1000 == 0) {
+            auto evt1000 = clock_type::now();
+            std::cout << "Event count : " << evtCount << " in " << std::chrono::duration_cast<std::chrono::seconds>(evt1000 - startRunTime).count() << " s\n";
+          }
+        }
+        if (baseAddr.verbose > 3) printf("%s) Event sent\n", __METHOD_NAME__);
+      }
+      else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
+        receiveSocket(openConn, &cmdLen, sizeof(cmdLen));
+        printf("%s) Updating command length to %d\n", __METHOD_NAME__, cmdLen);
+        sendSocket(openConn, &cmdLen, sizeof(cmdLen));
+      }
+      else if (strcmp(msg, "cmd=quit") == 0) {
         printf("FIX ME: Close connection and socket...\n");
         //kControl=false;
       }
       else {
-        char c[strlen(msg)+32]="";
-        sprintf(c, "%s) Unkown message: %s\n", __METHOD_NAME__, msg);
-        printf("%s",c);
-        sendSocket(openConn, c, strlen(c));
+        printf("%s) Unkown message: %s\n", __METHOD_NAME__, msg);
+        sendSocket(openConn, &badVal, sizeof(badVal));
       }
     }
-
-    bzero(msg, sizeof(msg));
-    sleep(1);
-
   }
 
   //-------------------------------------------------
 
   //pthread_exit(NULL);
-  void* pippo;
-  return pippo;
+  return nullptr;
 }

@@ -14,6 +14,8 @@ tcpserver::tcpserver(int port, int verb){
   kVerbosity=verb;
   kListeningOn=true;
 
+  cmdlenght = 8;
+  
   kSocket = -1;
   
   struct sockaddr_in server_addr;
@@ -49,7 +51,7 @@ tcpserver::tcpserver(int port, int verb){
 }
 
 void tcpserver::AcceptConnection(){
-
+  
   if (kSocket!=-1) {
     shutdown(kSocket, SHUT_RDWR);
     kSocket = -1;
@@ -70,19 +72,30 @@ void tcpserver::AcceptConnection(){
   while (kSocket==-1) {
     
     int addrlen = sizeof(client_addr);
-    printf("%s) waiting for connections...\n", __METHOD_NAME__);
+    if (kVerbosity>1) {
+      printf("%s) waiting for connections...\n", __METHOD_NAME__);
+    }
     //  kSocket = accept(kSock, (struct sockaddr *) &client_addr, (socklen_t *) &addrlen);
     kSocket = accept(kSock, (struct sockaddr *) &client_addr, (socklen_t *) &addrlen);
-    printf("%s) kSocket: %d, errno: %d (EAGAIN, EWOULDBLOCK: %d %d)\n", __METHOD_NAME__, kSocket, errno, EAGAIN, EWOULDBLOCK);
-    //  FIX ME: capire come ammazzare accept in maniera gracefully
-    if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
-    else {
+    if (kVerbosity>1) {
+      printf("%s) kSocket: %d, errno: %d (EAGAIN, EWOULDBLOCK: %d %d)\n", __METHOD_NAME__, kSocket, errno, EAGAIN, EWOULDBLOCK);
+    }
+    
+    if (kVerbosity>2) {
+      printf("%s) %d\n", __METHOD_NAME__, kListeningOn);
+    }
+    if (!kListeningOn){
+      return;
+    }
+    
+    if (errno == EAGAIN || errno == EWOULDBLOCK){
+      usleep(100);
+      continue;
+    } else {
       exit_if(kSocket<0, "%s) Negotiation error:", __METHOD_NAME__);
     }
-
-    if (!kListeningOn) return;
       
-    usleep(100000);
+    sleep(1);
   }
   
   //------------ make the read(socket) non-blocking ---------
@@ -115,22 +128,22 @@ tcpserver::~tcpserver(){
   return;
 }
 
-void tcpserver::Listen(){
+void tcpserver::ListenCmd(){
 
   kListeningOn=true;
 
   while (kListeningOn){
-    //    printf("%d\n", kListeningOn);
-    usleep(10000);//FIX ME: parametrizzarlo
+    // printf("%d\n", kListeningOn);
 
     char msg[LEN];
 
-    ssize_t readret = read(kSocket, msg, sizeof(msg));
+    //    ssize_t readret = read(kSocket, msg, sizeof(msg));
+    ssize_t readret = read(kSocket, msg, ((cmdlenght*8)*sizeof(char)+1));//we need to read N char, so N bytes. N is ((cmdLenght*8)*sizeof(char)+1) since we ship cmdLenght numbers (each one in ASCII char), so cmdLenght*8*sizeof(char) + 1 termination char
     //  printf("readret = %ld\n", readret);
 
     if (readret < 0){
       if (EAGAIN == errno || EWOULDBLOCK == errno) {
-	if (kVerbosity>0) {
+	if (kVerbosity>1) {
 	  printf("%s) there's nothing to read now; try again later\n", __METHOD_NAME__);
 	}
       }
@@ -143,20 +156,20 @@ void tcpserver::Listen(){
       AcceptConnection();
     }
     else {
-      ProcessMsgReceived(msg);
+      ProcessCmdReceived(msg);
     }
 
     bzero(msg, sizeof(msg));
   }
 
-  if (kVerbosity) {
+  if (kVerbosity>0) {
     printf("%s) Stop Listening\n", __METHOD_NAME__);
   }
 
   return;
 }
 
-void tcpserver::ProcessMsgReceived(char* msg){
+void tcpserver::ProcessCmdReceived(char* msg){
   //this method does essentially nothing but printing (if kVerbosity set) the message received from the client
 
   if (kVerbosity>0) {
@@ -174,4 +187,20 @@ void tcpserver::StopListening(){
   kListeningOn=false;
 
   return;
+}
+
+int tcpserver::ReplyToCmd(char* msg) {
+
+  int n;
+  n = write(kSocket, msg, cmdlenght);
+  if (n < 0){
+    fprintf(stderr, "%s) Error in writing to the socket\n", __METHOD_NAME__);
+    return 1;
+  }
+  
+  if (kVerbosity>1) {
+    printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  }
+  
+  return 0;
 }

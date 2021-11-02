@@ -17,6 +17,7 @@ tcpclient::tcpclient(const char *address, int port, int verb){
     printf("%s) tcpclient created\n", __METHOD_NAME__);
   }
   client_socket = client_connect(address, port);
+  cmdlenght=8;//in number of char/bytes
 }
 
 tcpclient::~tcpclient(){
@@ -71,7 +72,7 @@ int tcpclient::client_connect(const char *address, int port) {
   return client_socket;
 }
 
-int tcpclient::client_send(const char *buffer) {
+int tcpclient::client_send(void* buffer, int bytesize) {
 
   int result = 0;
 
@@ -79,59 +80,31 @@ int tcpclient::client_send(const char *buffer) {
   if (verbosity>0) {
     printf("%s) message sending\n", __METHOD_NAME__);
   }
-  if ((client_socket != -1) && (buffer)) {
+  if ((client_socket != -1) && buffer) {
     //memset(backup, 0, d_dampe_string_buffer);
     //snprintf(backup, d_dampe_string_buffer, "%s", buffer);
-    if ((write(client_socket, buffer, strlen(buffer)) > 0)) {
-      usleep(250000);
+    //    result = write(client_socket, buffer, strlen(buffer))
+    result = write(client_socket, buffer, bytesize);
+    if (result > 0) {
       if (verbosity>0) {
-        printf("%s) [CLIENT] message sent correctly\n", __METHOD_NAME__);
+        printf("%s) message sent correctly\n", __METHOD_NAME__);
       }
       //      changeText("inviato");
     }
     else {
       fprintf(stderr, "%s) error on sending", __METHOD_NAME__);
-      result = 1;
+      result = -1;
     }
   }
   else {
     fprintf(stderr, "%s) error on socket", __METHOD_NAME__);
-    result = 2;
+    result = -2;
   }
 
   return result;
 }
 
-int tcpclient::client_receive_int(){
-
-  int n;
-
-  int cont = 0;
-
-  //FIX ME: verificare se é vero che basta solo questa lunghezza e non *sizeof(int)
-  while(cont < 651){
-    int temp;
-    n = read(client_socket, &temp, sizeof(temp));
-    if(n < 0){
-      perror("reading error: ");
-    }
-    else{
-      char c[9];
-      char msg[256];//FIX ME: unused
-      sprintf(c, "%08x", temp);
-      //sprintf(msg, "ho letto %d", n);
-      //usleep(100000);
-      bzero(c, sizeof(c));
-      cont += n;
-    }
-  }
-
-  //  changeText("fine");
-
-  return n;//FIX ME: tocca ritornare temp
-}
-
-int tcpclient::client_receive(char* msg, int lentoread){
+int tcpclient::client_receive(void* msg, int bytesize){
 
   size_t n = 0;
 
@@ -139,10 +112,10 @@ int tcpclient::client_receive(char* msg, int lentoread){
     printf("%s) listening on socker number %d\n", __METHOD_NAME__, client_socket);
   }
 
-  n = read(client_socket, msg, lentoread);
+  n = read(client_socket, msg, bytesize);
 
   if(n < 0){
-    fprintf(stderr, "%s) receiving error\n", __METHOD_NAME__);
+    fprintf(stderr, "%s) Receiving error\n", __METHOD_NAME__);
   }
   else if(n == 0){
     if (verbosity>0) {
@@ -152,8 +125,8 @@ int tcpclient::client_receive(char* msg, int lentoread){
   else{
     //msg[n] = '\0';
     if (verbosity>0) {
-      printf("%s) read: %lu\n", __METHOD_NAME__, n);
-      printf("%s) %s\n", __METHOD_NAME__, msg);
+      printf("%s) Bytes read: %lu\n", __METHOD_NAME__, n);
+      printf("%s) %s\n", __METHOD_NAME__, (char*)msg);
       usleep(100000);
     }
 
@@ -167,12 +140,48 @@ int tcpclient::client_receive(char* msg, int lentoread){
   return n;
 }
 
-int tcpclient::Receive(char* msg) {
-  int ret = client_receive(msg);
+//---------------------------------------------------------------
 
+int tcpclient::Receive(void* buffer, int bytesize){
+  int ret = client_receive(buffer, bytesize);  
   if (ret <= 0) {
-    sprintf(msg, "");
+    memset(buffer, 0, bytesize);
   }
-
   return ret;
+}
+
+int tcpclient::Receive(char* buffer, int bytesize){
+  int ret = Receive((void*)buffer, bytesize);  
+  if (ret <= 0) {
+    strcpy(buffer, "");
+  }
+  return ret;
+}
+
+int tcpclient::ReceiveCmdReply(char* buffer){
+  return Receive(buffer, (cmdlenght*8)*sizeof(char)+1);
+}
+
+int tcpclient::ReceiveInt(uint32_t& receivedint){
+  return Receive((void*)&receivedint, 4);
+}
+
+//---------------------------------------------------------------
+
+int tcpclient::Send(void* buffer, int bytesize) {
+  return client_send(buffer, bytesize);
+}
+
+int tcpclient::Send(const char *buffer) {
+  return Send((void*)buffer, strlen(buffer));
+}
+ 
+int tcpclient::SendCmd(const char *buffer){
+  char c[sizeof(char) * 8 * cmdlenght + 1];
+  sprintf(c, "cmd=%s", buffer);
+  return Send(c);
+}
+
+int tcpclient::SendInt(uint32_t par){
+  return Send((void*)&par, 4);
 }

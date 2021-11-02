@@ -36,4 +36,6 @@ inline std::string className(const std::string& prettyFunction) {
 void print_error(const char* format, ...);
 void exit_if(bool r, const char* format, ...);
 
+void* hex2string(char *pt, int length,char* pt_string);
+
 #endif
