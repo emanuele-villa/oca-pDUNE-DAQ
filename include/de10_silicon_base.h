@@ -38,6 +38,9 @@ public:
   // virtual void sendData(std::vector<double> event) {};
 
   virtual void SetCmdLenght(int lenght);//overrides the mothers' one
+
+  void SetDetId(uint32_t _detid){ detId = _detid; }//FIX ME: not effective until an Init is sent
+  void SetPacketLen(uint32_t _pktLen){ pktLen = _pktLen; }//FIX ME: not effective until an Init is sent
   
   int readReg(int regAddr, uint32_t &regCont);
   int Init();

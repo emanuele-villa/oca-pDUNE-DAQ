@@ -411,7 +411,8 @@ void* receiver_comandi(int* sockIn){
       }
       else if(strcmp(msg, "cmd=getEvent") == 0){
 	//	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
-	std::vector<uint32_t> evt;
+	static std::vector<uint32_t> evt;//so that the size (changed inside getEvent) is not changing continuosly
+	//	std::vector<uint32_t> evt;
 
         int evtLen=0;
 

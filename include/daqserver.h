@@ -13,7 +13,7 @@ private:
   std::vector<const char*> addressdet;
   std::vector<int> portdet;
   std::vector<de10_silicon_base*> det;
-  const char kdataPath[12] = "../../data/";
+  const char kdataPath[12] = "./data/";
   volatile bool kStart;
   std::thread _3d;
   int calibmode;
@@ -30,6 +30,8 @@ public:
   daqserver(int port, int verb=0);
 
   void SetListDetectors(int nde10, const char* addressde10[], int portde10[], int detcmdlenght);
+  void SetDetId(const char* addressde10, uint32_t _detId);
+  void SetPacketLen(const char* addressde10, uint32_t _pktLen);
 
   void SetDetectorsCmdLenght(int detcmdlenght);
 

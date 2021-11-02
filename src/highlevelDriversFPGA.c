@@ -120,6 +120,16 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
     return 0;
   }
 
+  bool dampeladder = false;
+  {
+    uint32_t regContent;
+    ReadReg(3, &regContent);
+    if (baseAddr.verbose>3) {
+      printf("Detector ID (Register 3): %d\n", regContent);
+    }
+    if (regContent>255) dampeladder=true;
+  }
+  
   //Read the first word and make sure it's the SoP
   readErr = ReadFifo(DATA_FIFO, &sopWord);
   if(sopWord != DATA_SOP){
@@ -129,7 +139,10 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
 
   //Read the packet length
   readErr = ReadFifo(DATA_FIFO, &pktLen);
-
+  if (baseAddr.verbose>3){
+    printf("PacketLen: %08x\n", pktLen);
+  }
+  
   uint32_t packet[pktLen + 1];
   packet[0] = DATA_SOP;
   packet[1] = pktLen;
@@ -147,8 +160,11 @@ int getEvent(std::vector<uint32_t>& evt, int* evtLen){
   }
 
   *evtLen = pktLen+1;
-  evt.resize(pktLen+1);
-  memcpy(evt.data(), packet, sizeof(uint32_t)*(pktLen+1));
+  if (dampeladder) {//FIX ME: hacking to avoid big latency in case of smaller events. To be fully understood why
+    *evtLen = 651;//as for a standard FOOT event (650 + 1)
+  }
+  evt.resize(*evtLen);//resize to the full Len
+  memcpy(evt.data(), packet, sizeof(uint32_t)*(pktLen+1));//better to use pktLen (not modified by the hacking)
 
   return 0;
 }

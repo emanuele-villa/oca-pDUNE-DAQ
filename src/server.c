@@ -26,12 +26,12 @@ uint32_t kGwV = 0;
 int main(int argc, char *argv[]){
   std::cout<<"hash="<<GIT_HASH<<", time="<<COMPILE_TIME<<", branch="<<GIT_BRANCH<<std::endl;
   
-  if (argc < 2) {
-    printf("Usage:\n\tPAPERO <socket port>\n");
+  if (argc < 3) {
+    printf("Usage:\n\tPAPERO <socket port> <verbosity level>\n");
     return 0;
   }
 
-  baseAddr.verbose = 1; //@todo pass the verbose as argument
+  baseAddr.verbose = atoi(argv[2]);
   printf("Opening /dev/mem...\n");
 	int fd;
 	if( ( fd = open( "/dev/mem", ( O_RDWR | O_SYNC ) ) ) == -1 ) {
@@ -109,7 +109,8 @@ int main(int argc, char *argv[]){
   printf("/*--- Piumone (it must be 0xC1A0C1A0): %08x ---*/\n\n", piumone);
   InitFifo(CONFIG_FIFO, 3, 1000, 0);
   InitFifo(HK_FIFO, 3, 1000, 0);
-  InitFifo(DATA_FIFO, 646, 3442, 0);
+  //  InitFifo(DATA_FIFO, 646, 3442, 0);
+  InitFifo(DATA_FIFO, 390, 3442, 0);//FIX ME: this is to be compliant also with the "DAMPE ladder case"
   /* ShowStatusFifo(CONFIG_FIFO); */
   /* ShowStatusFifo(HK_FIFO); */
   /* ShowStatusFifo(DATA_FIFO); */

@@ -14,12 +14,13 @@
 // const int nde10 = 0;
 // const char* addressde10[nde10] = {};
 // int portde10[nde10] = {};
- const int nde10 = 6;
- const char* addressde10[nde10] = {"192.168.2.101", "192.168.2.102", "192.168.2.103",
- 				  "192.168.2.104", "192.168.2.105", "192.168.2.106",
- };
- int portde10[nde10] = {5000, 5000, 5000, 5000, 5000, 5000,
- };
+const int nde10 = 7;
+const char* addressde10[nde10] = {"192.168.2.101", "192.168.2.102", "192.168.2.103",
+				  "192.168.2.105", "192.168.2.106", "192.168.2.107",
+				  "192.168.2.108"
+};
+int portde10[nde10] = {5000, 5000, 5000, 5000, 5000, 5000, 5000
+};
 // const int nde10 = 1;
 // const char* addressde10[nde10] = {"192.168.2.101"};
 // int portde10[nde10] = {5000};
@@ -53,12 +54,18 @@ int main(int argc, char *argv[]) {
   daqsrv->SetCmdLenght(64);
 
   daqsrv->SetListDetectors(nde10, addressde10, portde10, 24);
+  daqsrv->SetDetId("192.168.2.103", 302);
+  daqsrv->SetPacketLen("192.168.2.103", 0x18A);
 
   daqsrv->Init();
 
-
-  daqsrv->SetCalibrationMode(1);
-  daqsrv->SelectTrigger(0);
+  sleep(5);
+  
+  //  daqsrv->SetCalibrationMode(1);
+  daqsrv->SetCalibrationMode(0);
+  sleep(1);
+  //  daqsrv->SelectTrigger(0);
+  daqsrv->SelectTrigger(1);
   //  daqsrv->ReadAllRegs();
   daqsrv->ReadReg(31);
 

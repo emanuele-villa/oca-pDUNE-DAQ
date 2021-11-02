@@ -56,6 +56,28 @@ void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portd
   return;
 }
 
+void daqserver::SetDetId(const char* addressde10, uint32_t _detId){
+  
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    if (strcmp(addressde10, addressdet[ii]) == 0){
+      det[ii]->SetDetId(_detId);
+    }
+  }
+  
+  return;
+}
+
+void daqserver::SetPacketLen(const char* addressde10, uint32_t _pktLen){
+  
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    if (strcmp(addressde10, addressdet[ii]) == 0){
+      det[ii]->SetPacketLen(_pktLen);
+    }
+  }
+  
+  return;
+}
+
 void daqserver::SetDetectorsCmdLenght(int detcmdlenght){
 
   for (int ii=0; ii<(int)(det.size()); ii++) {
@@ -270,7 +292,7 @@ int daqserver::recordEvents(FILE* fd) {
   // FIX ME: at most 64 DE10
   std::bitset<64> replied{0};
   
-  constexpr uint32_t pippo = 0xfa4af1ca;
+  constexpr uint32_t header = 0xfa4af1ca;//FIX ME: this header must be done properly. In particular the real length (written by this master, not the one in the payload, after the SoP word) 
   bool headerWritten = false;
 
   // FIX ME: replace kStart with proper timeout
@@ -293,7 +315,7 @@ int daqserver::recordEvents(FILE* fd) {
 	// only write the header when the first board replies
 	if(replied.count() == 1 && !headerWritten){
 	  ++nEvents;
-	  fwrite(&pippo, 4, 1, fd);	  
+	  fwrite(&header, 4, 1, fd);	  
 	  headerWritten = true;
 	}
 	writeRet += fwrite(evt.data(), evtLen, 1, fd);

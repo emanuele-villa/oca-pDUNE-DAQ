@@ -40,20 +40,33 @@ int main(int argc, char *argv[]) {
 
   // sleep(3);
 
-  // old format
+  // // //  old format
+  // // //  const char* start ="FF80000800000000EE00000100000000";
+  // // //  uint32_t start[4] = {0xFF800008, 0x00000000, 0xEE000001, 0x00000000};
+  // // uint32_t start[4] = {0x080080FF, 0x00000000, 0x010000EE, 0x00000000};
+  // // ----------
+  // //  const char* start ="FF80000800150001EE00000161616B23";
+  // //  uint32_t start[4] = {0xFF800008, 0x00150001, 0xEE000001, 0x61616B23};
+  // uint32_t start[4] = {0x080080FF, 0x01001500, 0x010000EE, 0x236B6161};
+  // daq->Send((void*)start, 4*sizeof(uint32_t));
+  // daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
+  // hex2string(readBack,length,command_string);
+  // printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
+
+  // //  old format
   // //  const char* start ="FF80000800000000EE00000100000000";
   // //  uint32_t start[4] = {0xFF800008, 0x00000000, 0xEE000001, 0x00000000};
   // uint32_t start[4] = {0x080080FF, 0x00000000, 0x010000EE, 0x00000000};
   // ----------
   //  const char* start ="FF80000800150001EE00000161616B23";
   //  uint32_t start[4] = {0xFF800008, 0x00150001, 0xEE000001, 0x61616B23};
-  uint32_t start[4] = {0x080080FF, 0x01001500, 0x010000EE, 0x236B6161};
+  uint32_t start[4] = {0x080080FF, 0x00001500, 0x010000EE, 0x236B6171};
   daq->Send((void*)start, 4*sizeof(uint32_t));
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
   
-  sleep(10);
+  sleep(60);
 
   // old format
   // //  const char* stop  ="FF80000800000000EE00000000000000";
@@ -70,19 +83,19 @@ int main(int argc, char *argv[]) {
   
   sleep(3);
 
-  uint32_t start2[4] = {0x080080FF, 0x00001600, 0x010000EE, 0x236B6181};
-  daq->Send((void*)start2, 4*sizeof(uint32_t));
-  daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
-  hex2string(readBack,length,command_string);
-  printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
+  // uint32_t start2[4] = {0x080080FF, 0x00001600, 0x010000EE, 0x236B6181};
+  // daq->Send((void*)start2, 4*sizeof(uint32_t));
+  // daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
+  // hex2string(readBack,length,command_string);
+  // printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
 
-  sleep(10);
+  // sleep(10);
 
-  uint32_t stop2[4] = {0x080080FF, 0x00001600, 0x000000EE, 0x5B8D6181};
-  daq->Send((void*)stop2, 4*sizeof(uint32_t));
-  daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
-  hex2string(readBack,length,command_string);
-  printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
+  // uint32_t stop2[4] = {0x080080FF, 0x00001600, 0x000000EE, 0x5B8D6181};
+  // daq->Send((void*)stop2, 4*sizeof(uint32_t));
+  // daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
+  // hex2string(readBack,length,command_string);
+  // printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
   
   // daq->SendCmd("fava");
   

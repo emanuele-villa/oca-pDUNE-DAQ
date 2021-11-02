@@ -158,8 +158,18 @@ int ReadFifoBurst(int FIFO_TYPE, uint32_t* data, int length_burst, bool flush){	
   if (flush == true) {
     readLen = (uint32_t)fifo_level;
   }
-  if ((uint32_t)readLen > fifo_level)					// Se il livello è minore della lunghezza della raffica, termina la funzione con un errore.
+  if ((uint32_t)readLen > fifo_level) {// Se il livello è minore della lunghezza della raffica, termina la funzione con un errore.
+    if(baseAddr.verbose > 3){
+      printf("We tried to read %d, while the fifo level was %d\n", readLen, (int)(fifo_level));
+      uint32_t regContent;
+      ReadReg(21, &regContent);
+      printf("Register 21: %08x\n", regContent);
+      ReadReg(22, &regContent);
+      printf("Register 22: %08x\n", regContent);
+      //      sleep(3);
+    }
     return (-2);
+  }
   else{											// Altrimenti, leggi dalla FIFO "length_burst" dati e restituisci il valore "0".
     for (int i=0; i<readLen; i++){
       data[i] = *f2h_lw_fifo_output_addr;
