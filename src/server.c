@@ -109,8 +109,7 @@ int main(int argc, char *argv[]){
   printf("/*--- Piumone (it must be 0xC1A0C1A0): %08x ---*/\n\n", piumone);
   InitFifo(CONFIG_FIFO, 3, 1000, 0);
   InitFifo(HK_FIFO, 3, 1000, 0);
-  //  InitFifo(DATA_FIFO, 646, 3442, 0);
-  InitFifo(DATA_FIFO, 390, 3442, 0);//FIX ME: this is to be compliant also with the "DAMPE ladder case"
+  InitFifo(DATA_FIFO, 646, 3442, 0);
   /* ShowStatusFifo(CONFIG_FIFO); */
   /* ShowStatusFifo(HK_FIFO); */
   /* ShowStatusFifo(DATA_FIFO); */

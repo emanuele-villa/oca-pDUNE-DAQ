@@ -60,13 +60,13 @@ int main(int argc, char *argv[]) {
   // ----------
   //  const char* start ="FF80000800150001EE00000161616B23";
   //  uint32_t start[4] = {0xFF800008, 0x00150001, 0xEE000001, 0x61616B23};
-  uint32_t start[4] = {0x080080FF, 0x00001500, 0x010000EE, 0x236B6171};
+  uint32_t start[4] = {0x080080FF, 0x01001500, 0x010000EE, 0x236B6171};
   daq->Send((void*)start, 4*sizeof(uint32_t));
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
   
-  sleep(60);
+  sleep(180);
 
   // old format
   // //  const char* stop  ="FF80000800000000EE00000000000000";

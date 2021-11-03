@@ -39,6 +39,17 @@ void Init(uint32_t * regsContentIn, uint32_t opLen){
 	//Configure the whole regArray (except register rGOTO_STATE)
 	writeReg(regsContentIn, opLen);
 
+	{
+	  uint32_t regContent;
+	  ReadReg(3, &regContent);
+	  if (baseAddr.verbose>3) {
+	    printf("Detector ID (Register 3): %d\n", regContent);
+	  }
+	  if (regContent>255) {
+	    InitFifo(DATA_FIFO, 390, 3690, 0);
+	  }
+	}
+	
 	//Reset the FPGA
 	ResetFpga();
 }

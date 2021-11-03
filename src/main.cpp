@@ -61,11 +61,11 @@ int main(int argc, char *argv[]) {
 
   sleep(5);
   
-  //  daqsrv->SetCalibrationMode(1);
-  daqsrv->SetCalibrationMode(0);
+  daqsrv->SetCalibrationMode(1);
+  //  daqsrv->SetCalibrationMode(0);
   sleep(1);
-  //  daqsrv->SelectTrigger(0);
-  daqsrv->SelectTrigger(1);
+  daqsrv->SelectTrigger(0);
+  //  daqsrv->SelectTrigger(1);
   //  daqsrv->ReadAllRegs();
   daqsrv->ReadReg(31);
 
