@@ -5,45 +5,58 @@
   @author Mattia Barbanera (mattia.barbanera@infn.it)
   @author Matteo Duranti (matteo.duranti@infn.it)
 */
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <arpa/inet.h>
-
 #include "tcpServer.h"
 #include "utility.h"
 
 tcpServer::tcpServer(int port, int verb){
-  struct sockaddr_in server_addr;
-  server_addr.sin_family      = AF_INET;
-  server_addr.sin_port        = htons(port);
-  server_addr.sin_addr.s_addr = INADDR_ANY;
-  int n = 1;
-
-  //Pass values to the class variables 
-  kVerbosity   = verb;
-  kListeningOn = true;
-  kCmdLen      = 8;
-  kTcpConn     = -1;
+  kVerbosity            = verb;
+  kListeningOn          = false;
+  kCmdLen               = 8;
+  kTcpConn              = -1;
+  kSockDesc             = -1;
+  kPort                 = port;
+  kBlocking             = false;
   
+  //Reset kAddr to intended values
+  memset(&kAddr, 0, sizeof(kAddr));
+  kAddr.sin_family      = AF_INET;
+  kAddr.sin_port        = htons(kPort);
+  kAddr.sin_addr.s_addr = INADDR_ANY;
+
+  Start();
+}
+
+tcpServer::~tcpServer(){
+  if (kVerbosity>0) {
+    printf("%s) Destroying tcpServer\n", __METHOD_NAME__);
+  }
+  kListeningOn = false;
+  close(kSockDesc);
+  shutdown(kTcpConn, SHUT_RDWR);
+  
+  return;
+}
+
+void tcpServer::Setup(){
+  int optval = 1;
+
+  exit_if(kListeningOn == true, "%s) Socket already setup", __METHOD_NAME__);
+
   //Create a new socket
   kSockDesc = socket(AF_INET , SOCK_STREAM , 0);
-  exit_if(kSockDesc < 0, "%s) Socket creation error:", __METHOD_NAME__);
+  exit_if(kSockDesc < 0, "%s) Socket creation error", __METHOD_NAME__);
 
   //Set socket options
   //SO_REUSEADDR to avoid waiting for addresses already in use
-  if (setsockopt(kSockDesc, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(int)) == -1) {
+  if (setsockopt(kSockDesc, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int)) == -1) {
     perror("setsockopt");
     exit(1);
   }
   
   //Binding to port and address
-  int retbind = bind(kSockDesc, (struct sockaddr *) &server_addr,
-                      sizeof(server_addr));
-  exit_if(retbind<0, "%s) Bind error:", __METHOD_NAME__);
+  int result = bind(kSockDesc, (struct sockaddr *) &kAddr,
+                  sizeof(kAddr));
+  exit_if(result < 0, "%s) Bind error", __METHOD_NAME__);
 
   if (kVerbosity>0) {
     printf("%s) Correct bind...\n", __METHOD_NAME__);
@@ -51,29 +64,17 @@ tcpServer::tcpServer(int port, int verb){
   fflush(stdout);
 
   //Listen for new connections
-  int retlisten=listen(kSockDesc, 100);//Matteo D.
-  exit_if(retlisten < 0, "%s) Listening not possibile:", __METHOD_NAME__);
+  result = listen(kSockDesc, 100);//Matteo D.
+  exit_if(result < 0, "%s) Listening not possibile", __METHOD_NAME__);
 
-  //Prepare for new connections
-  AcceptConnection();
+  kListeningOn = true;
 
-  return;
-}
-
-tcpServer::~tcpServer(){
-  
-  if (kVerbosity>0) {
-    printf("%s) Destroying tcpServer\n", __METHOD_NAME__);
-  }
-  close(kSockDesc);
-  shutdown(kTcpConn, SHUT_RDWR);
-  
   return;
 }
 
 void tcpServer::AcceptConnection(){
-  struct sockaddr_in client_addr;
-  int addrLen = sizeof(client_addr);
+  struct sockaddr_in clientAddr;
+  socklen_t addrLen = sizeof(clientAddr);
   int flags, retflags;
 
   sockaddr_in peerAddr;
@@ -85,12 +86,14 @@ void tcpServer::AcceptConnection(){
     kTcpConn = -1;
   }
 
-  //Save the current flags, if any
-  flags = fcntl(kSockDesc ,F_GETFL, 0);
-  exit_if(flags < 0, "%s) Fcntl failed:", __METHOD_NAME__);
-  //Make the socket non-blocking
-  retflags=fcntl(kSockDesc, F_SETFL, flags | O_NONBLOCK);
-  exit_if(retflags < 0, "%s) Fcntl failed:", __METHOD_NAME__);
+  if (!kBlocking) {
+    //Save the current flags, if any
+    flags = fcntl(kSockDesc ,F_GETFL, 0);
+    exit_if(flags < 0, "%s) Fcntl failed:", __METHOD_NAME__);
+    //Make the socket non-blocking
+    retflags=fcntl(kSockDesc, F_SETFL, flags | O_NONBLOCK);
+    exit_if(retflags < 0, "%s) Fcntl failed:", __METHOD_NAME__);
+  }
 
   //Stop here until a connection exists
   while (kTcpConn==-1) {
@@ -100,8 +103,7 @@ void tcpServer::AcceptConnection(){
     }
     
     //Await (blocking) or try (non-blocking) connections
-    kTcpConn = accept(kSockDesc, (struct sockaddr *) &client_addr,
-                        (socklen_t *) &addrLen);
+    kTcpConn = accept(kSockDesc, (struct sockaddr *) &clientAddr, &addrLen);
     if (kVerbosity>1) {
       printf("%s) kTcpConn: %d, errno: %d (EAGAIN, EWOULDBLOCK: %d %d)\n",
                 __METHOD_NAME__, kTcpConn, errno, EAGAIN, EWOULDBLOCK);
@@ -127,17 +129,27 @@ void tcpServer::AcceptConnection(){
     sleep(1);
   }
   
-  //Update the connection flags to make it non-blocking
-  flags=fcntl(kTcpConn ,F_GETFL, 0);
-  exit_if(flags < 0, "%s) Fcntl failed:", __METHOD_NAME__);
-  retflags=fcntl(kTcpConn, F_SETFL, flags | O_NONBLOCK);
-  exit_if(retflags < 0, "%s) Fcntl failed:", __METHOD_NAME__);
+  //FIXME Return to blocking socket?
+  if (!kBlocking) {
+    //Update the connection flags to make it non-blocking
+    flags=fcntl(kTcpConn ,F_GETFL, 0);
+    exit_if(flags < 0, "%s) Fcntl failed:", __METHOD_NAME__);
+    retflags=fcntl(kTcpConn, F_SETFL, flags | O_NONBLOCK);
+    exit_if(retflags < 0, "%s) Fcntl failed:", __METHOD_NAME__);
+  }
   
   //
   getpeername(kTcpConn, (sockaddr *) &peerAddr, &peerAddrLen);
   printf("%s) Connection succeded: (socket number %d, %s:%d)\n", 
             __METHOD_NAME__, kTcpConn, inet_ntoa(peerAddr.sin_addr),
             ntohs(peerAddr.sin_port));
+
+  return;
+}
+
+void tcpServer::Start(){
+  Setup();
+  AcceptConnection();
 
   return;
 }
@@ -194,9 +206,7 @@ void tcpServer::ProcessCmdReceived(char* msg){
 }
 
 void tcpServer::StopListening(){
-
-  kListeningOn=false;
-
+  kListeningOn = false;
   return;
 }
 
