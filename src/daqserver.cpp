@@ -10,7 +10,7 @@
 #include <chrono>
 #include <algorithm>
 
-daqserver::daqserver(int port, int verb):tcpserver(port, verb){
+daqserver::daqserver(int port, int verb):tcpServer(port, verb){
   if (kVerbosity>0){
     printf("%s) daqserver created\n", __METHOD_NAME__);
   }

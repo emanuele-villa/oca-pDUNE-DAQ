@@ -200,7 +200,7 @@ void *receiver_slow_control(void *args){
 int sockOpener(void* args, int* sockIn) {
   // questa parte diventa un banale
   // hpsserver* hsrv = new hpsserver(bla, bla, bla)
-  // dare controllata che tutta 'sta roba sia, uguale, nel costruttore di tcpserver
+  // dare controllata che tutta 'sta roba sia, uguale, nel costruttore di tcpServer
   // in teoria si' perche' io da qui ho copiato
   // ma sicuramente almeno manca il pezzo committato da Nicolo' dopo:
   // https://github.com/PerugiaOverNetDAQ/oca/commit/b8daee0873b71e149a75e278ae9f00c0b8d2b702
@@ -288,7 +288,7 @@ void* receiver_comandi(int* sockIn){
   // questa parte sara' un metodo di hpsserver
 
   //------------------------------------------------------
-  // questa parte sarà il Listen() (di tcpserver)
+  // questa parte sarà il Listen() (di tcpServer)
   // che a sua volta chiama il
   // virtual void ProcessMsgReceived(char* msg);
   // che e' specializzato/implementato in hpsserver

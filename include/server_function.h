@@ -6,7 +6,7 @@
 // - server_function.h
 
 // hpsserver.h
-// qui ci va la classe: copiare daqserver (i.e. figlia di tcpserver + le funzioni sotto che diventano metodi di classe
+// qui ci va la classe: copiare daqserver (i.e. figlia di tcpServer + le funzioni sotto che diventano metodi di classe
 
 extern struct fpgaAddresses baseAddr;
 extern uint32_t kGwV;

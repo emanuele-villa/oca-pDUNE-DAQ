@@ -1,33 +1,64 @@
+/*!
+  @file tcpServer.h
+  @brief TCP server class
+  @author Mattia Barbanera (mattia.barbanera@infn.it)
+  @author Matteo Duranti (matteo.duranti@infn.it)
+*/
+
 #ifndef TCPSERVER_H
 #define TCPSERVER_H
 
-class tcpserver {
+/*!
+  TCP server class
+*/
+class tcpServer {
 
-protected:
-  int kVerbosity;
-  int cmdlenght;
-  int kSocket;//FIX ME: this name is a shit. Change
-  int kSock;
-  volatile bool kListeningOn;
+  protected:
+    int kVerbosity; //!< Verbosity level
+    int kCmdLen;    //!< Length of incoming TCP commands 
+    int kSockDesc;  //!< Socket descriptor before opening connections
+    int kTcpConn;   //!< Accepted and open TCP connection
+    volatile bool kListeningOn; //!< Turn on/off the listenings of commands
 
-  void AcceptConnection();
+    /*!
+      Open connections after socket binding
+    */
+    void AcceptConnection();
 
-  virtual void ProcessCmdReceived(char* msg);
-  
-  int ReplyToCmd(char* msg);
-  
-public:
-  virtual ~tcpserver();
-  tcpserver(int port, int verb=0);
+    /*!
+      Printing the message received from the client(s)
+    */
+    virtual void ProcessCmdReceived(char* msg);
 
-  void SetCmdLenght(int lenght) { cmdlenght = lenght; }
+    /*!
+      Send a reply to received commands
+    */
+    int ReplyToCmd(char* msg);
 
-  void SetVerbosity(int verb){ kVerbosity = verb; }
-  int GetVerbosity(){ return kVerbosity; }
+  public:
+    tcpServer(int port, int verb=0);
+    virtual ~tcpServer();
 
-  void StopListening();
-  
-  virtual void ListenCmd();
+    void SetVerbosity(int verb){ kVerbosity = verb; }
+
+    int GetVerbosity(){ return kVerbosity; }
+
+    /*!
+      Define the length of the receiving commands
+    */
+    void SetCmdLenght(int lenght) {
+      kCmdLen = lenght;
+    }
+
+    /*!
+      Stop incoming connections
+    */
+    void StopListening();
+
+    /*!
+      Receive commands and call the appropriate function
+    */
+    virtual void ListenCmd();
 };
 
 #endif

@@ -4,10 +4,10 @@
 #include <vector>
 #include <thread>
 
-#include "tcpserver.h"
+#include "tcpServer.h"
 #include "de10_silicon_base.h"
 
-class daqserver: public tcpserver {
+class daqserver: public tcpServer {
 
 private:
   std::vector<const char*> addressdet;
