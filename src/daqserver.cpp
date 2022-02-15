@@ -12,9 +12,10 @@
 
 daqserver::daqserver(int port, int verb):tcpServer(port, verb){
   if (kVerbosity>0){
-    printf("%s) daqserver created\n", __METHOD_NAME__);
+    printf("%s) Daqserver created\n", __METHOD_NAME__);
   }
 
+  kCmdLen = 8;
   addressdet.clear();
   portdet.clear();
 
@@ -125,6 +126,63 @@ void daqserver::ResetBoards(){
   for(auto de10 : det){
     de10->EventReset();
   }
+}
+
+int tcpServer::ReplyToCmd(char* msg) {
+  //Send msg to socket
+  int n = write(kTcpConn, msg, kCmdLen);
+  if (n < 0){
+    fprintf(stderr, "%s) Error in writing to the socket\n", __METHOD_NAME__);
+    return 1;
+  }
+  
+  if (kVerbosity>1) {
+    printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  }
+  
+  return 0;
+}
+
+void daqserver::ListenCmd(){
+
+  kListeningOn = true;
+
+  while (kListeningOn){
+  
+    char msg[LEN];
+
+    //Receive a command of kCmdLen numbers chars (each one in ASCII char),
+    //+ 1 for the termination character
+    ssize_t readret = read(kTcpConn, msg, ((kCmdLen*8)*sizeof(char)+1));
+
+    if (readret < 0){
+      //Error
+      if (EAGAIN == errno || EWOULDBLOCK == errno) {
+        if (kVerbosity>1) {
+          printf("%s) There's nothing to read now; try again later\n", __METHOD_NAME__);
+        }
+      }
+      else {
+        print_error("%s) Read error: \n", __METHOD_NAME__);
+      }
+    }
+    else if (readret==0){
+      //Stream is over and client disconnected: wait for another connection
+      AcceptConnection();
+    }
+    else {
+      //RX ok
+      ProcessCmdReceived(msg);
+    }
+
+    bzero(msg, sizeof(msg));
+  }
+
+  if (kVerbosity>0) {
+    printf("%s) Stop Listening\n", __METHOD_NAME__);
+  }
+
+  return;
 }
 
 void daqserver::ProcessCmdReceived(char* msg){

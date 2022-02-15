@@ -11,7 +11,6 @@
 tcpServer::tcpServer(int port, int verb){
   kVerbosity            = verb;
   kListeningOn          = false;
-  kCmdLen               = 8;
   kTcpConn              = -1;
   kSockDesc             = -1;
   kPort                 = port;
@@ -23,7 +22,7 @@ tcpServer::tcpServer(int port, int verb){
   kAddr.sin_port        = htons(kPort);
   kAddr.sin_addr.s_addr = INADDR_ANY;
 
-  Start();
+  SockStart();
 }
 
 tcpServer::~tcpServer(){
@@ -48,7 +47,8 @@ void tcpServer::Setup(){
 
   //Set socket options
   //SO_REUSEADDR to avoid waiting for addresses already in use
-  if (setsockopt(kSockDesc, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int)) == -1) {
+  if (setsockopt(kSockDesc, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval,
+                  sizeof(int)) == -1) {
     perror("setsockopt");
     exit(1);
   }
@@ -147,60 +147,9 @@ void tcpServer::AcceptConnection(){
   return;
 }
 
-void tcpServer::Start(){
+void tcpServer::SockStart(){
   Setup();
   AcceptConnection();
-
-  return;
-}
-
-void tcpServer::ListenCmd(){
-
-  kListeningOn = true;
-
-  while (kListeningOn){
-  
-    char msg[LEN];
-
-    //Receive a command of kCmdLen numbers chars (each one in ASCII char),
-    //+ 1 for the termination character
-    ssize_t readret = read(kTcpConn, msg, ((kCmdLen*8)*sizeof(char)+1));
-
-    if (readret < 0){
-      //Error
-      if (EAGAIN == errno || EWOULDBLOCK == errno) {
-        if (kVerbosity>1) {
-          printf("%s) There's nothing to read now; try again later\n", __METHOD_NAME__);
-        }
-      }
-      else {
-        print_error("%s) Read error: \n", __METHOD_NAME__);
-      }
-    }
-    else if (readret==0){
-      //Stream is over and client disconnected: wait for another connection
-      AcceptConnection();
-    }
-    else {
-      //RX ok
-      ProcessCmdReceived(msg);
-    }
-
-    bzero(msg, sizeof(msg));
-  }
-
-  if (kVerbosity>0) {
-    printf("%s) Stop Listening\n", __METHOD_NAME__);
-  }
-
-  return;
-}
-
-void tcpServer::ProcessCmdReceived(char* msg){
-
-  if (kVerbosity>0) {
-    printf("%s) %s\n", __METHOD_NAME__, msg);
-  }
 
   return;
 }
@@ -210,17 +159,60 @@ void tcpServer::StopListening(){
   return;
 }
 
-int tcpServer::ReplyToCmd(char* msg) {
-  //Send msg to socket
-  int n = write(kTcpConn, msg, kCmdLen);
-  if (n < 0){
-    fprintf(stderr, "%s) Error in writing to the socket\n", __METHOD_NAME__);
-    return 1;
+int tcpServer::Tx(const void* msg, uint32_t len){
+  int n;
+  n = write(kTcpConn, msg, len);
+  if(n < 0){
+    fprintf(stderr, "Error in writing to the socket\n");
+    return -1;
   }
-  
-  if (kVerbosity>1) {
-    printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  if (baseAddr.verbose > 3) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  return n;
+}
+
+int tcpServer::Rx(const void* msg, uint32_t len){
+  int n;
+  n = read(kTcpConn, msg, len);
+  if (n < 0) {
+    fprintf(stderr, "Error in reading the socket\n");
+    return -1;
   }
-  
-  return 0;
+  return n;
+}
+
+int tcpServer::Rx(const void* msg, uint32_t len, int timeout){
+  if (timeout <= 0) {
+    return Rx(msg, len);
+  }
+
+  if (waitForReadEvent(timeout) == true) {
+    return Rx(msg, len);
+  } else {
+    //return read(kTcpConn, msg, len);
+    return -2;
+  }
+}
+
+bool tcpServer::waitForReadEvent(int timeout){
+  fd_set readSet;
+  struct timeval waitTime;
+  waitTime.tv_sec  = static_cast<int>(timeout/1000);
+  waitTime.tv_usec = static_cast<int>((timeout%1000)*1000);
+
+  //Initialize readSet and add the listening socket to the set readSet
+  FD_ZERO(&readSet); //FIXME if kTcpConn already in the list, FD_SET returns no error
+  FD_SET(kTcpConn, &readSet);
+	
+  //Wait the socket to be readable
+  //pselect for signal capture; poll/ppoll are an upgrade
+	int retSel = select(kTcpConn+1, &readSet, NULL, NULL, &waitTime);
+	if(retSel > 0) {
+	  return true;
+	} else if(retSel < 0) {
+	  printf("%s) Select returned negative value: %d\n", __METHOD_NAME__, retSel);
+	} else {
+    printf("%s) Timeout\n", __METHOD_NAME__);
+	}
+	
+  return false;
 }

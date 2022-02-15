@@ -23,13 +23,12 @@ class tcpServer {
 
   protected:
     int kVerbosity; //!< Verbosity level
-    int kCmdLen;    //!< Length of incoming TCP commands 
     int kSockDesc;  //!< Socket descriptor before opening connections
     int kTcpConn;   //!< Accepted and open TCP connection
     volatile bool kListeningOn; //!< Turn on/off the listenings of commands
     int kPort;      //!< Port
     struct sockaddr_in kAddr; //!< Address
-    bool kBlocking;
+    bool kBlocking; //!< Blocking or non-blocking flag
 
     /*!
       Create, bind, and configure socket
@@ -44,31 +43,42 @@ class tcpServer {
     /*!
       Setup and AcceptConnections
     */
-    void Start();
+    void SockStart();
 
     /*!
-      Printing the message received from the client(s)
+      Receive len bytes into msg
+      @param msg Pointer to the memory where to store incoming bytes
+      @param len Bytes to read from the socket
+      @return Bytes read, -1 for errors, 0 for EOF
     */
-    virtual void ProcessCmdReceived(char* msg);
+    int Rx(const void* msg, uint32_t len);
 
     /*!
-      Send a reply to received commands
+      Receive len bytes into msg, but waits until socket is readable
+      @param msg     Pointer to the memory where to store incoming bytes
+      @param len     Bytes to read from the socket
+      @param timeout Microseconds to wait until socket is readable
+      @return Bytes read, -1 for errors, -2 for timeout, 0 for EOF
     */
-    int ReplyToCmd(char* msg);
+    int Rx(const void* msg, uint32_t len, int timeout);
+
+    /*!
+      Wait until socket is readable
+      @param timeout Microseconds to wait until socket is readable
+      @return False if timed-out or select returns negative values
+    */
+    bool waitForReadEvent(int timeout);
 
   public:
     tcpServer(int port, int verb=0);
     virtual ~tcpServer();
 
-    void SetVerbosity(int verb){ kVerbosity = verb; }
+    void SetVerbosity(int verb){
+      kVerbosity = verb;
+    }
 
-    int GetVerbosity(){ return kVerbosity; }
-
-    /*!
-      Define the length of the receiving commands
-    */
-    void SetCmdLenght(int lenght) {
-      kCmdLen = lenght;
+    int GetVerbosity(){
+      return kVerbosity;
     }
 
     /*!
@@ -76,10 +86,6 @@ class tcpServer {
     */
     void StopListening();
 
-    /*!
-      Receive commands and call the appropriate function
-    */
-    virtual void ListenCmd();
 };
 
 #endif

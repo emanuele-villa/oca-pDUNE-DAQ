@@ -9,6 +9,9 @@
 
 class daqserver: public tcpServer {
 
+protected:
+  int kCmdLen;    //!< Length of incoming TCP commands 
+
 private:
   std::vector<const char*> addressdet;
   std::vector<int> portdet;
@@ -21,6 +24,19 @@ private:
   int trigtype;
   unsigned int nEvents = 0;
   
+  /*!
+    Send a reply to received commands
+  */
+  int ReplyToCmd(char* msg);
+  
+  /*!
+    Receive commands and call the appropriate function
+  */
+  void ListenCmd();
+  
+  /*!
+    Printing the message received from the client(s)
+  */
   void ProcessCmdReceived(char* msg);
   
   int recordEvents(FILE* fd);
@@ -28,6 +44,13 @@ private:
 public:
   ~daqserver();
   daqserver(int port, int verb=0);
+
+  /*!
+    Define the length of the receiving commands
+  */
+  void SetCmdLenght(int lenght) {
+    kCmdLen = lenght;
+  }
 
   void SetListDetectors(int nde10, const char* addressde10[], int portde10[], int detcmdlenght);
   void SetDetId(const char* addressde10, uint32_t _detId);
