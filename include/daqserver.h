@@ -30,11 +30,6 @@ private:
   int ReplyToCmd(char* msg);
   
   /*!
-    Receive commands and call the appropriate function
-  */
-  void ListenCmd();
-  
-  /*!
     Printing the message received from the client(s)
   */
   void ProcessCmdReceived(char* msg);
@@ -70,6 +65,11 @@ public:
   int Init();
   void Start(char* runtype, uint32_t runnum, uint32_t unixtime);
   void Stop();
+
+  /*!
+    Receive commands and call the appropriate function
+  */
+  void ListenCmd();
 
 };
 

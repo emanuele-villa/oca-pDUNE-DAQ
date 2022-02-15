@@ -166,11 +166,11 @@ int tcpServer::Tx(const void* msg, uint32_t len){
     fprintf(stderr, "Error in writing to the socket\n");
     return -1;
   }
-  if (baseAddr.verbose > 3) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  if (kVerbosity > 3) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
   return n;
 }
 
-int tcpServer::Rx(const void* msg, uint32_t len){
+int tcpServer::Rx(void* msg, uint32_t len){
   int n;
   n = read(kTcpConn, msg, len);
   if (n < 0) {
@@ -180,7 +180,7 @@ int tcpServer::Rx(const void* msg, uint32_t len){
   return n;
 }
 
-int tcpServer::Rx(const void* msg, uint32_t len, int timeout){
+int tcpServer::RxTimeout(void* msg, uint32_t len, int timeout){
   if (timeout <= 0) {
     return Rx(msg, len);
   }

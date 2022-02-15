@@ -46,21 +46,29 @@ class tcpServer {
     void SockStart();
 
     /*!
+      Send len bytes into msg
+      @param msg Pointer to the TX buffer
+      @param len Bytes to send to the socket
+      @return Bytes sent, -1 for errors, 0 for EOF
+    */
+    int Tx(const void* msg, uint32_t len);
+
+    /*!
       Receive len bytes into msg
-      @param msg Pointer to the memory where to store incoming bytes
+      @param msg Pointer to the RX buffer
       @param len Bytes to read from the socket
       @return Bytes read, -1 for errors, 0 for EOF
     */
-    int Rx(const void* msg, uint32_t len);
+    int Rx(void* msg, uint32_t len);
 
     /*!
       Receive len bytes into msg, but waits until socket is readable
-      @param msg     Pointer to the memory where to store incoming bytes
+      @param msg     Pointer to the RX buffer
       @param len     Bytes to read from the socket
       @param timeout Microseconds to wait until socket is readable
       @return Bytes read, -1 for errors, -2 for timeout, 0 for EOF
     */
-    int Rx(const void* msg, uint32_t len, int timeout);
+    int RxTimeout(void* msg, uint32_t len, int timeout = -1);
 
     /*!
       Wait until socket is readable

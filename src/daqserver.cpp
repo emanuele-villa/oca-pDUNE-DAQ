@@ -128,7 +128,7 @@ void daqserver::ResetBoards(){
   }
 }
 
-int tcpServer::ReplyToCmd(char* msg) {
+int daqserver::ReplyToCmd(char* msg) {
   //Send msg to socket
   int n = write(kTcpConn, msg, kCmdLen);
   if (n < 0){
