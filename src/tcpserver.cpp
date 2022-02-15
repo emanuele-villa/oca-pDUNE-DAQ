@@ -42,6 +42,7 @@ void tcpServer::Setup(){
   exit_if(kListeningOn == true, "%s) Socket already setup", __METHOD_NAME__);
 
   //Create a new socket
+  printf("TCP/IP socket: Opening... ");
   kSockDesc = socket(AF_INET , SOCK_STREAM , 0);
   exit_if(kSockDesc < 0, "%s) Socket creation error", __METHOD_NAME__);
 
@@ -49,23 +50,24 @@ void tcpServer::Setup(){
   //SO_REUSEADDR to avoid waiting for addresses already in use
   if (setsockopt(kSockDesc, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval,
                   sizeof(int)) == -1) {
-    perror("setsockopt");
+    perror("setsockopt failed...\n");
     exit(1);
   }
+  printf("ok\n");
   
   //Binding to port and address
+  printf("TCP/IP socket: binding... ");
   int result = bind(kSockDesc, (struct sockaddr *) &kAddr,
                   sizeof(kAddr));
   exit_if(result < 0, "%s) Bind error", __METHOD_NAME__);
-
-  if (kVerbosity>0) {
-    printf("%s) Correct bind...\n", __METHOD_NAME__);
-  }
+  printf("ok\n");
   fflush(stdout);
 
   //Listen for new connections
-  result = listen(kSockDesc, 100);//Matteo D.
+  printf("TCP/IP socket: listening... ");
+  result = listen(kSockDesc, 100);
   exit_if(result < 0, "%s) Listening not possibile", __METHOD_NAME__);
+  printf("ok\n");
 
   kListeningOn = true;
 
@@ -164,7 +166,7 @@ int tcpServer::Tx(const void* msg, uint32_t len){
   n = write(kTcpConn, msg, len);
   if(n < 0){
     fprintf(stderr, "Error in writing to the socket\n");
-    return -1;
+    return n;
   }
   if (kVerbosity > 3) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
   return n;
@@ -175,7 +177,6 @@ int tcpServer::Rx(void* msg, uint32_t len){
   n = read(kTcpConn, msg, len);
   if (n < 0) {
     fprintf(stderr, "Error in reading the socket\n");
-    return -1;
   }
   return n;
 }

@@ -17,11 +17,12 @@
 #include "user_avalon_fifo_regs.h"
 #include "lowlevelDriversFPGA.h"
 #include "highlevelDriversFPGA.h"
-#include "server_function.h"
+#include "hpsServer.h"
 #include "server.h"
 
 struct fpgaAddresses baseAddr;
 uint32_t kGwV = 0;
+hpsServer* hpsSrv = nullptr;
 
 int main(int argc, char *argv[]){
   std::cout<<"hash="<<GIT_HASH<<", time="<<COMPILE_TIME<<", branch="<<GIT_BRANCH<<std::endl;
@@ -115,16 +116,15 @@ int main(int argc, char *argv[]){
   /* ShowStatusFifo(DATA_FIFO); */
 
   //Connect to the socket and loop forever to receive commands
-  int sock = 0;
-  //Open the socket, bind it to the address and listen to the port
   printf("Creating a server socket...\n");
-  sockOpener(argv[1], &sock);
+  hpsSrv = new hpsServer(atoi(argv[1]), baseAddr.verbose);
+
   //Accept client connections and receive commands, until client is closed
   while (1) {
-    receiver_comandi(&sock);
+    hpsSrv->ListenCmd();
   }
   //Everything done, close the socket
-  close(sock);
+  if (hpsSrv) delete hpsSrv;
 
   return 0;
 }

@@ -207,8 +207,8 @@ void daqserver::ProcessCmdReceived(char* msg){
       printf("%s) Wait()\n", __METHOD_NAME__);
       printf("sleeping for 30s: "); fflush(stdout);
       for (int ii=0; ii<30; ii++) {
-	printf("%d... ", ii); fflush(stdout);
-	sleep(1);
+        printf("%d... ", ii); fflush(stdout);
+        sleep(1);
       }
       printf("\n");
       ReplyToCmd(msg);
@@ -233,60 +233,59 @@ void daqserver::ProcessCmdReceived(char* msg){
     for (int ii=0; ii<4; ii++) {
       strncpy(cmdgroup[ii], &command_string[ii*8], 8);
       if (kVerbosity>0) {
-	printf("%s\n", cmdgroup[ii]);
+        printf("%s\n", cmdgroup[ii]);
       }
     }
     
     //check the command
     if (strcmp(btcmd, cmdgroup[0])==0) {//is a chinese command
       if (strcmp(start,cmdgroup[2])==0) {//start daq
-	printf("%s) Start()\n", __METHOD_NAME__);
-	char runtype[32] = "";
-	strncpy(runtype, &cmdgroup[1][4], 4);
-	char sruntype[32] = "";
-	if (strcmp(beam,runtype)==0) {
-	  sprintf(sruntype, "BEAM");
-	  SetCalibrationMode(0);
-	}
-	else if (strcmp(cal,runtype)==0) {
-	  sprintf(sruntype, "CAL");
-	  SetCalibrationMode(1);
-	}
-	else {
-	  printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
-	  sprintf(sruntype, "????");
-	}
+	      printf("%s) Start()\n", __METHOD_NAME__);
+	      char runtype[32] = "";
+	      strncpy(runtype, &cmdgroup[1][4], 4);
+	      char sruntype[32] = "";
+	      if (strcmp(beam,runtype)==0) {
+	        sprintf(sruntype, "BEAM");
+	        SetCalibrationMode(0);
+	      }
+	      else if (strcmp(cal,runtype)==0) {
+	        sprintf(sruntype, "CAL");
+	        SetCalibrationMode(1);
+	      }
+	      else {
+	        printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
+	        sprintf(sruntype, "????");
+	      }
 
-	// ignore consecutive Start commands
-	if(kStart){
-	  ReplyToCmd("Consecutive starts received. Ignoring last command.");
-	  return;
-	}
+        // ignore consecutive Start commands
+        if(kStart){
+          ReplyToCmd("Consecutive starts received. Ignoring last command.");
+          return;
+        }
 
-	char srunnum[32] = "";
-	strncpy(srunnum,  &cmdgroup[1][0], 4);
-	char* ptr;
-	uint32_t runnum = strtol(srunnum, &ptr, 16);
-	uint32_t unixtime = strtol(cmdgroup[3], &ptr, 16);
-	std::time_t t = unixtime;
-	if (kVerbosity>0) {
-	  printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
-	}
-	//Spawn a thread to read events. Stop() will join the thread
-	nEvents = 0;
-	_3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
-	ReplyToCmd(msg);
-	//	}
+        char srunnum[32] = "";
+        strncpy(srunnum,  &cmdgroup[1][0], 4);
+        char* ptr;
+        uint32_t runnum = strtol(srunnum, &ptr, 16);
+        uint32_t unixtime = strtol(cmdgroup[3], &ptr, 16);
+        std::time_t t = unixtime;
+        if (kVerbosity>0) {
+          printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
+        }
+        //Spawn a thread to read events. Stop() will join the thread
+        nEvents = 0;
+        _3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
+        ReplyToCmd(msg);
       }
       else if(strcmp(stop,cmdgroup[2])==0) {//stop daq
-	printf("%s) Stop()\n", __METHOD_NAME__);
-	Stop();
-	ReplyToCmd(msg);
+        printf("%s) Stop()\n", __METHOD_NAME__);
+        Stop();
+        ReplyToCmd(msg);
       }
       else {
-	printf("%s) not a valid sub-command: %s (%s)\n\n", __METHOD_NAME__, cmdgroup[2], command_string);
-	sprintf(msg, "NOT-A-VALID-SUBCMD");
-	ReplyToCmd(msg);
+        printf("%s) not a valid sub-command: %s (%s)\n\n", __METHOD_NAME__, cmdgroup[2], command_string);
+        sprintf(msg, "NOT-A-VALID-SUBCMD");
+        ReplyToCmd(msg);
       }
     }
     else {
@@ -294,7 +293,6 @@ void daqserver::ProcessCmdReceived(char* msg){
       sprintf(msg, "NOT-A-VALID-CMD");
       ReplyToCmd(msg);
     }
-
   }
 
   return;

@@ -68,7 +68,7 @@ HPSOPTFLAG := -g
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpServer.o $(OBJ)/utility.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
-OBJECTSHPS := $(OBJARM)/server.o $(OBJARM)/server_function.o $(OBJARM)/highlevelDriversFPGA.o $(OBJARM)/lowlevelDriversFPGA.o
+OBJECTSHPS := $(OBJARM)/server.o $(OBJARM)/hpsServer.o $(OBJARM)/highlevelDriversFPGA.o $(OBJARM)/lowlevelDriversFPGA.o
 
 # Executables:
 PAPERO := $(EXE)/PAPERO
