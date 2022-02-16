@@ -58,3 +58,4 @@ exe/
 build*
 *.user
 bin/
+.vscode
