@@ -6,6 +6,14 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <string.h>
+#include <sys/mman.h>
+#include "socal/socal.h"
+#include "socal/hps.h"
+#include "socal/alt_gpio.h"
+
+#include "hps_0.h"
+#include "user_avalon_fifo_regs.h"
+
 
 /*!
   AXI FIFO properties and methods
@@ -31,25 +39,39 @@ class axiFifo {
     axiFifo(void* virtualBase, uint32_t address, uint32_t csr, uint32_t aEmptyThr, uint32_t aFullThr, uint8_t interruptEn);
 
     //!< Return the number of used words
-    uint32_t getUsedw ();
+    inline uint32_t getUsedw () {
+      return *UsedwAddr;
+    };
 
     //!< Return the full flag
-    bool getFull ();
+    inline bool getFull () {
+     return (*StatusAddr & ALTERA_AVALON_FIFO_STATUS_F_MSK) && 1;
+    };
 
     //!< Return the almost-full flag
-    bool getAFull ();
+    inline bool getAFull () {
+    	return (*StatusAddr & ALTERA_AVALON_FIFO_STATUS_AF_MSK) && 1;
+    };
 
     //!< Return the empty flag
-    bool getEmpty ();
+    inline bool getEmpty () {
+    	return (*StatusAddr & ALTERA_AVALON_FIFO_STATUS_E_MSK) && 1;
+    };
 
     //!< Return the almost-empty flag
-    bool getAEmpty ();
+    inline bool getAEmpty () {
+    	return (*StatusAddr & ALTERA_AVALON_FIFO_STATUS_AE_MSK) && 1;
+    };
 
     //!< Return the overflow flag
-    bool getOverFlow ();
+    inline bool getOverFlow () {
+    	return (*EventReg & ALTERA_AVALON_FIFO_EVENT_OVF_MSK) && 1;
+    };
 
     //!< Reset overflow flag
-    void resetOverflow ();
+    inline void resetOverflow () {
+      *EventReg &= ALTERA_AVALON_FIFO_EVENT_OVF_MSK;
+    };
 
     /*!
       FIFO initialization: Set aFull and aEmpty thresholds, disable interrupts, and reset events register
