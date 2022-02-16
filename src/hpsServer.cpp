@@ -15,11 +15,7 @@
 #include <chrono>
 
 #include "utility.h"
-
-#include "highlevelDriversFPGA.h"
-#include "lowlevelDriversFPGA.h"
 #include "hpsServer.h"
-#include "server.h"
 
 
 hpsServer::hpsServer(int port, int verb):tcpServer(port, verb){
@@ -39,7 +35,14 @@ hpsServer::hpsServer(int port, int verb):tcpServer(port, verb){
   kCmdLen = 24;
   kEvtCount = 0;
 
-  //Setup server
+  //Instantiate the FPGA driver
+  fpga = new fpgaDriver(verb);
+  uint32_t piumone = 0;
+  fpga->ReadReg(rPIUMONE, &piumone);
+  printf("\n/*--- GateWare SHA: %08x ----------------------*/\n", fpga->getkGwV());
+  printf("/*--- Piumone (it must be 0xC1A0C1A0): %08x ---*/\n\n", piumone);
+
+  //Setup TCP server
   Setup();
 }
 
@@ -58,9 +61,6 @@ void* hpsServer::ListenCmd(){
   // printf("\n");
   AcceptConnection();
   cmdLenHandshake();
-
-  //FIXME fetch the GW version from gitlab and not from FPGA
-  ReadReg(rGW_VER, &kGwV);
 
   bool ListenCmdOn = true;
   kEvtCount = 0;
@@ -101,14 +101,14 @@ void hpsServer::ProcessCmdReceived(char* msg){
     uint32_t regsContent[14];
     uint32_t singleReg = 0;
 
-    if (baseAddr.verbose > 1) printf("%s) Starting init...\n", __METHOD_NAME__);
-      //Receive the whole content (apart from reg rGOTO_STATE)
+    if (kVerbosity > 1) printf("%s) Starting init...\n", __METHOD_NAME__);
+      //TCP-Receive the whole content (apart from reg rGOTO_STATE)
       for(int ii = 0; ii < 7; ii++){
         Rx(&singleReg, sizeof(singleReg));
         regsContent[ii*2]   = singleReg;
         regsContent[ii*2+1] = (uint32_t)ii+1;
       }
-      Init(regsContent, 14);
+      fpga->InitFpga(regsContent, 14);
       Tx(&kOkVal, sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=readReg") == 0){
@@ -116,25 +116,25 @@ void hpsServer::ProcessCmdReceived(char* msg){
     uint32_t regAddr = 0;
     Rx(&regAddr, sizeof(regAddr));
     printf("Send read request...\n");
-    ReadReg(regAddr, &regContent);
+    fpga->ReadReg(regAddr, &regContent);
     Tx(&regContent, sizeof(regContent));
   }
   else if((strcmp(msg, "cmd=setDelay")==0)||(strcmp(msg, "cmd=overWriteDelay")==0)){
     uint32_t delay = 0;
     Rx(&delay, sizeof(delay));
-    SetDelay(delay);
+    fpga->SetDelay(delay);
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=setMode") == 0){
     uint32_t mode = 0;
     Rx(&mode, sizeof(mode));
-    SetMode(mode);
+    fpga->SetMode(mode);
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=getEventNumber") == 0){
     uint32_t extTrigCount, intTrigCount;
 
-    GetEventNumber(&extTrigCount, &intTrigCount);
+    fpga->GetEventNumber(&extTrigCount, &intTrigCount);
 
     Tx(&extTrigCount, sizeof(extTrigCount));
     Tx(&intTrigCount, sizeof(intTrigCount));
@@ -142,13 +142,13 @@ void hpsServer::ProcessCmdReceived(char* msg){
   else if(strcmp(msg, "cmd=eventReset") == 0){
     kEvtCount = 0;
     kStartRunTime = std::chrono::system_clock::now();
-    EventReset();
+    fpga->EventReset();
     Tx(&kOkVal , sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=calibrate") == 0){
     uint32_t calib = 0;
     Rx(&calib, sizeof(calib));
-    Calibrate(calib);
+    fpga->Calibrate(calib);
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=writeCalibPar") == 0){
@@ -162,13 +162,13 @@ void hpsServer::ProcessCmdReceived(char* msg){
   else if(strcmp(msg, "cmd=intTrigPeriod") == 0){
     uint32_t period = 0;
     Rx(&period, sizeof(period));
-    intTriggerPeriod(period);
+    fpga->intTriggerPeriod(period);
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=selectTrigger") == 0){
     uint32_t intTrig = 0;
     Rx(&intTrig, sizeof(intTrig));
-    selectTrigger(intTrig);
+    fpga->selectTrigger(intTrig);
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=configTestUnit") == 0){
@@ -176,8 +176,8 @@ void hpsServer::ProcessCmdReceived(char* msg){
     Rx(&tuCfg, sizeof(tuCfg));
     char testUnitCfg = ((tuCfg&0x300)>>8);
     char testUnitEn  = ((tuCfg&0x2)>>1);
-    configureTestUnit(tuCfg);
-    if (baseAddr.verbose > 1) {
+    fpga->configureTestUnit(tuCfg);
+    if (kVerbosity > 1) {
       printf("Test unit cfg: %d - en: %d\n", testUnitCfg, testUnitEn);
     }
     Tx(&kOkVal, sizeof(kOkVal));
@@ -190,8 +190,8 @@ void hpsServer::ProcessCmdReceived(char* msg){
     int evtLen=0;
 
     //Get an event from FPGA
-    int evtErr = getEvent(evt, &evtLen);
-    if (baseAddr.verbose > 3) printf("getEvent result: %d\n", evtErr);
+    int evtErr = fpga->getEvent(evt, &evtLen);
+    if (kVerbosity > 3) printf("getEvent result: %d\n", evtErr);
     //Send the eventLen to the socket
     Tx(&evtLen, sizeof(evtLen));
     //Send the event to the socket
@@ -203,7 +203,7 @@ void hpsServer::ProcessCmdReceived(char* msg){
         std::cout << "Event count : " << kEvtCount << " in " << std::chrono::duration_cast<std::chrono::seconds>(evt1000 - kStartRunTime).count() << " s\n";
       }
     }
-      if (baseAddr.verbose > 3) printf("%s) Event sent\n", __METHOD_NAME__);
+      if (kVerbosity > 3) printf("%s) Event sent\n", __METHOD_NAME__);
   }
   else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
     cmdLenHandshake();

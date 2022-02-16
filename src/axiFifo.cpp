@@ -6,10 +6,15 @@
 
 #include "hps_0.h"
 #include "user_avalon_fifo_regs.h"
-#include "server.h"
 #include "utility.h"
-
 #include "axiFifo.h"
+
+
+#include <sys/mman.h>
+#include "socal/socal.h"
+#include "socal/hps.h"
+#include "socal/alt_gpio.h"
+
 
 axiFifo::axiFifo(void* virtualBase, uint32_t address, uint32_t csr, uint32_t aEmptyThr, uint32_t aFullThr, uint8_t interruptEn){
   //Base Data and CST addresses: the shifts are in units of bytes
@@ -27,31 +32,31 @@ axiFifo::axiFifo(void* virtualBase, uint32_t address, uint32_t csr, uint32_t aEm
   init(aEmptyThr, aFullThr, interruptEn);
 }
 
-inline uint32_t axiFifo::getUsedw () {
+uint32_t axiFifo::getUsedw () {
   return *UsedwAddr;
 };
 
-inline bool axiFifo::getFull () {
+bool axiFifo::getFull () {
  return (*StatusAddr & ALTERA_AVALON_FIFO_STATUS_F_MSK) && 1;
 };
 
-inline bool axiFifo::getAFull () {
+bool axiFifo::getAFull () {
 	return (*StatusAddr & ALTERA_AVALON_FIFO_STATUS_AF_MSK) && 1;
 };
 
-inline bool axiFifo::getEmpty () {
+bool axiFifo::getEmpty () {
 	return (*StatusAddr & ALTERA_AVALON_FIFO_STATUS_E_MSK) && 1;
 };
 
-inline bool axiFifo::getAEmpty () {
+bool axiFifo::getAEmpty () {
 	return (*StatusAddr & ALTERA_AVALON_FIFO_STATUS_AE_MSK) && 1;
 };
 
-inline bool axiFifo::getOverFlow () {
+bool axiFifo::getOverFlow () {
 	return (*EventReg & ALTERA_AVALON_FIFO_EVENT_OVF_MSK) && 1;
 };
 
-inline void axiFifo::resetOverflow () {
+void axiFifo::resetOverflow () {
   *EventReg &= ALTERA_AVALON_FIFO_EVENT_OVF_MSK;
 };
 

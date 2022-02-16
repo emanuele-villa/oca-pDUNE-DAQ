@@ -5,9 +5,7 @@
 #include <chrono>
 
 #include "tcpServer.h"
-
-extern struct fpgaAddresses baseAddr;
-extern uint32_t kGwV;
+#include "fpgaDriver.h"
 
 class hpsServer: public tcpServer {
 
@@ -19,6 +17,8 @@ private:
   std::chrono::_V2::system_clock::time_point kStartRunTime; //!< Start time of a run
 
 public:
+  fpgaDriver* fpga;
+
   hpsServer(int port, int verb=0);
 
   /*!
@@ -35,11 +35,7 @@ public:
     Process commands
   */
   void ProcessCmdReceived(char* msg);
-
-
-
   
-
 };
 
 

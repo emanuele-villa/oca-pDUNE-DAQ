@@ -31,25 +31,25 @@ class axiFifo {
     axiFifo(void* virtualBase, uint32_t address, uint32_t csr, uint32_t aEmptyThr, uint32_t aFullThr, uint8_t interruptEn);
 
     //!< Return the number of used words
-    inline uint32_t getUsedw ();
+    uint32_t getUsedw ();
 
     //!< Return the full flag
-    inline bool getFull ();
+    bool getFull ();
 
     //!< Return the almost-full flag
-    inline bool getAFull ();
+    bool getAFull ();
 
     //!< Return the empty flag
-    inline bool getEmpty ();
+    bool getEmpty ();
 
     //!< Return the almost-empty flag
-    inline bool getAEmpty ();
+    bool getAEmpty ();
 
     //!< Return the overflow flag
-    inline bool getOverFlow ();
+    bool getOverFlow ();
 
     //!< Reset overflow flag
-    inline void resetOverflow ();
+    void resetOverflow ();
 
     /*!
       FIFO initialization: Set aFull and aEmpty thresholds, disable interrupts, and reset events register

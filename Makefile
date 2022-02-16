@@ -68,7 +68,7 @@ HPSOPTFLAG := -g
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpServer.o $(OBJ)/utility.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
-OBJECTSHPS := $(OBJARM)/server.o $(OBJARM)/hpsServer.o $(OBJARM)/highlevelDriversFPGA.o $(OBJARM)/lowlevelDriversFPGA.o $(OBJARM)/tcpServer.o
+OBJECTSHPS := $(OBJARM)/papero.o $(OBJARM)/hpsServer.o $(OBJARM)/tcpServer.o $(OBJARM)/utility.o $(OBJARM)/fpgaDriver.o $(OBJARM)/axiFifo.o
 
 # Executables:
 PAPERO := $(EXE)/PAPERO
@@ -119,8 +119,7 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 	@mkdir -pv $(OBJ)
 	$(CXX) $(CPPFLAGS) $(OCAOPTFLAG) $(VERSION_FLAGS) -c -o $@ $<
 
-#Objects
-$(OBJARM)/%.o: $(SRC)/%.c
+$(OBJARM)/%.o: $(SRC)/%.cpp
 ifeq ($(UNAME_S),Darwin)
 	@echo Compilation under MacOs not possibile
 else
