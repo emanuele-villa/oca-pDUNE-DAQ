@@ -19,7 +19,7 @@
 
 
 fpgaDriver::fpgaDriver(int verbose){
-  verbose     = verbose;
+  kVerbose     = verbose;
   
   printf("Opening /dev/mem...\n");
 	int fd;
@@ -105,7 +105,7 @@ void fpgaDriver::ReadReg(int regAddr, uint32_t* data){
 	*raAddr = regAddr;
 	//Read the register content
 	*data = *raCont;
-  if(verbose > 2){
+  if(kVerbose > 2){
     printf("%s) ReadREG: Register addr: %d - content: %08x\n", __METHOD_NAME__, regAddr, *data);
   }
 }
@@ -146,7 +146,7 @@ int fpgaDriver::WriteReg(uint32_t* pktContent, int pktLen){
   pktCrc = CrcFinalize(pktCrc);
   packet[pktLen+5] = pktCrc;
 
-  if (verbose > 2){
+  if (kVerbose > 2){
     printf("%s) WriteReg: Packet Content:\n", __METHOD_NAME__);
     for (int jj=0; jj<pktLen+6;jj++){
       printf("%08x\n", packet[jj]);
@@ -167,9 +167,9 @@ void fpgaDriver::ResetFpga(){
 
 	//Flush the FastData Fifo
 	flushErr = dataFifo->readChunk(data, 0, true);
-	if(verbose > 0) printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
+	if(kVerbose > 0) printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
   flushErr = hkFifo->readChunk(data, 0, true);
-	if(verbose > 0) printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
+	if(kVerbose > 0) printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
 
 	//Remove regArray reset
 	SingleWriteReg((uint32_t)rGOTO_STATE, 0x00000000);
@@ -181,7 +181,7 @@ void fpgaDriver::InitFpga(uint32_t* regsContentIn, uint32_t opLen){
 	{//FIXME: what was this for?
 	  uint32_t regContent;
 	  ReadReg(rDET_ID, &regContent);
-	  if (verbose>3) {
+	  if (kVerbose>3) {
 	    printf("%s) Detector ID (Register 3): %d\n", __METHOD_NAME__, regContent);
 	  }
 	  if (regContent>255) {
@@ -243,7 +243,7 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
 
   //Check if FIFO has words in it (possibly, a full event)
   if (dataFifo->getAEmpty()){
-    if (verbose > 3) {
+    if (kVerbose > 3) {
       uint32_t regContent;
       printf("%s) Fifo A-Empty.\n", __METHOD_NAME__);
       ReadReg(21, &regContent);
@@ -260,7 +260,7 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
   {
     uint32_t regContent;
     ReadReg(3, &regContent);
-    if (verbose > 3) {
+    if (kVerbose > 3) {
       printf("%s) Detector ID (Register 3): %d\n", __METHOD_NAME__, regContent);
     }
     if (regContent>255) dampeladder=true;
@@ -275,7 +275,7 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
 
   //Read the packet length
   readErr = dataFifo->read(&pktLen);
-  if (verbose > 3){
+  if (kVerbose > 3){
     printf("%s) PacketLen: %08x\n", __METHOD_NAME__, pktLen);
   }
   
@@ -289,7 +289,7 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
     return -1;
   }
 
-  if (verbose > 3){
+  if (kVerbose > 3){
     printf("%s) Event:\n", __METHOD_NAME__);
     for(uint32_t i = 0; i < pktLen+1; i++){
       printf("%08x\n", packet[i]);

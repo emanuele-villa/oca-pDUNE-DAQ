@@ -40,7 +40,7 @@
 */
 class fpgaDriver {
   protected:
-    int       verbose; //!< Verbosity level
+    int       kVerbose; //!< Verbosity level
     void*     virtualBase; //!< Base of the virtual address
     uint32_t* raAddr; //!< Register to address the register array
     uint32_t* raCont; //!< Content of the register array addressed register

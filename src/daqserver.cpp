@@ -25,6 +25,8 @@ daqserver::daqserver(int port, int verb):tcpServer(port, verb){
   mode=0;
   trigtype=0;
   
+  SockStart();
+
   return;
 }
 

@@ -21,8 +21,7 @@ tcpServer::tcpServer(int port, int verb){
   kAddr.sin_family      = AF_INET;
   kAddr.sin_port        = htons(kPort);
   kAddr.sin_addr.s_addr = INADDR_ANY;
-
-  SockStart();
+  
 }
 
 tcpServer::~tcpServer(){
