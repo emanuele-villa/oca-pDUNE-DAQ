@@ -50,8 +50,15 @@ fpgaDriver::fpgaDriver(int verbose){
                           FIFO_HPS_TO_FPGA_IN_CSR_BASE, 3, 1000, 0);
   hkFifo = new axiFifo(virtualBase, FIFO_FPGA_TO_HPS_OUT_BASE,
                         FIFO_FPGA_TO_HPS_OUT_CSR_BASE, 3, 1000, 0);
-  dataFifo = new axiFifo(virtualBase, FAST_FIFO_FPGA_TO_HPS_OUT_CSR_BASE,
-                          FIFO_HPS_TO_FPGA_IN_CSR_BASE, 646, 3442, 0);
+  dataFifo = new axiFifo(virtualBase, FAST_FIFO_FPGA_TO_HPS_OUT_BASE,
+                          FAST_FIFO_FPGA_TO_HPS_OUT_CSR_BASE, 646, 3442, 0);
+
+  if (kVerbose > 3) {
+    printf("FIFO Status post init:\n");
+    confFifo->Status();
+    hkFifo->Status();
+    dataFifo->Status();
+  }
 };
 
 fpgaDriver::~fpgaDriver(){
@@ -176,8 +183,8 @@ void fpgaDriver::ResetFpga(){
 }
 
 void fpgaDriver::InitFpga(uint32_t* regsContentIn, uint32_t opLen){
-	//Configure the whole regArray (except register rGOTO_STATE)
-	WriteReg(regsContentIn, opLen);
+  //Configure the whole regArray (except register rGOTO_STATE)
+  WriteReg(regsContentIn, opLen);
 	{//FIXME: what was this for?
 	  uint32_t regContent;
 	  ReadReg(rDET_ID, &regContent);

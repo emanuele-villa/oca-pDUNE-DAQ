@@ -26,10 +26,10 @@ axiFifo::axiFifo(void* virtualBase, uint32_t address, uint32_t csr, uint32_t aEm
 }
 
 void axiFifo::init (uint32_t aEmptyThr, uint32_t aFullThr, uint8_t interruptEn) {
-  *EventReg		= ALTERA_AVALON_FIFO_EVENT_ALL_MSK;
   *AEmptyReg	= aEmptyThr;
   *AFullReg	  = aFullThr;
   *iEnableReg = interruptEn & ALTERA_AVALON_FIFO_IENABLE_ALL_MSK;
+  *EventReg		= ALTERA_AVALON_FIFO_EVENT_ALL_MSK;
   return;
 };
 
@@ -85,4 +85,10 @@ int axiFifo::readChunk(uint32_t* data, int lenChunk, bool flush){
   };
   return len;
   
+};
+
+int axiFifo::Status() {
+	printf("%s)\n Full: %u\t AFull: %u\nEmpty: %u\tAEmpty: %u\nUsedw: %u\nSettings:\nAFull: %u\tAEmpty: %u\n", __METHOD_NAME__,
+	        getUsedw(), getFull(), getEmpty(), getAFull(), getAEmpty(),
+          *AFullReg, *AEmptyReg);
 };

@@ -110,6 +110,11 @@ class axiFifo {
       @return -1 if words are not enough, number of read bytes
     */
     int readChunk(uint32_t* data, int lenChunk, bool flush);
+
+    /*
+      Print the FIFO status
+    */
+    int Status();
 };
 
 #endif
