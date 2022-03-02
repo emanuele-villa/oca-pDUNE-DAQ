@@ -1,0 +1,2 @@
+#Det | Listen TCP client | TCP client port | Data dir | HPS commands len | TCP-client commands len
+1  0 8888  ./data/ 24 64
