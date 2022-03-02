@@ -21,6 +21,11 @@ class daqConfig
 {
   
   public:
+    daqConfig(const std::string& filePath){
+      conf = {1, false, 8888, "./data/", 24, 64};
+      readConfigFromFile(filePath);
+    };
+
     //!Definition of configuration parameters struct
     struct configParams {
       int nDet;               //!Total number of connected detector
@@ -39,7 +44,7 @@ class daqConfig
 
   private:
     //! Configuration parameters
-    configParams conf = {1, false, 8888, "./data/", 24, 64};
+    configParams conf;
 
     //! Open an input file and get the streamer object
     void openInputFile(const std::string& filePath,
