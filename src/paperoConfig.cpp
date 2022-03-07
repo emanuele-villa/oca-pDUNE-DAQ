@@ -13,7 +13,7 @@ void paperoConfig::readConfigFromFile(const string& filePath)
   is.close();
 }
 
-configParams* paperoConfig::getParams(uint32_t det)
+paperoConfig::configParams* paperoConfig::getParams(uint32_t det)
 {
   auto it = conf.find(det);
   if (it == conf.cend())
