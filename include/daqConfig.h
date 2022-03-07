@@ -57,6 +57,7 @@ class daqConfig
     template <typename T>
     void readOption(T& option, std::istream& is)
     {
+      if (is.peek() == '\n') exit(1);
       is >> option;
     }
 
