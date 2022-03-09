@@ -32,7 +32,7 @@ class paperoConfig
       readConfigFromFile(filePath);
     };
 
-    //!Struct containing the configuration parameters
+    //! Struct containing the configuration parameters
     struct configParams {
       uint32_t id; //!Detector ID
       string ipAddr; //!IP address
@@ -41,9 +41,7 @@ class paperoConfig
       bool testUnitEn; //TestUnit Enable
       bool hkEn; //!HK reader enable
       bool dataEn; //!Scientific data enable
-      bool intTrigEn; //!Internal trigger enable
       uint32_t intTrigPeriod; //!Internal Trigger period (in clock cycles)
-      bool calMode; //!Calibration mode
       uint32_t pktLen; //!Packet Length (in case of events of fixed length)
       uint16_t feClkDuty; //!FE clock duty cycle (in clock cycles)
       uint16_t feClkDiv; //!FE clock period (in clock cycles)
@@ -64,9 +62,7 @@ class paperoConfig
         cout << "TestUnit En:       " << testUnitEn << endl;
         cout << "HK En:             " << hkEn << endl;
         cout << "Data En:           " << dataEn << endl;
-        cout << "Int Trig En:       " << intTrigEn << endl;
         cout << "Int Trig Period:   " << intTrigPeriod << endl;
-        cout << "Calibration Mode:  " << calMode << endl;
         cout << "Packet Length:     " << pktLen << endl;
         cout << "FE Clk Duty:       " << feClkDuty << endl;
         cout << "FE Clk Div:        " << feClkDiv << endl;
@@ -80,18 +76,24 @@ class paperoConfig
       }
     };
 
+    typedef std::vector<configParams*> vectorParam;
+
     //! Open configuration file and read it in an istream
     void readConfigFromFile(const string& filePath);
 
-    //! Retrieve parameters for a single map entry
-    configParams* getParams(uint32_t det);
+    //! Retrieve parameters for a single vector entry
+    configParams* getParams(int det);
+
+    //! Retrieve parameters for all the detectors
+    vectorParam getParams();
 
     //! Dump the content of the whole configuration map
     void dump();
 
   private:
-    //! Configuration parameters map, indexed with detector ID
-    map<uint32_t, configParams*> conf;
+
+    //! Configuration parameters vector
+    vectorParam conf;
 
     //! Open an input file and get the streamer object
     void openInputFile(const string& filePath,

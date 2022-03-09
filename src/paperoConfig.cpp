@@ -13,25 +13,29 @@ void paperoConfig::readConfigFromFile(const string& filePath)
   is.close();
 }
 
-paperoConfig::configParams* paperoConfig::getParams(uint32_t det)
+paperoConfig::configParams* paperoConfig::getParams(int det)
 {
-  auto it = conf.find(det);
-  if (it == conf.cend())
+  if (det > conf.size())
   {
     cout << __METHOD_NAME__ << ") [ERR] Detector " << det <<
                         " not in config list. Returning first element." << endl;
-    return conf.cbegin()->second;
+    return conf[0];
   }
-  return it->second;
+  return conf[det];
 };
+
+paperoConfig::vectorParam paperoConfig::getParams()
+{
+  return conf;
+}
 
 void paperoConfig::dump()
 {
   cout << "Dumping configuration map..." << endl;
-  for (auto it=conf.begin();it != conf.end();it++)
+  for (int jj = 0; jj < conf.size(); jj++)
   {
-    cout << endl << "Key " << it->first << ": " << endl;
-    (it->second)->dump();
+    cout << endl << "Detector " << jj << ": " << endl;
+    conf[0]->dump();
   }
 }
 
@@ -91,42 +95,36 @@ int paperoConfig::config(istream& is)
           readOption<bool>(tempBuffer->dataEn, word);
           break;
         case 7:
-          readOption<bool>(tempBuffer->intTrigEn, word);
-          break;
-        case 8:
           readOption<uint32_t>(tempBuffer->intTrigPeriod, word);
           break;
-        case 9:
-          readOption<bool>(tempBuffer->calMode, word);
-          break;
-        case 10:
+        case 8:
           readOption<uint32_t>(tempBuffer->pktLen, word);
           break;
-        case 11:
+        case 9:
           readOption<uint16_t>(tempBuffer->feClkDuty, word);
           break;
-        case 12:
+        case 10:
           readOption<uint16_t>(tempBuffer->feClkDiv, word);
           break;
-        case 13:
+        case 11:
           readOption<uint16_t>(tempBuffer->adcClkDuty, word);
           break;
-        case 14:
+        case 12:
           readOption<uint16_t>(tempBuffer->adcClkDiv, word);
           break;
-        case 15:
+        case 13:
           readOption<uint16_t>(tempBuffer->trig2Hold, word);
           break;
-        case 16:
+        case 14:
           readOption<bool>(tempBuffer->ideTest, word);
           break;
-        case 17:
+        case 15:
           readOption<bool>(tempBuffer->adcFast, word);
           break;
-        case 18:
+        case 16:
           readOption<uint16_t>(tempBuffer->busyLen, word);
           break;
-        case 19:
+        case 17:
           readOption<uint16_t>(tempBuffer->adcDelay, word);
           break;
         default:
@@ -140,7 +138,7 @@ int paperoConfig::config(istream& is)
     if (discardLine) continue;
 
     //Add the temporary buffer to the output map
-    conf.insert(pair<uint32_t, configParams*>(tempBuffer->id, tempBuffer));
+    conf.push_back(tempBuffer);
     
     wordsRead = 0;
     linesRead++;

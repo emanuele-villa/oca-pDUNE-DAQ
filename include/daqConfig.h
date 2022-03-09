@@ -28,12 +28,13 @@ class daqConfig
 
     //!Definition of configuration parameters struct
     struct configParams {
-      int nDet;               //!Total number of connected detector
       bool listenClient;      //!Listen to external TCP client
       int portClient;         //!TCP server port number
       std::string dataFolder; //!Data folder
       int hpsCmdLen;          //!Command length w.r.t. HPS
       int clientCmdLen;       //!Command length w.r.t. TCP client
+      bool intTrigEn;         //!Internal trigger enable
+      bool calMode;           //!Calibration mode enable
     };
 
     //! Open configuration file and read it in an istream

@@ -45,12 +45,13 @@ int daqConfig::config(std::istream& is)
       pip = is.peek();
     }
     
-    readOption<int>(conf.nDet, is);
     readOption<bool>(conf.listenClient, is);
     readOption<int>(conf.portClient, is);
     readOption<std::string>(conf.dataFolder, is);
     readOption<int>(conf.hpsCmdLen, is);
     readOption<int>(conf.clientCmdLen, is);
+    readOption<bool>(conf.intTrigEn, is);
+    readOption<bool>(conf.calMode, is);
     linesRead++;
     
     //Ignore newline
