@@ -101,16 +101,16 @@ int paperoConfig::config(istream& is)
           readOption<uint32_t>(tempBuffer->pktLen, word);
           break;
         case 9:
-          readOption<uint16_t>(tempBuffer->feClkDuty, word);
-          break;
-        case 10:
           readOption<uint16_t>(tempBuffer->feClkDiv, word);
           break;
+        case 10:
+          readOption<uint16_t>(tempBuffer->feClkDuty, word);
+          break;
         case 11:
-          readOption<uint16_t>(tempBuffer->adcClkDuty, word);
+          readOption<uint16_t>(tempBuffer->adcClkDiv, word);
           break;
         case 12:
-          readOption<uint16_t>(tempBuffer->adcClkDiv, word);
+          readOption<uint16_t>(tempBuffer->adcClkDuty, word);
           break;
         case 13:
           readOption<uint16_t>(tempBuffer->trig2Hold, word);
