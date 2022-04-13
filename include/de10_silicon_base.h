@@ -49,7 +49,7 @@ public:
   
   int readReg(int regAddr, uint32_t &regCont);
   int Init();
-  int SetDelay(uint32_t delayIn);
+  int SetTrig2Hold(uint32_t delayIn);
   int SetMode(uint8_t modeIn);
   int GetEventNumber();
   int EventReset();
