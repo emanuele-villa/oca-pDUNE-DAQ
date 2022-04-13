@@ -114,7 +114,7 @@ class axiFifo {
     /*
       Print the FIFO status
     */
-    int Status();
+    void Status();
 };
 
 #endif

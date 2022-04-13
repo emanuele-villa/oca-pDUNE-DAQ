@@ -22,7 +22,7 @@ class daqConfig
   
   public:
     daqConfig(const std::string& filePath){
-      conf = {1, false, 8888, "./data/", 24, 64};
+      conf = {true, 8888, "./data/", 64, 0, 0};
       readConfigFromFile(filePath);
     };
 
@@ -31,7 +31,6 @@ class daqConfig
       bool listenClient;      //!Listen to external TCP client
       int portClient;         //!TCP server port number
       std::string dataFolder; //!Data folder
-      int hpsCmdLen;          //!Command length w.r.t. HPS
       int clientCmdLen;       //!Command length w.r.t. TCP client
       bool intTrigEn;         //!Internal trigger enable
       bool calMode;           //!Calibration mode enable

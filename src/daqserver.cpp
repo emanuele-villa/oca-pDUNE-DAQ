@@ -1,4 +1,3 @@
-#include "daqserver.h"
 #include "utility.h"
 #include <sys/time.h>
 //#include <TDatime.h>
@@ -10,23 +9,31 @@
 #include <chrono>
 #include <algorithm>
 
-daqserver::daqserver(int port, int verb):tcpServer(port, verb){
-  if (kVerbosity>0){
-    printf("%s) Daqserver created\n", __METHOD_NAME__);
-  }
+#include "daqserver.h"
 
-  kCmdLen = 8;
+daqserver::daqserver(int port, int verb, std::string paperoCfgPath):tcpServer(port, verb){
+  //Copy configuration file parameters
+  kCmdLen   = daqConf.clientCmdLen;
+  calibmode = daqConf.calMode;
+  trigtype  = daqConf.intTrigEn;
+  kdataPath = daqConf.dataFolder;
+
+  //Read paperoConfig parameters
+  paperoConfig paperoConf(paperoCfgPath);
+  paperoConfVector = paperoConf.getParams(); //FIXME non glielo dovrei passare per referenza?
+  
+  //Stop the run (if applicable) and reset
+  kStart  = false;
+  mode    = 0;
   addressdet.clear();
   portdet.clear();
 
-  kStart=false;
-
-  calibmode=0;
-  mode=0;
-  trigtype=0;
-  
+  //Start the socket
   SockStart();
 
+  if (kVerbosity>0){
+    printf("%s) DAQ Server Created\n", __METHOD_NAME__);
+  }
   return;
 }
 
@@ -45,15 +52,30 @@ daqserver::~daqserver(){
   return;
 }
 
-void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portde10[], int detcmdlenght){
+void daqserver::SetUpConfigClients(){
+  
+
+  SetListDetectors();
+  Init();
+}
+
+void daqserver::SetListDetectors(){
 
   addressdet.clear();
   portdet.clear();
 
-  for (int ii=0; ii<nde10; ii++) {
-    addressdet.push_back(addressde10[ii]);
-    portdet.push_back(portde10[ii]);
-    det.push_back(new de10_silicon_base(addressde10[ii], portde10[ii], ii, detcmdlenght, kVerbosity));
+  for (uint32_t ii=0; ii<paperoConfVector.size(); ii++) {
+    addressdet.push_back(paperoConfVector[ii]->ipAddr.data());
+    portdet.push_back(paperoConfVector[ii]->tcpPort);
+    det.push_back(
+      new de10_silicon_base(
+        paperoConfVector[ii]->ipAddr.data(),
+        paperoConfVector[ii]->tcpPort,
+        paperoConfVector[ii],
+        calibmode,
+        trigtype,
+        kVerbosity)
+      );
   }
 
   return;
@@ -261,7 +283,8 @@ void daqserver::ProcessCmdReceived(char* msg){
 
         // ignore consecutive Start commands
         if(kStart){
-          ReplyToCmd("Consecutive starts received. Ignoring last command.");
+          char* tempStr = "Consecutive starts received. Ignoring last command.";
+          ReplyToCmd(tempStr);
           return;
         }
 
@@ -438,14 +461,14 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
   // std::transform(begin(runtype_upper), end(runtype_upper), begin(runtype_upper), std::toupper);
 
   std::string humanDate = format_human_date(unixtime);
-  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kdataPath, runnum, runtype, humanDate.c_str());
+  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kdataPath.data(), runnum, runtype, humanDate.c_str());
 
   printf("%s) Opening output file: %s\n", __METHOD_NAME__, dataFileName);
 
   FILE* dataFileD;
   dataFileD = fopen(dataFileName,"w");
   if (dataFileD == nullptr) {
-    printf("%s) Error: file %s could not be created. Do the data dir %s exist?\n", __METHOD_NAME__, dataFileName, kdataPath);
+    printf("%s) Error: file %s could not be created. Do the data dir %s exist?\n", __METHOD_NAME__, dataFileName, kdataPath.data());
     return;
   }
 

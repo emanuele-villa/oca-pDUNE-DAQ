@@ -1,2 +1,2 @@
-#Listen TCP client | TCP client port | Data dir | HPS commands len | TCP-client commands len | Cal mode | IntTrig En |
-0 8888  ./data/ 24 64 0 0
+#Listen TCP client | TCP client port | Data dir | TCP-client commands len | Cal mode | IntTrig En |
+1 8888  ./data/ 64 0 0

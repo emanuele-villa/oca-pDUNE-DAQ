@@ -87,7 +87,7 @@ int axiFifo::readChunk(uint32_t* data, int lenChunk, bool flush){
   
 };
 
-int axiFifo::Status() {
+void axiFifo::Status() {
 	printf("%s)\n Full: %u\t AFull: %u\nEmpty: %u\tAEmpty: %u\nUsedw: %u\nSettings:\nAFull: %u\tAEmpty: %u\n", __METHOD_NAME__,
 	        getUsedw(), getFull(), getEmpty(), getAFull(), getAEmpty(),
           *AFullReg, *AEmptyReg);

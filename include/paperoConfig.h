@@ -18,6 +18,7 @@
 #include <sstream>
 #include <cinttypes>
 #include <map>
+#include <vector>
 
 #include "daqConfig.h"
 #include "utility.h"
@@ -37,6 +38,7 @@ class paperoConfig
       uint32_t id; //!Detector ID
       string ipAddr; //!IP address
       int tcpPort; //!TCP client port to connect to HPS
+      int cmdLen; //!Command length
       uint8_t testUnitCfg; //TestUnit Cnofiguration
       bool testUnitEn; //TestUnit Enable
       bool hkEn; //!HK reader enable
@@ -58,6 +60,7 @@ class paperoConfig
         cout << "ID:                " << id << endl;
         cout << "IP address:        " << ipAddr << endl;
         cout << "TCP port:          " << tcpPort << endl;
+        cout << "Command Length:    " << cmdLen << endl;
         cout << "TestUnit cfg:      " << testUnitCfg << endl;
         cout << "TestUnit En:       " << testUnitEn << endl;
         cout << "HK En:             " << hkEn << endl;

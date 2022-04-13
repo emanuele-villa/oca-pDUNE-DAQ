@@ -5,33 +5,46 @@
 uint32_t okVal = 0xb01af1ca;
 uint32_t badVal = 0x000cacca;
 
-de10_silicon_base::de10_silicon_base(const char *address, int port, int _detid, int _cmdlenght, int verb):tcpclient(address, port, verb){
+de10_silicon_base::de10_silicon_base(const char *address, int port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb):tcpclient(address, port, verb){
+  uint32_t cmdLenReply = 1;
 
-  cmdlenght = _cmdlenght;
-  SendInt(cmdlenght);//for now is the default value
-  uint32_t reply = 1;
-  ReceiveInt(reply);
-  //let's set as cmd lenght not the one passed but the one received back (hoping they are equal)
-  cmdlenght=reply;//in number of char
-  printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
   
-  //Initialize and compute configurations
-  testUnitCfg = 0;
-  hkEn = 0;
-  ConfigureTestUnit(0);
-  dataEn = 1;
-  //  SetIntTriggerPeriod(0x02faf080);
-  SetIntTriggerPeriod(0x0002faf0);
-  SetCalibrationMode(0);
-  SelectTrigger(0);
-  pktLen = 0x0000028A;
-  feClkDuty  = 0x00000004;
-  feClkDiv   = 0x00000028;
-  adcClkDuty = 0x00000004;
-  adcClkDiv  = 0x00000002;
-  SetDelay(0x00000145);
+  //Copy the parameters from the config file
+  detId         = params->id;
+  cmdlenght     = params->cmdLen;
+  testUnitCfg   = (uint32_t)params->testUnitCfg;
+  testUnitEn    = (uint32_t)params->testUnitEn;
+  hkEn          = (uint32_t)params->hkEn;
+  dataEn        = (uint32_t)params->dataEn;
+  pktLen        = params->pktLen;
+  intTrigPeriod = params->intTrigPeriod;
+  feClkDuty     = (uint32_t)params->feClkDuty;
+  feClkDiv      = (uint32_t)params->feClkDiv;
+  adcClkDuty    = (uint32_t)params->adcClkDuty;
+  adcClkDiv     = (uint32_t)params->adcClkDiv;
+  delay         = (uint32_t)params->trig2Hold;
+  ideTest       = (uint32_t)params->ideTest;
+  adcFast       = (uint32_t)params->adcFast;
+  calEn         = (uint32_t)_calMode;
+  intTrigEn     = (uint32_t)_intTrig;
+
+  //Send command length and set it with the loopback value
+  SendInt(cmdlenght);
+  ReceiveInt(cmdLenReply);
+  //let's set as cmd lenght not the one passed but the one received back
+  //FIXME: add a check that they are the same
+  cmdlenght=cmdLenReply;//in number of char
+  printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, cmdLenReply);  
+
+  //
+  ConfigureTestUnit(testUnitCfg);
+  SetIntTriggerPeriod(params->intTrigPeriod);
+  SetCalibrationMode(_calMode);
+  SelectTrigger(_intTrig);
+  SetDelay(params->trig2Hold);
+
+  //Make sure system is NOT running
   SetMode(0);
-  detId = _detid;
 
   if (verbosity>0) {
     printf("%s) de10 silicon created\n", __METHOD_NAME__);

@@ -7,6 +7,11 @@
 #include "tcpServer.h"
 #include "de10_silicon_base.h"
 
+#include "daqConfig.h"
+#include "paperoConfig.h"
+
+extern daqConfig::configParams daqConf;
+
 class daqserver: public tcpServer {
 
 protected:
@@ -16,13 +21,14 @@ private:
   std::vector<const char*> addressdet;
   std::vector<int> portdet;
   std::vector<de10_silicon_base*> det;
-  const char kdataPath[12] = "./data/";
-  volatile bool kStart;
-  std::thread _3d;
-  int calibmode;
-  int mode;
-  int trigtype;
-  unsigned int nEvents = 0;
+  std::string kdataPath = "./data/"; //!< Data file path
+  volatile bool kStart; //!< Start event recording
+  std::thread _3d;//!< Thread handle
+  int calibmode;  //!< Calibration enable
+  int mode;       //!< '1': Run, '0': Stop
+  int trigtype;   //!< Trigger Type: if '1', internal
+  unsigned int nEvents = 0; //!< Acquired event number
+  paperoConfig::vectorParam paperoConfVector; //!< Papero configuration vector
   
   /*!
     Send a reply to received commands
@@ -38,7 +44,12 @@ private:
   
 public:
   ~daqserver();
-  daqserver(int port, int verb=0);
+  daqserver(int port, int verb, std::string paperoCfgPath);
+
+  /*!
+    Setup clients to configure the detectors
+  */
+  void SetUpConfigClients();
 
   /*!
     Define the length of the receiving commands
@@ -47,7 +58,11 @@ public:
     kCmdLen = lenght;
   }
 
-  void SetListDetectors(int nde10, const char* addressde10[], int portde10[], int detcmdlenght);
+  /*!
+    Create lists for detector IP addresses, ports, and object addresses
+  */
+  void SetListDetectors();
+
   void SetDetId(const char* addressde10, uint32_t _detId);
   void SetPacketLen(const char* addressde10, uint32_t _pktLen);
 
