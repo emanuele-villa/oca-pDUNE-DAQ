@@ -322,3 +322,107 @@ int de10_silicon_base::ConfigureTestUnit(uint32_t testUnitEnIn){
   }
   return ret;
 }
+
+int de10_silicon_base::SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv){
+  int ret=0;
+  uint32_t reply = 1;
+  feClkDuty = _feClkDuty & 0x0000FFFF;
+  feClkDiv  = _feClkDiv  & 0x0000FFFF;
+  if (SendCmd("setFeClk")>0) {
+    SendInt((feClkDuty << 16) | feClkDiv);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv){
+  int ret=0;
+  uint32_t reply = 1;
+  adcClkDuty = _adcClkDuty & 0x0000FFFF;
+  adcClkDiv  = _adcClkDiv  & 0x0000FFFF;
+  if (SendCmd("setAdcClk")>0) {
+    SendInt((adcClkDuty << 16) | adcClkDiv);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetIdeTest(uint32_t _ideTest){
+  int ret=0;
+  uint32_t reply = 1;
+  ideTest = _ideTest & 0x00000001;
+  if (SendCmd("setIdeTest")>0) {
+    SendInt(ideTest << 19);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetAdcFast(uint32_t _adcFast){
+  int ret=0;
+  uint32_t reply = 1;
+  adcFast = _adcFast & 0x00000001;
+  if (SendCmd("setAdcFast")>0) {
+    SendInt(adcFast << 24);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetBusyLen(uint32_t _busyLen){
+  int ret=0;
+  uint32_t reply = 1;
+  busyLen = _busyLen & 0x0000FFFF;
+  if (SendCmd("setBusyLen")>0) {
+    SendInt(busyLen << 16);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetAdcDelay(uint32_t _adcDelay){
+  int ret=0;
+  uint32_t reply = 1;
+  adcDelay = _adcDelay & 0x0000FFFF;
+  if (SendCmd("setAdcDelay")>0) {
+    SendInt(adcDelay);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}

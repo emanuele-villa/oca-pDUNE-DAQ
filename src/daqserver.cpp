@@ -145,6 +145,50 @@ void daqserver::SelectTrigger(uint32_t trig){
   return;
 }
 
+void daqserver::SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetFeClk((_feClkDuty&0x0000FFFF)<<16, (_feClkDiv&0x0000FFFF));
+  }
+  return;
+}
+
+void daqserver::SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetAdcClk((_adcClkDuty&0x0000FFFF)<<16, (_adcClkDiv&0x0000FFFF));
+  }
+  return;
+}
+
+void daqserver::SetIdeTest(uint32_t _ideTest){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetIdeTest((_ideTest & 0x00000001) << 19);
+  }
+  return;
+}
+
+void daqserver::SetAdcFast(uint32_t _adcFast){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetAdcFast((_adcFast & 0x00000001) << 24);
+  }
+  return;
+}
+
+void daqserver::SetAdcDelay(uint32_t _adcDelay){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetAdcDelay(_adcDelay & 0x0000FFFF);
+  }
+  return;
+}
+
+void daqserver::SetBusyLen(uint32_t _busyLen){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetBusyLen((_busyLen & 0x0000FFFF) << 16);
+  }
+  return;
+}
+
+
+
 void daqserver::ResetBoards(){
   printf("%s) Resetting boards counters...\n", __METHOD_NAME__);
   for(auto de10 : det){

@@ -182,6 +182,42 @@ void hpsServer::ProcessCmdReceived(char* msg){
     }
     Tx(&kOkVal, sizeof(kOkVal));
   }
+  else if(strcmp(msg, "cmd=setFeClk") == 0){
+    uint32_t rxUInt = 0;
+    Rx(&rxUInt, sizeof(rxUInt));
+    fpga->setFeClk(rxUInt);
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
+  else if(strcmp(msg, "cmd=setAdcClk") == 0){
+    uint32_t rxUInt = 0;
+    Rx(&rxUInt, sizeof(rxUInt));
+    fpga->setAdcClk(rxUInt);
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
+  else if(strcmp(msg, "cmd=setIdeTest") == 0){
+    uint32_t rxUInt = 0;
+    Rx(&rxUInt, sizeof(rxUInt));
+    fpga->setIdeTest(rxUInt);
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
+  else if(strcmp(msg, "cmd=setAdcFast") == 0){
+    uint32_t rxUInt = 0;
+    Rx(&rxUInt, sizeof(rxUInt));
+    fpga->setAdcFast(rxUInt);
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
+  else if(strcmp(msg, "cmd=setBusyLen") == 0){
+    uint32_t rxUInt = 0;
+    Rx(&rxUInt, sizeof(rxUInt));
+    fpga->setBusyLen(rxUInt);
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
+  else if(strcmp(msg, "cmd=setAdcDelay") == 0){
+    uint32_t rxUInt = 0;
+    Rx(&rxUInt, sizeof(rxUInt));
+    fpga->setAdcDelay(rxUInt);
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
   else if(strcmp(msg, "cmd=getEvent") == 0){
 	  //	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
 	  static std::vector<uint32_t> evt;//so that the size (changed inside getEvent) is not changing continuosly

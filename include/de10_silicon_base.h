@@ -30,10 +30,10 @@ private:
   uint32_t adcClkDuty;
   uint32_t adcClkDiv;
   uint32_t trig2Hold;
-  uint32_t ideTest;  //FIXME: create the function to pass the value to the HPS
-  uint32_t adcFast;  //FIXME: create the function to pass the value to the HPS
-  uint32_t busyLen;  //FIXME: create the function to pass the value to the HPS
-  uint32_t adcDelay; //FIXME: create the function to pass the value to the HPS
+  uint32_t ideTest;
+  uint32_t adcFast;
+  uint32_t busyLen;
+  uint32_t adcDelay;
 
 public:
   ~de10_silicon_base();
@@ -61,6 +61,12 @@ public:
   int SetIntTriggerPeriod(uint32_t intTrigPeriodIn);
   int SelectTrigger(uint32_t intTrigEnIn);
   int ConfigureTestUnit(uint32_t testUnitEnIn);
+  int SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv);
+  int SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv);
+  int SetIdeTest(uint32_t _ideTest);
+  int SetAdcFast(uint32_t _adcFast);
+  int SetBusyLen(uint32_t _busyLen);
+  int SetAdcDelay(uint32_t _adcDelay);
 };
 
 #endif

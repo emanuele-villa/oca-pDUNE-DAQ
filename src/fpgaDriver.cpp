@@ -234,6 +234,42 @@ void fpgaDriver::configureTestUnit(uint32_t tuCfg){
 	SingleWriteReg(rUNITS_EN, regContent);
 }
 
+void fpgaDriver::setFeClk(uint32_t _feClkParams){
+  SingleWriteReg(rFE_CLK_PARAM, _feClkParams);
+}
+
+void fpgaDriver::setAdcClk(uint32_t _adcClkParams){
+  SingleWriteReg(rADC_CLK_PARAM, _adcClkParams);
+}
+
+void fpgaDriver::setIdeTest(uint32_t _ideTest){
+  uint32_t regContent;
+  ReadReg(rMSD_PARAM, &regContent);
+  regContent = (regContent & 0xFFF7FFFF) | (_ideTest & 0x00080000);
+  SingleWriteReg(rMSD_PARAM, regContent);
+}
+
+void fpgaDriver::setAdcFast(uint32_t _adcFast){
+  uint32_t regContent;
+  ReadReg(rMSD_PARAM, &regContent);
+  regContent = (regContent & 0xFEFFFFFF) | (_adcFast & 0x01000000);
+  SingleWriteReg(rMSD_PARAM, regContent);
+}
+
+void fpgaDriver::setBusyLen(uint32_t _busyLen){
+  uint32_t regContent;
+  ReadReg(rBUSYADC_PARAM, &regContent);
+  regContent = (regContent & 0x0000FFFF) | (_busyLen & 0xFFFF0000);
+  SingleWriteReg(rBUSYADC_PARAM, regContent);
+}
+
+void fpgaDriver::setAdcDelay(uint32_t _adcDelay){
+  uint32_t regContent;
+  ReadReg(rBUSYADC_PARAM, &regContent);
+  regContent = (regContent & 0xFFFF0000) | (_adcDelay & 0x0000FFFF);
+  SingleWriteReg(rBUSYADC_PARAM, regContent);
+}
+
 int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
   int readErr = 0;
   uint32_t pktLen = 0;

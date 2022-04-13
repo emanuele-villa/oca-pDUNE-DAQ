@@ -18,6 +18,7 @@
 #define rFE_CLK_PARAM     5
 #define rADC_CLK_PARAM    6
 #define rMSD_PARAM        7
+#define rBUSYADC_PARAM    8
 #define rGW_VER           16
 #define rINT_TS_MSB       17
 #define rINT_TS_LSB       18
@@ -117,7 +118,25 @@ class fpgaDriver {
     
     //!< Configure and enable/disable the test unit
     void configureTestUnit(uint32_t tuCfg);
+
+    //!< Configure FE clock
+    void setFeClk(uint32_t _feClkParams);
     
+    //!< Configure ADC clock
+    void setAdcClk(uint32_t _adcClkParams);
+
+    //!< Configure IDE1140 Test port
+    void setIdeTest(uint32_t _ideTest);
+
+    //!< Configure AD7276 Fast Mode
+    void setAdcFast(uint32_t _adcFast);
+
+    //!< Configure Artificial Busy Lenght
+    void setBusyLen(uint32_t _busyLen);
+
+    //!< Configure delay between FE falling edge and AD conversion start
+    void setAdcDelay(uint32_t _adcDelay);
+
     //!< Receive one event from the FastDATA FIFO
     int getEvent(std::vector<uint32_t>& evt, int* evtLen);
 };

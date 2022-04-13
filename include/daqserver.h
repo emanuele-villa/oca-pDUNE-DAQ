@@ -72,6 +72,13 @@ public:
   void SetMode(uint8_t mode);
   void SelectTrigger(uint32_t trig);
 
+  void SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv);
+  void SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv);
+  void SetIdeTest(uint32_t _ideTest);
+  void SetAdcFast(uint32_t _adcFast);
+  void SetBusyLen(uint32_t _busyLen);
+  void SetAdcDelay(uint32_t _adcDelay);
+
   void ResetBoards();
 
   void ReadAllRegs();
