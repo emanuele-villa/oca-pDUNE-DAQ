@@ -22,7 +22,7 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, paperoConfig
   feClkDiv      = (uint32_t)params->feClkDiv;
   adcClkDuty    = (uint32_t)params->adcClkDuty;
   adcClkDiv     = (uint32_t)params->adcClkDiv;
-  delay         = (uint32_t)params->trig2Hold;
+  trig2Hold         = (uint32_t)params->trig2Hold;
   ideTest       = (uint32_t)params->ideTest;
   adcFast       = (uint32_t)params->adcFast;
   calEn         = (uint32_t)_calMode;
@@ -41,7 +41,7 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, paperoConfig
   SetIntTriggerPeriod(params->intTrigPeriod);
   SetCalibrationMode(_calMode);
   SelectTrigger(_intTrig);
-  SetDelay(params->trig2Hold);
+  SetTrig2Hold(params->trig2Hold);
 
   //Make sure system is NOT running
   SetMode(0);
@@ -131,7 +131,7 @@ int de10_silicon_base::Init() {
     SendInt(regContent);
     
     //Register 7
-    regContent  = delay;
+    regContent  = trig2Hold;
     SendInt(regContent);
   }
   else {
@@ -146,12 +146,12 @@ int de10_silicon_base::Init() {
   return ret;
 }
 
-int de10_silicon_base::SetDelay(uint32_t delayIn){
+int de10_silicon_base::SetTrig2Hold(uint32_t delayIn){
   int ret=0;
   uint32_t reply = 1;
-  delay = (delayIn & 0x0000FFFF);
+  trig2Hold = (delayIn & 0x0000FFFF);
   if (SendCmd("setDelay")>0) {
-    SendInt(delay);
+    SendInt(trig2Hold);
   }
   else {
     ret = 1;

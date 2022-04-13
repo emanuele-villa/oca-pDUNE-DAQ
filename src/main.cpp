@@ -135,6 +135,8 @@ int main(int argc, char *argv[]) {
   //This must be done before `signal` handling
   //to avoid NULL daqsrv when StopRun function is invoked
   daqsrv = new daqserver(daqConf.portClient, opt.verbose, opt.paperoCfg);
+  //Create and configure detectors
+  daqsrv->SetUpConfigClients();
 
   //Wait for clients and servers to be ready
   sleep(5);

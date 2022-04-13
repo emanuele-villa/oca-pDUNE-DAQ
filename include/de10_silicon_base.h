@@ -29,7 +29,7 @@ private:
   uint32_t feClkDiv;
   uint32_t adcClkDuty;
   uint32_t adcClkDiv;
-  uint32_t delay;    //FIXME: replace name with trig2hold
+  uint32_t trig2Hold;
   uint32_t ideTest;  //FIXME: create the function to pass the value to the HPS
   uint32_t adcFast;  //FIXME: create the function to pass the value to the HPS
   uint32_t busyLen;  //FIXME: create the function to pass the value to the HPS
