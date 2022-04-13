@@ -98,17 +98,17 @@ void* hpsServer::ListenCmd(){
 void hpsServer::ProcessCmdReceived(char* msg){
   
   if(strcmp(msg, "cmd=init") == 0){
-    uint32_t regsContent[14];
+    uint32_t regsContent[16];
     uint32_t singleReg = 0;
 
     if (kVerbosity > 1) printf("%s) Starting init...\n", __METHOD_NAME__);
       //TCP-Receive the whole content (apart from reg rGOTO_STATE)
-      for(int ii = 0; ii < 7; ii++){
+      for(int ii = 0; ii < 8; ii++){
         Rx(&singleReg, sizeof(singleReg));
         regsContent[ii*2]   = singleReg;
         regsContent[ii*2+1] = (uint32_t)ii+1;
       }
-      fpga->InitFpga(regsContent, 14);
+      fpga->InitFpga(regsContent, 16);
       Tx(&kOkVal, sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=readReg") == 0){

@@ -185,16 +185,7 @@ void fpgaDriver::ResetFpga(){
 void fpgaDriver::InitFpga(uint32_t* regsContentIn, uint32_t opLen){
   //Configure the whole regArray (except register rGOTO_STATE)
   WriteReg(regsContentIn, opLen);
-	{//FIXME: what was this for?
-	  uint32_t regContent;
-	  ReadReg(rDET_ID, &regContent);
-	  if (kVerbose>3) {
-	    printf("%s) Detector ID (Register 3): %d\n", __METHOD_NAME__, regContent);
-	  }
-	  if (regContent>255) {
-	    dataFifo->init(390, 3690, 0);
-	  }
-	}
+  
 	//Reset the FPGA
 	ResetFpga();
 }
