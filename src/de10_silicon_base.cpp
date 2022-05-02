@@ -5,33 +5,53 @@
 uint32_t okVal = 0xb01af1ca;
 uint32_t badVal = 0x000cacca;
 
-de10_silicon_base::de10_silicon_base(const char *address, int port, int _detid, int _cmdlenght, int verb):tcpclient(address, port, verb){
+de10_silicon_base::de10_silicon_base(const char *address, int port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb):tcpclient(address, port, verb){
+  uint32_t cmdLenReply = 1;
 
-  cmdlenght = _cmdlenght;
-  SendInt(cmdlenght);//for now is the default value
-  uint32_t reply = 1;
-  ReceiveInt(reply);
-  //let's set as cmd lenght not the one passed but the one received back (hoping they are equal)
-  cmdlenght=reply;//in number of char
-  printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
   
-  //Initialize and compute configurations
-  testUnitCfg = 0;
-  hkEn = 0;
-  ConfigureTestUnit(0);
-  dataEn = 1;
-  //  SetIntTriggerPeriod(0x02faf080);
-  SetIntTriggerPeriod(0x0002faf0);
-  SetCalibrationMode(0);
-  SelectTrigger(0);
-  pktLen = 0x0000028A;
-  feClkDuty  = 0x00000004;
-  feClkDiv   = 0x00000028;
-  adcClkDuty = 0x00000004;
-  adcClkDiv  = 0x00000002;
-  SetDelay(0x00000145);
+  //Copy the parameters from the config file
+  detId         = params->id  & 0x0000FFFF;
+  cmdlenght     = params->cmdLen;
+  testUnitCfg   = (uint32_t)params->testUnitCfg & 0x00000003;
+  testUnitEn    = (uint32_t)params->testUnitEn & 0x00000001;
+  hkEn          = (uint32_t)params->hkEn & 0x00000001;
+  dataEn        = (uint32_t)params->dataEn & 0x00000001;
+  pktLen        = params->pktLen;
+  intTrigPeriod = params->intTrigPeriod & 0xFFFFFFF0;
+  feClkDuty     = (uint32_t)params->feClkDuty & 0x0000FFFF;
+  feClkDiv      = (uint32_t)params->feClkDiv & 0x0000FFFF;
+  adcClkDuty    = (uint32_t)params->adcClkDuty & 0x0000FFFF;
+  adcClkDiv     = (uint32_t)params->adcClkDiv & 0x0000FFFF;
+  trig2Hold     = (uint32_t)params->trig2Hold & 0x0000FFFF;
+  ideTest       = (uint32_t)params->ideTest & 0x00000001;
+  adcFast       = (uint32_t)params->adcFast & 0x00000001;
+  calEn         = (uint32_t)_calMode & 0x00000001;
+  intTrigEn     = (uint32_t)_intTrig & 0x00000001;
+  busyLen       = (uint32_t)params->busyLen & 0x0000FFFF;
+  adcDelay      = (uint32_t)params->adcDelay & 0x0000FFFF;
+
+  //Send command length and set it with the loopback value
+  //Cannot use specific function since it is the first time setting the length
+  SendInt(cmdlenght);
+  ReceiveInt(cmdLenReply);
+  //Set cmd lenght with the detector reply (and check if they are the same)
+  if (cmdlenght != cmdLenReply){
+    printf("%s) Detector has command length %d (requested: %d)\n",
+            __METHOD_NAME__, cmdlenght, cmdLenReply);
+    exit(1);
+  }
+  cmdlenght=cmdLenReply;//in number of char
+  printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, cmdLenReply);  
+
+  //
+  ConfigureTestUnit(testUnitCfg);
+  SetIntTriggerPeriod(intTrigPeriod);
+  SetCalibrationMode(calEn);
+  SelectTrigger(intTrigEn);
+  SetTrig2Hold(trig2Hold);
+
+  //Make sure system is NOT running
   SetMode(0);
-  detId = _detid;
 
   if (verbosity>0) {
     printf("%s) de10 silicon created\n", __METHOD_NAME__);
@@ -93,16 +113,16 @@ int de10_silicon_base::Init() {
   
   if (SendCmd("init")>0) {
     //Register 1
-    regContent = (testUnitCfg&0x00000003) << 8 | (hkEn&0x00000001) << 6 \
-      | testUnitEn | (dataEn&0x00000001);
+    regContent = (testUnitCfg << 8) | (hkEn << 6) \
+      | (testUnitEn << 1) | dataEn;
     SendInt(regContent);
     
     //Register 2
-    regContent = intTrigPeriod|calEn|intTrigEn;
+    regContent = intTrigPeriod | (calEn<<1) | intTrigEn;
     SendInt(regContent);
     
     //Register 3
-    regContent = detId&0x0000FFFF;
+    regContent = detId;
     SendInt(regContent);
     
     //Register 4
@@ -110,15 +130,19 @@ int de10_silicon_base::Init() {
     SendInt(regContent);
     
     //Register 5
-    regContent = ((feClkDuty&0x0000FFFF)<<16) | (feClkDiv&0x0000FFFF);
+    regContent = (feClkDuty << 16) | feClkDiv;
     SendInt(regContent);
     
     //Register 6
-    regContent = ((adcClkDuty&0x0000FFFF)<<16) | (adcClkDiv&0x0000FFFF);
+    regContent = (adcClkDuty << 16) | adcClkDiv;
     SendInt(regContent);
     
     //Register 7
-    regContent  = delay;
+    regContent  = adcFast << 24 | ideTest << 19 | trig2Hold;
+    SendInt(regContent);
+
+    //Register 8
+    regContent  = busyLen << 16 | adcDelay;
     SendInt(regContent);
   }
   else {
@@ -133,12 +157,12 @@ int de10_silicon_base::Init() {
   return ret;
 }
 
-int de10_silicon_base::SetDelay(uint32_t delayIn){
+int de10_silicon_base::SetTrig2Hold(uint32_t delayIn){
   int ret=0;
   uint32_t reply = 1;
-  delay = (delayIn & 0x0000FFFF);
+  trig2Hold = (delayIn & 0x0000FFFF);
   if (SendCmd("setDelay")>0) {
-    SendInt(delay);
+    SendInt(trig2Hold);
   }
   else {
     ret = 1;
@@ -161,8 +185,8 @@ int de10_silicon_base::SetMode(uint8_t modeIn) {
     ret = 1;
   }
   ReceiveInt(reply);
-  if (verbosity>-1) {//FIX ME
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  if (verbosity>1) {
+    printf("%s) Setting Mode. Reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
   }  
   return ret;
 }
@@ -222,9 +246,9 @@ int de10_silicon_base::GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen){
 int de10_silicon_base::SetCalibrationMode(uint32_t calEnIn){
   int ret = 0;
   uint32_t reply = 1;
-  calEn = (calEnIn&0x00000001)<<1;
+  calEn = calEnIn & 0x00000001;
   if (SendCmd("calibrate")>0){
-    SendInt(calEn);
+    SendInt(calEn<<1);
   }
   else {
     ret = 1;
@@ -255,7 +279,7 @@ int de10_silicon_base::SaveCalibrations(){
 int de10_silicon_base::SetIntTriggerPeriod(uint32_t intTrigPeriodIn){
   int ret=0;
   uint32_t reply = 1;
-  intTrigPeriod = intTrigPeriodIn&0xFFFFFFF0;
+  intTrigPeriod = intTrigPeriodIn & 0xFFFFFFF0;
   if (SendCmd("intTrigPeriod")>0) {
     SendInt(intTrigPeriod);
   }
@@ -272,7 +296,7 @@ int de10_silicon_base::SetIntTriggerPeriod(uint32_t intTrigPeriodIn){
 int de10_silicon_base::SelectTrigger(uint32_t intTrigEnIn){
   int ret=0;
   uint32_t reply = 1;
-  intTrigEn = intTrigEnIn&0x00000001;
+  intTrigEn = intTrigEnIn & 0x00000001;
   if (SendCmd("selectTrigger")>0) {
     SendInt(intTrigEn);
   }
@@ -289,9 +313,113 @@ int de10_silicon_base::SelectTrigger(uint32_t intTrigEnIn){
 int de10_silicon_base::ConfigureTestUnit(uint32_t testUnitEnIn){
   int ret=0;
   uint32_t reply = 1;
-  testUnitEn = (testUnitEnIn&0x00000001)<<1;
+  testUnitEn = testUnitEnIn & 0x00000001;
   if (SendCmd("configTestUnit")>0) {
-    SendInt(testUnitEn);
+    SendInt(testUnitEn<<1);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv){
+  int ret=0;
+  uint32_t reply = 1;
+  feClkDuty = _feClkDuty & 0x0000FFFF;
+  feClkDiv  = _feClkDiv  & 0x0000FFFF;
+  if (SendCmd("setFeClk")>0) {
+    SendInt((feClkDuty << 16) | feClkDiv);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv){
+  int ret=0;
+  uint32_t reply = 1;
+  adcClkDuty = _adcClkDuty & 0x0000FFFF;
+  adcClkDiv  = _adcClkDiv  & 0x0000FFFF;
+  if (SendCmd("setAdcClk")>0) {
+    SendInt((adcClkDuty << 16) | adcClkDiv);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetIdeTest(uint32_t _ideTest){
+  int ret=0;
+  uint32_t reply = 1;
+  ideTest = _ideTest & 0x00000001;
+  if (SendCmd("setIdeTest")>0) {
+    SendInt(ideTest << 19);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetAdcFast(uint32_t _adcFast){
+  int ret=0;
+  uint32_t reply = 1;
+  adcFast = _adcFast & 0x00000001;
+  if (SendCmd("setAdcFast")>0) {
+    SendInt(adcFast << 24);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetBusyLen(uint32_t _busyLen){
+  int ret=0;
+  uint32_t reply = 1;
+  busyLen = _busyLen & 0x0000FFFF;
+  if (SendCmd("setBusyLen")>0) {
+    SendInt(busyLen << 16);
+  }
+  else {
+    ret = 1;
+  }
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::SetAdcDelay(uint32_t _adcDelay){
+  int ret=0;
+  uint32_t reply = 1;
+  adcDelay = _adcDelay & 0x0000FFFF;
+  if (SendCmd("setAdcDelay")>0) {
+    SendInt(adcDelay);
   }
   else {
     ret = 1;

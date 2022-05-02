@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "tcpclient.h"
+#include "paperoConfig.h"
 
 class de10_silicon_base: public tcpclient {
 
@@ -15,6 +16,7 @@ private:
 
   //Configuration variables
   uint32_t mode;
+  uint32_t detId;
   uint32_t testUnitCfg;
   uint32_t hkEn;
   uint32_t testUnitEn;
@@ -27,12 +29,15 @@ private:
   uint32_t feClkDiv;
   uint32_t adcClkDuty;
   uint32_t adcClkDiv;
-  uint32_t delay;
-  uint32_t detId;
+  uint32_t trig2Hold;
+  uint32_t ideTest;
+  uint32_t adcFast;
+  uint32_t busyLen;
+  uint32_t adcDelay;
 
 public:
   ~de10_silicon_base();
-  de10_silicon_base(const char *address, int port, int _detid, int _cmdlenght, int verb=0);
+  de10_silicon_base(const char *address, int port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb=0);
 
   // virtual void changeText(const std::string& new_text) {};
   // virtual void sendData(std::vector<double> event) {};
@@ -44,7 +49,7 @@ public:
   
   int readReg(int regAddr, uint32_t &regCont);
   int Init();
-  int SetDelay(uint32_t delayIn);
+  int SetTrig2Hold(uint32_t delayIn);
   int SetMode(uint8_t modeIn);
   int GetEventNumber();
   int EventReset();
@@ -56,6 +61,12 @@ public:
   int SetIntTriggerPeriod(uint32_t intTrigPeriodIn);
   int SelectTrigger(uint32_t intTrigEnIn);
   int ConfigureTestUnit(uint32_t testUnitEnIn);
+  int SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv);
+  int SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv);
+  int SetIdeTest(uint32_t _ideTest);
+  int SetAdcFast(uint32_t _adcFast);
+  int SetBusyLen(uint32_t _busyLen);
+  int SetAdcDelay(uint32_t _adcDelay);
 };
 
 #endif

@@ -1,4 +1,3 @@
-#include "daqserver.h"
 #include "utility.h"
 #include <sys/time.h>
 //#include <TDatime.h>
@@ -10,20 +9,31 @@
 #include <chrono>
 #include <algorithm>
 
-daqserver::daqserver(int port, int verb):tcpserver(port, verb){
-  if (kVerbosity>0){
-    printf("%s) daqserver created\n", __METHOD_NAME__);
-  }
+#include "daqserver.h"
 
+daqserver::daqserver(int port, int verb, std::string paperoCfgPath):tcpServer(port, verb){
+  //Copy configuration file parameters
+  kCmdLen   = daqConf.clientCmdLen;
+  calibmode = daqConf.calMode;
+  trigtype  = daqConf.intTrigEn;
+  kdataPath = daqConf.dataFolder;
+
+  //Read paperoConfig parameters
+  paperoConfig paperoConf(paperoCfgPath);
+  paperoConfVector = paperoConf.getParams(); //FIXME non glielo dovrei passare per referenza?
+  
+  //Stop the run (if applicable) and reset
+  kStart  = false;
+  mode    = 0;
   addressdet.clear();
   portdet.clear();
 
-  kStart=false;
+  //Start the socket
+  SockStart();
 
-  calibmode=0;
-  mode=0;
-  trigtype=0;
-  
+  if (kVerbosity>0){
+    printf("%s) DAQ Server Created\n", __METHOD_NAME__);
+  }
   return;
 }
 
@@ -42,15 +52,28 @@ daqserver::~daqserver(){
   return;
 }
 
-void daqserver::SetListDetectors(int nde10, const char* addressde10[], int portde10[], int detcmdlenght){
+void daqserver::SetUpConfigClients(){
+  SetListDetectors();
+  Init();
+}
+
+void daqserver::SetListDetectors(){
 
   addressdet.clear();
   portdet.clear();
 
-  for (int ii=0; ii<nde10; ii++) {
-    addressdet.push_back(addressde10[ii]);
-    portdet.push_back(portde10[ii]);
-    det.push_back(new de10_silicon_base(addressde10[ii], portde10[ii], ii, detcmdlenght, kVerbosity));
+  for (uint32_t ii=0; ii<paperoConfVector.size(); ii++) {
+    addressdet.push_back(paperoConfVector[ii]->ipAddr.data());
+    portdet.push_back(paperoConfVector[ii]->tcpPort);
+    det.push_back(
+      new de10_silicon_base(
+        paperoConfVector[ii]->ipAddr.data(),
+        paperoConfVector[ii]->tcpPort,
+        paperoConfVector[ii],
+        calibmode,
+        trigtype,
+        kVerbosity)
+      );
   }
 
   return;
@@ -120,6 +143,50 @@ void daqserver::SelectTrigger(uint32_t trig){
   return;
 }
 
+void daqserver::SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetFeClk((_feClkDuty&0x0000FFFF)<<16, (_feClkDiv&0x0000FFFF));
+  }
+  return;
+}
+
+void daqserver::SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetAdcClk((_adcClkDuty&0x0000FFFF)<<16, (_adcClkDiv&0x0000FFFF));
+  }
+  return;
+}
+
+void daqserver::SetIdeTest(uint32_t _ideTest){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetIdeTest((_ideTest & 0x00000001) << 19);
+  }
+  return;
+}
+
+void daqserver::SetAdcFast(uint32_t _adcFast){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetAdcFast((_adcFast & 0x00000001) << 24);
+  }
+  return;
+}
+
+void daqserver::SetAdcDelay(uint32_t _adcDelay){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetAdcDelay(_adcDelay & 0x0000FFFF);
+  }
+  return;
+}
+
+void daqserver::SetBusyLen(uint32_t _busyLen){
+  for (int ii=0; ii<(int)(det.size()); ii++) {
+    det[ii]->SetBusyLen((_busyLen & 0x0000FFFF) << 16);
+  }
+  return;
+}
+
+
+
 void daqserver::ResetBoards(){
   printf("%s) Resetting boards counters...\n", __METHOD_NAME__);
   for(auto de10 : det){
@@ -127,9 +194,66 @@ void daqserver::ResetBoards(){
   }
 }
 
+int daqserver::ReplyToCmd(char* msg) {
+  //Send msg to socket
+  int n = write(kTcpConn, msg, kCmdLen);
+  if (n < 0){
+    fprintf(stderr, "%s) Error in writing to the socket\n", __METHOD_NAME__);
+    return 1;
+  }
+  
+  if (kVerbosity>1) {
+    printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
+  }
+  
+  return 0;
+}
+
+void daqserver::ListenCmd(){
+
+  kListeningOn = true;
+
+  while (kListeningOn){
+  
+    char msg[LEN];
+
+    //Receive a command of kCmdLen numbers chars (each one in ASCII char),
+    //+ 1 for the termination character
+    ssize_t readret = read(kTcpConn, msg, ((kCmdLen*8)*sizeof(char)+1));
+
+    if (readret < 0){
+      //Error
+      if (EAGAIN == errno || EWOULDBLOCK == errno) {
+        if (kVerbosity>1) {
+          printf("%s) There's nothing to read now; try again later\n", __METHOD_NAME__);
+        }
+      }
+      else {
+        print_error("%s) Read error: \n", __METHOD_NAME__);
+      }
+    }
+    else if (readret==0){
+      //Stream is over and client disconnected: wait for another connection
+      AcceptConnection();
+    }
+    else {
+      //RX ok
+      ProcessCmdReceived(msg);
+    }
+
+    bzero(msg, sizeof(msg));
+  }
+
+  if (kVerbosity>0) {
+    printf("%s) Stop Listening\n", __METHOD_NAME__);
+  }
+
+  return;
+}
+
 void daqserver::ProcessCmdReceived(char* msg){
 
-  if (kVerbosity>-1) {//FIX ME: >-1 perche' ora non fa niene, poi deve fare quelle sotto
+  if (kVerbosity>1) {
     printf("%s) |%s| (lenght = %lu)\n", __METHOD_NAME__, msg, strlen(msg));
   }
 
@@ -139,18 +263,13 @@ void daqserver::ProcessCmdReceived(char* msg){
       printf("%s) Init()\n", __METHOD_NAME__);
       Init();
       ReplyToCmd(msg);
-      //FIX ME: only for now to test
-      // for (int ii=0; ii<32; ii++) {
-      // 	printf("%s) Reading reg %d\n", __METHOD_NAME__, ii);
-      // 	ReadReg(ii);
-      // }
     }
     else if (strcmp(msg, "cmd=Wait") == 0){//essentially for test
       printf("%s) Wait()\n", __METHOD_NAME__);
       printf("sleeping for 30s: "); fflush(stdout);
       for (int ii=0; ii<30; ii++) {
-	printf("%d... ", ii); fflush(stdout);
-	sleep(1);
+        printf("%d... ", ii); fflush(stdout);
+        sleep(1);
       }
       printf("\n");
       ReplyToCmd(msg);
@@ -175,60 +294,60 @@ void daqserver::ProcessCmdReceived(char* msg){
     for (int ii=0; ii<4; ii++) {
       strncpy(cmdgroup[ii], &command_string[ii*8], 8);
       if (kVerbosity>0) {
-	printf("%s\n", cmdgroup[ii]);
+        printf("%s\n", cmdgroup[ii]);
       }
     }
     
     //check the command
     if (strcmp(btcmd, cmdgroup[0])==0) {//is a chinese command
       if (strcmp(start,cmdgroup[2])==0) {//start daq
-	printf("%s) Start()\n", __METHOD_NAME__);
-	char runtype[32] = "";
-	strncpy(runtype, &cmdgroup[1][4], 4);
-	char sruntype[32] = "";
-	if (strcmp(beam,runtype)==0) {
-	  sprintf(sruntype, "BEAM");
-	  SetCalibrationMode(0);
-	}
-	else if (strcmp(cal,runtype)==0) {
-	  sprintf(sruntype, "CAL");
-	  SetCalibrationMode(1);
-	}
-	else {
-	  printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
-	  sprintf(sruntype, "????");
-	}
+	      printf("%s) Start()\n", __METHOD_NAME__);
+	      char runtype[32] = "";
+	      strncpy(runtype, &cmdgroup[1][4], 4);
+	      char sruntype[32] = "";
+	      if (strcmp(beam,runtype)==0) {
+	        sprintf(sruntype, "BEAM");
+	        SetCalibrationMode(0);
+	      }
+	      else if (strcmp(cal,runtype)==0) {
+	        sprintf(sruntype, "CAL");
+	        SetCalibrationMode(1);
+	      }
+	      else {
+	        printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
+	        sprintf(sruntype, "????");
+	      }
 
-	// ignore consecutive Start commands
-	if(kStart){
-	  ReplyToCmd("Consecutive starts received. Ignoring last command.");
-	  return;
-	}
+        // ignore consecutive Start commands
+        if(kStart){
+          char* tempStr = "Consecutive starts received. Ignoring last command.";
+          ReplyToCmd(tempStr);
+          return;
+        }
 
-	char srunnum[32] = "";
-	strncpy(srunnum,  &cmdgroup[1][0], 4);
-	char* ptr;
-	uint32_t runnum = strtol(srunnum, &ptr, 16);
-	uint32_t unixtime = strtol(cmdgroup[3], &ptr, 16);
-	std::time_t t = unixtime;
-	if (kVerbosity>0) {
-	  printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
-	}
-	//Spawn a thread to read events. Stop() will join the thread
-	nEvents = 0;
-	_3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
-	ReplyToCmd(msg);
-	//	}
+        char srunnum[32] = "";
+        strncpy(srunnum,  &cmdgroup[1][0], 4);
+        char* ptr;
+        uint32_t runnum = strtol(srunnum, &ptr, 16);
+        uint32_t unixtime = strtol(cmdgroup[3], &ptr, 16);
+        std::time_t t = unixtime;
+        if (kVerbosity>0) {
+          printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
+        }
+        //Spawn a thread to read events. Stop() will join the thread
+        nEvents = 0;
+        _3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
+        ReplyToCmd(msg);
       }
       else if(strcmp(stop,cmdgroup[2])==0) {//stop daq
-	printf("%s) Stop()\n", __METHOD_NAME__);
-	Stop();
-	ReplyToCmd(msg);
+        printf("%s) Stop()\n", __METHOD_NAME__);
+        Stop();
+        ReplyToCmd(msg);
       }
       else {
-	printf("%s) not a valid sub-command: %s (%s)\n\n", __METHOD_NAME__, cmdgroup[2], command_string);
-	sprintf(msg, "NOT-A-VALID-SUBCMD");
-	ReplyToCmd(msg);
+        printf("%s) not a valid sub-command: %s (%s)\n\n", __METHOD_NAME__, cmdgroup[2], command_string);
+        sprintf(msg, "NOT-A-VALID-SUBCMD");
+        ReplyToCmd(msg);
       }
     }
     else {
@@ -236,7 +355,6 @@ void daqserver::ProcessCmdReceived(char* msg){
       sprintf(msg, "NOT-A-VALID-CMD");
       ReplyToCmd(msg);
     }
-
   }
 
   return;
@@ -380,14 +498,14 @@ void daqserver::Start(char* runtype, uint32_t runnum, uint32_t unixtime) {
   // std::transform(begin(runtype_upper), end(runtype_upper), begin(runtype_upper), std::toupper);
 
   std::string humanDate = format_human_date(unixtime);
-  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kdataPath, runnum, runtype, humanDate.c_str());
+  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kdataPath.data(), runnum, runtype, humanDate.c_str());
 
   printf("%s) Opening output file: %s\n", __METHOD_NAME__, dataFileName);
 
   FILE* dataFileD;
   dataFileD = fopen(dataFileName,"w");
   if (dataFileD == nullptr) {
-    printf("%s) Error: file %s could not be created. Do the data dir %s exist?\n", __METHOD_NAME__, dataFileName, kdataPath);
+    printf("%s) Error: file %s could not be created. Do the data dir %s exist?\n", __METHOD_NAME__, dataFileName, kdataPath.data());
     return;
   }
 

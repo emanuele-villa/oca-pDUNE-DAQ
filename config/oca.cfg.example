@@ -1,0 +1,2 @@
+#Listen TCP client | TCP client port | Data dir | TCP-client commands len | Cal mode | IntTrig En |
+1 8888  ./data/ 64 0 0

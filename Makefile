@@ -65,10 +65,10 @@ HPSOPTFLAG := -g
 # HPSOPTFLAG := -O2
 
 # Objects and sources:
-OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpserver.o $(OBJ)/utility.o
+OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/daqConfig.o $(OBJ)/paperoConfig.o $(OBJ)/anyoption.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
-OBJECTSHPS := $(OBJARM)/server.o $(OBJARM)/server_function.o $(OBJARM)/highlevelDriversFPGA.o $(OBJARM)/lowlevelDriversFPGA.o
+OBJECTSHPS := $(OBJARM)/papero.o $(OBJARM)/hpsServer.o $(OBJARM)/tcpServer.o $(OBJARM)/utility.o $(OBJARM)/fpgaDriver.o $(OBJARM)/axiFifo.o
 
 # Executables:
 PAPERO := $(EXE)/PAPERO
@@ -119,8 +119,7 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 	@mkdir -pv $(OBJ)
 	$(CXX) $(CPPFLAGS) $(OCAOPTFLAG) $(VERSION_FLAGS) -c -o $@ $<
 
-#Objects
-$(OBJARM)/%.o: $(SRC)/%.c
+$(OBJARM)/%.o: $(SRC)/%.cpp
 ifeq ($(UNAME_S),Darwin)
 	@echo Compilation under MacOs not possibile
 else
