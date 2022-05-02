@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   hex2string(readBack,length,command_string);
   printf("%s) Read from DAQ: %s\n", __METHOD_NAME__, command_string);
   
-  sleep(180);
+  sleep(60);
 
   // old format
   // //  const char* stop  ="FF80000800000000EE00000000000000";
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   // ----------
   //  const char* stop  ="FF80000800150001EE00000061618D5B";
   //  uint32_t stop[4] = {0xFF800008, 0x00150001, 0xEE000000, 0x61618D5B};
-  // uint32_t stop[4] = {0x080080FF, 0x01001500, 0x000000EE, 0x5B8D6161};
+  uint32_t stop[4] = {0x080080FF, 0x01001500, 0x000000EE, 0x5B8D6161};
   daq->Send((void*)stop, 4*sizeof(uint32_t));
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
   hex2string(readBack,length,command_string);

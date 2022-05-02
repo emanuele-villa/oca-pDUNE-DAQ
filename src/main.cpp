@@ -67,6 +67,9 @@ int main(int argc, char *argv[]) {
   //daqsrv->SelectTrigger(0);
     daqsrv->SelectTrigger(1);
     daqsrv->ReadAllRegs();
+    std::cout<<"----------Lettura registro 2----------"<<std::endl;
+    daqsrv->ReadReg(2);
+    std::cout<<"----------Lettura registro 2----------"<<std::endl;
 
   //is not really working, for now: it is killed as a standard CTRL-C
   //the param sent to StopRun is SIGTERM itself and we need that StopRun accepts a param even if cannot use it
