@@ -25,10 +25,10 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, int _detid, 
   SetCalibrationMode(0);
   SelectTrigger(0);
   pktLen = 0x0000028A;
-  feClkDuty  = 0x00000008;
+  feClkDuty  = 0x00000014;
   feClkDiv   = 0x00000028;
-  adcClkDuty = 0x00000001;
-  adcClkDiv  = 0x00000002;
+  adcClkDuty = 0x00000002;
+  adcClkDiv  = 0x00000004;
   SetDelay(0x00000145);
   SetMode(0);
   detId = _detid;

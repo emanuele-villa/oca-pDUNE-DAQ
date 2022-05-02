@@ -57,7 +57,7 @@ CFLAGS := -Wall -Wextra -pthread #-fsanitize=address
 LDFLAGS := -Wall -Wextra -pthread #-fsanitize=address
 
 CPPFLAGS := $(CFLAGS) -std=c++11 $(INCLUDE)
-CFLAGSARM := $(CFLAGS) $(INCLUDEARM) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
+CFLAGSARM := $(CFLAGS) -std=c++11 $(INCLUDEARM) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
 
 OCAOPTFLAG := -g
 HPSOPTFLAG := -g

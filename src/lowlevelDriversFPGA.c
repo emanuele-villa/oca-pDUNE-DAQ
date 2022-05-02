@@ -368,7 +368,8 @@ uint8_t parity32(uint32_t dataIn){
 void ReadReg(int regAddr, uint32_t *data){
 	//Write the address of the register to be read
 	*baseAddr.fpgaRegAddr = regAddr;
-
+  usleep(1);
+  //printf("Lettura registro %d \n",regAddr);
 	//Read the register content
 	*data = *baseAddr.fpgaRegCont;
 
