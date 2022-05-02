@@ -67,7 +67,8 @@ int commandLineParser(int argc, char *argv[], commandLineOptions &clOpt, vector<
   /* go through the command line and get the options  */
   opt->processCommandArgs(argc, argv);
 
-  //if (!opt->hasOptions()) { /* print usage if no options */
+  /* print usage if no options */
+  //if (!opt->hasOptions()) {
   //  opt->printUsage();
   //  delete opt;
   //  exit(1);
@@ -85,7 +86,7 @@ int commandLineParser(int argc, char *argv[], commandLineOptions &clOpt, vector<
   }
   else
   {
-    clOpt.verbose = 1;
+    clOpt.verbose = 0;
   }
   if (opt->getValue('p') != NULL || opt->getValue("papero") != NULL)
   {

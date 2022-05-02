@@ -153,7 +153,7 @@ int fpgaDriver::WriteReg(uint32_t* pktContent, int pktLen){
   pktCrc = CrcFinalize(pktCrc);
   packet[pktLen+5] = pktCrc;
 
-  if (kVerbose > 2){
+  if (kVerbose > 3){
     printf("%s) WriteReg: Packet Content:\n", __METHOD_NAME__);
     for (int jj=0; jj<pktLen+6;jj++){
       printf("%08x\n", packet[jj]);
@@ -174,9 +174,9 @@ void fpgaDriver::ResetFpga(){
 
 	//Flush the FastData Fifo
 	flushErr = dataFifo->readChunk(data, 0, true);
-	if(kVerbose > 0) printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
+	if(kVerbose > 0) printf("%s) Flushed %d words from DATA FIFO\n", __METHOD_NAME__, flushErr);
   flushErr = hkFifo->readChunk(data, 0, true);
-	if(kVerbose > 0) printf("%s) Flushed %d words\n", __METHOD_NAME__, flushErr);
+	if(kVerbose > 0) printf("%s) Flushed %d words from HK FIFO\n", __METHOD_NAME__, flushErr);
 
 	//Remove regArray reset
 	SingleWriteReg((uint32_t)rGOTO_STATE, 0x00000000);
@@ -287,18 +287,6 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
     }
     return 0;
   }
-
-  //FIXME: shall not have this hardcoded
-  //Check if the detector connected is a dampeladder
-  bool dampeladder = false;
-  {
-    uint32_t regContent;
-    ReadReg(3, &regContent);
-    if (kVerbose > 3) {
-      printf("%s) Detector ID (Register 3): %d\n", __METHOD_NAME__, regContent);
-    }
-    if (regContent>255) dampeladder=true;
-  }
   
   //Read the first word and make sure it's the SoP
   readErr = dataFifo->read(&sopWord);
@@ -323,7 +311,7 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
     return -1;
   }
 
-  if (kVerbose > 3){
+  if (kVerbose > 4){
     printf("%s) Event:\n", __METHOD_NAME__);
     for(uint32_t i = 0; i < pktLen+1; i++){
       printf("%08x\n", packet[i]);
@@ -331,9 +319,6 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
   }
 
   *evtLen = pktLen+1;
-  if (dampeladder) {//FIX ME: hacking to avoid big latency in case of smaller events. To be fully understood why
-    *evtLen = 651;//as for a standard FOOT event (650 + 1)
-  }
   evt.resize(*evtLen);//resize to the full Len
   memcpy(evt.data(), packet, sizeof(uint32_t)*(pktLen+1));//better to use pktLen (not modified by the hacking)
 

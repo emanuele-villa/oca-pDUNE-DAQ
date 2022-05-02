@@ -34,8 +34,12 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, paperoConfig
   //Cannot use specific function since it is the first time setting the length
   SendInt(cmdlenght);
   ReceiveInt(cmdLenReply);
-  //let's set as cmd lenght not the one passed but the one received back
-  //FIXME: add a check that they are the same
+  //Set cmd lenght with the detector reply (and check if they are the same)
+  if (cmdlenght != cmdLenReply){
+    printf("%s) Detector has command length %d (requested: %d)\n",
+            __METHOD_NAME__, cmdlenght, cmdLenReply);
+    exit(1);
+  }
   cmdlenght=cmdLenReply;//in number of char
   printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, cmdLenReply);  
 
@@ -181,8 +185,8 @@ int de10_silicon_base::SetMode(uint8_t modeIn) {
     ret = 1;
   }
   ReceiveInt(reply);
-  if (verbosity>-1) {//FIX ME
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  if (verbosity>1) {
+    printf("%s) Setting Mode. Reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
   }  
   return ret;
 }

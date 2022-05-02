@@ -227,7 +227,7 @@ void hpsServer::ProcessCmdReceived(char* msg){
 
     //Get an event from FPGA
     int evtErr = fpga->getEvent(evt, &evtLen);
-    if (kVerbosity > 3) printf("getEvent result: %d\n", evtErr);
+    if (kVerbosity > 4) printf("getEvent result: %d\n", evtErr);
     //Send the eventLen to the socket
     Tx(&evtLen, sizeof(evtLen));
     //Send the event to the socket
@@ -248,7 +248,7 @@ void hpsServer::ProcessCmdReceived(char* msg){
     printf("FIX ME: Close connection and socket...\n");
   }
   else {
-    printf("%s) Unkown message: %s\n", __METHOD_NAME__, msg);
+    printf("%s) Unknown message: %s\n", __METHOD_NAME__, msg);
     Tx(&kBadVal, sizeof(kBadVal));
   }
 }

@@ -53,8 +53,6 @@ daqserver::~daqserver(){
 }
 
 void daqserver::SetUpConfigClients(){
-  
-
   SetListDetectors();
   Init();
 }
@@ -255,7 +253,7 @@ void daqserver::ListenCmd(){
 
 void daqserver::ProcessCmdReceived(char* msg){
 
-  if (kVerbosity>-1) {//FIX ME: >-1 perche' ora non fa niene, poi deve fare quelle sotto
+  if (kVerbosity>1) {
     printf("%s) |%s| (lenght = %lu)\n", __METHOD_NAME__, msg, strlen(msg));
   }
 
@@ -265,11 +263,6 @@ void daqserver::ProcessCmdReceived(char* msg){
       printf("%s) Init()\n", __METHOD_NAME__);
       Init();
       ReplyToCmd(msg);
-      //FIX ME: only for now to test
-      // for (int ii=0; ii<32; ii++) {
-      // 	printf("%s) Reading reg %d\n", __METHOD_NAME__, ii);
-      // 	ReadReg(ii);
-      // }
     }
     else if (strcmp(msg, "cmd=Wait") == 0){//essentially for test
       printf("%s) Wait()\n", __METHOD_NAME__);
