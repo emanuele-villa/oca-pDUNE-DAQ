@@ -426,7 +426,7 @@ void* receiver_comandi(int* sockIn){
         if (evtLen>0) {
           sendSocket(openConn, evt.data(), evtLen*sizeof(uint32_t));
           evtCount++;
-          if (evtCount % 100 == 0) {
+          if (evtCount % 10 == 0) {
             auto evt1000 = clock_type::now();
             std::cout << "Event count : " << evtCount << " in " << std::chrono::duration_cast<std::chrono::seconds>(evt1000 - startRunTime).count() << " s\n";
           }

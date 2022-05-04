@@ -21,10 +21,10 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, int _detid, 
   ConfigureTestUnit(0);
   dataEn = 1;
   //  SetIntTriggerPeriod(0x02faf080);
-  SetIntTriggerPeriod(0x000007d0);
+  SetIntTriggerPeriod(0x002625a0);
   SetCalibrationMode(0);
   SelectTrigger(0);
-  pktLen = 0x0000028A;
+  pktLen = 0x0000002A;
   feClkDuty  = 0x00000008;
   feClkDiv   = 0x00000028;
   adcClkDuty = 0x00000001;
