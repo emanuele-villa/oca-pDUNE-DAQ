@@ -74,7 +74,7 @@ public:
 
   void SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv);
   void SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv);
-  void SetIdeTest(uint32_t _ideTest);
+  void SetIdeTest(uint32_t _ideTest, uint32_t _chTest);
   void SetAdcFast(uint32_t _adcFast);
   void SetBusyLen(uint32_t _busyLen);
   void SetAdcDelay(uint32_t _adcDelay);

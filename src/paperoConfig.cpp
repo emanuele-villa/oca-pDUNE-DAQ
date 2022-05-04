@@ -119,16 +119,19 @@ int paperoConfig::config(istream& is)
           readOption<uint16_t>(tempBuffer->trig2Hold, word);
           break;
         case 15:
-          readOption<bool>(tempBuffer->ideTest, word);
-          break;
-        case 16:
           readOption<bool>(tempBuffer->adcFast, word);
           break;
-        case 17:
+        case 16:
           readOption<uint16_t>(tempBuffer->busyLen, word);
           break;
-        case 18:
+        case 17:
           readOption<uint16_t>(tempBuffer->adcDelay, word);
+          break;
+        case 18:
+          readOption<bool>(tempBuffer->ideTest, word);
+          break;
+        case 19:
+          readOption<uint8_t>(tempBuffer->chTest, word);
           break;
         default:
           cout << __METHOD_NAME__ << ") Too many columns in config file." << endl;

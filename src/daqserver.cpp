@@ -145,42 +145,42 @@ void daqserver::SelectTrigger(uint32_t trig){
 
 void daqserver::SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv){
   for (int ii=0; ii<(int)(det.size()); ii++) {
-    det[ii]->SetFeClk((_feClkDuty&0x0000FFFF)<<16, (_feClkDiv&0x0000FFFF));
+    det[ii]->SetFeClk(_feClkDuty, _feClkDiv);
   }
   return;
 }
 
 void daqserver::SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv){
   for (int ii=0; ii<(int)(det.size()); ii++) {
-    det[ii]->SetAdcClk((_adcClkDuty&0x0000FFFF)<<16, (_adcClkDiv&0x0000FFFF));
+    det[ii]->SetAdcClk(_adcClkDuty, _adcClkDiv);
   }
   return;
 }
 
-void daqserver::SetIdeTest(uint32_t _ideTest){
+void daqserver::SetIdeTest(uint32_t _ideTest, uint32_t _chTest){
   for (int ii=0; ii<(int)(det.size()); ii++) {
-    det[ii]->SetIdeTest((_ideTest & 0x00000001) << 19);
+    det[ii]->SetIdeTest(_ideTest, _chTest);
   }
   return;
 }
 
 void daqserver::SetAdcFast(uint32_t _adcFast){
   for (int ii=0; ii<(int)(det.size()); ii++) {
-    det[ii]->SetAdcFast((_adcFast & 0x00000001) << 24);
+    det[ii]->SetAdcFast(_adcFast);
   }
   return;
 }
 
 void daqserver::SetAdcDelay(uint32_t _adcDelay){
   for (int ii=0; ii<(int)(det.size()); ii++) {
-    det[ii]->SetAdcDelay(_adcDelay & 0x0000FFFF);
+    det[ii]->SetAdcDelay(_adcDelay);
   }
   return;
 }
 
 void daqserver::SetBusyLen(uint32_t _busyLen){
   for (int ii=0; ii<(int)(det.size()); ii++) {
-    det[ii]->SetBusyLen((_busyLen & 0x0000FFFF) << 16);
+    det[ii]->SetBusyLen(_busyLen);
   }
   return;
 }

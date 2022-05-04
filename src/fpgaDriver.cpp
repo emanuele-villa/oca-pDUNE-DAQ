@@ -245,14 +245,14 @@ void fpgaDriver::setAdcClk(uint32_t _adcClkParams){
 void fpgaDriver::setIdeTest(uint32_t _ideTest){
   uint32_t regContent;
   ReadReg(rMSD_PARAM, &regContent);
-  regContent = (regContent & 0xFFF7FFFF) | (_ideTest & 0x00080000);
+  regContent = (regContent & 0xFE00FFFF) | (_ideTest & 0x01FF0000);
   SingleWriteReg(rMSD_PARAM, regContent);
 }
 
 void fpgaDriver::setAdcFast(uint32_t _adcFast){
   uint32_t regContent;
   ReadReg(rMSD_PARAM, &regContent);
-  regContent = (regContent & 0xFEFFFFFF) | (_adcFast & 0x01000000);
+  regContent = (regContent & 0x7FFFFFFF) | (_adcFast & 0x80000000);
   SingleWriteReg(rMSD_PARAM, regContent);
 }
 

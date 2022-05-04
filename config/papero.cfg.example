@@ -1,7 +1,7 @@
-#ID | IPaddr | Port | cmd Len | TestUnitCfg | TestUnit en | HK en | data en | IntTrig Period | Pkt Len | FeClk period | FeClk duty | AdcClk period | AdcClk duty | Trig2Hold | IDE Test | AD7276 FastMode | Busy Len | ADC delay |
-0 192.168.2.101 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 0 1 40 29
-1 192.168.2.102 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 0 1 40 29
-2 192.168.2.103 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 0 1 40 29
-3 192.168.2.104 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 0 1 40 29
-4 192.168.2.105 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 0 1 40 29
-5 192.168.2.106 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 0 1 40 29
+#ID | IPaddr | Port | cmd Len | TestUnitCfg | TestUnit en | HK en | data en | IntTrig Period | Pkt Len | FeClk period | FeClk duty | AdcClk period | AdcClk duty | Trig2Hold | AD7276 FastMode | Busy Len | ADC delay | IDE Test | Test Channel |
+0 192.168.2.101 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 1 40 29 0 0x7f
+1 192.168.2.102 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 1 40 29 0 0x7f
+2 192.168.2.103 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 1 40 29 0 0x7f
+3 192.168.2.104 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 1 40 29 0 0x7f
+4 192.168.2.105 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 1 40 29 0 0x7f
+5 192.168.2.106 5000 24 0 0 0 1 0x02faf080 650 34 17 2 1 325 1 40 29 0 0x7f

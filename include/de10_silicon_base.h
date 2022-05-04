@@ -30,10 +30,11 @@ private:
   uint32_t adcClkDuty;
   uint32_t adcClkDiv;
   uint32_t trig2Hold;
-  uint32_t ideTest;
   uint32_t adcFast;
   uint32_t busyLen;
   uint32_t adcDelay;
+  uint32_t ideTest;
+  uint32_t chTest;
 
 public:
   ~de10_silicon_base();
@@ -63,7 +64,7 @@ public:
   int ConfigureTestUnit(uint32_t testUnitEnIn);
   int SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv);
   int SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv);
-  int SetIdeTest(uint32_t _ideTest);
+  int SetIdeTest(uint32_t _ideTest, uint32_t _chTest);
   int SetAdcFast(uint32_t _adcFast);
   int SetBusyLen(uint32_t _busyLen);
   int SetAdcDelay(uint32_t _adcDelay);

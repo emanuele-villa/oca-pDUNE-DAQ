@@ -23,12 +23,13 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, paperoConfig
   adcClkDuty    = (uint32_t)params->adcClkDuty & 0x0000FFFF;
   adcClkDiv     = (uint32_t)params->adcClkDiv & 0x0000FFFF;
   trig2Hold     = (uint32_t)params->trig2Hold & 0x0000FFFF;
-  ideTest       = (uint32_t)params->ideTest & 0x00000001;
   adcFast       = (uint32_t)params->adcFast & 0x00000001;
   calEn         = (uint32_t)_calMode & 0x00000001;
   intTrigEn     = (uint32_t)_intTrig & 0x00000001;
   busyLen       = (uint32_t)params->busyLen & 0x0000FFFF;
   adcDelay      = (uint32_t)params->adcDelay & 0x0000FFFF;
+  ideTest       = (uint32_t)params->ideTest & 0x00000001;
+  chTest        = (uint32_t)params->chTest & 0x000000FF;
 
   //Send command length and set it with the loopback value
   //Cannot use specific function since it is the first time setting the length
@@ -138,7 +139,7 @@ int de10_silicon_base::Init() {
     SendInt(regContent);
     
     //Register 7
-    regContent  = adcFast << 24 | ideTest << 19 | trig2Hold;
+    regContent  = adcFast << 31 | ideTest << 24 | chTest << 16 | trig2Hold;
     SendInt(regContent);
 
     //Register 8
@@ -363,12 +364,13 @@ int de10_silicon_base::SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv){
   return ret;
 }
 
-int de10_silicon_base::SetIdeTest(uint32_t _ideTest){
+int de10_silicon_base::SetIdeTest(uint32_t _ideTest, uint32_t _chTest){
   int ret=0;
   uint32_t reply = 1;
   ideTest = _ideTest & 0x00000001;
+  chTest  = _chTest & 0x000000FF;
   if (SendCmd("setIdeTest")>0) {
-    SendInt(ideTest << 19);
+    SendInt(ideTest << 24 | chTest << 16);
   }
   else {
     ret = 1;
@@ -385,7 +387,7 @@ int de10_silicon_base::SetAdcFast(uint32_t _adcFast){
   uint32_t reply = 1;
   adcFast = _adcFast & 0x00000001;
   if (SendCmd("setAdcFast")>0) {
-    SendInt(adcFast << 24);
+    SendInt(adcFast << 31);
   }
   else {
     ret = 1;

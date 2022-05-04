@@ -50,32 +50,34 @@ class paperoConfig
       uint16_t adcClkDuty; //!ADC clock duty cycle (in clock cycles)
       uint16_t adcClkDiv; //!ADC clock period (in clock cycles)
       uint16_t trig2Hold; //!Trigger to Hold delay (in clock cycles)
-      bool ideTest; //!Test port of IDE1140
       bool adcFast; //!AD7276 Fast Mode support
       uint16_t busyLen; //!Duration of extended busy
       uint16_t adcDelay; //!ADC delay (in clock cycles)
+      bool ideTest; //!Test port of IDE1140
+      uint8_t chTest; //!IDE1140 channel connected to CAL port
 
       void dump()
       {
-        cout << "ID:                " << id << endl;
-        cout << "IP address:        " << ipAddr << endl;
-        cout << "TCP port:          " << tcpPort << endl;
-        cout << "Command Length:    " << cmdLen << endl;
-        cout << "TestUnit cfg:      " << testUnitCfg << endl;
-        cout << "TestUnit En:       " << testUnitEn << endl;
-        cout << "HK En:             " << hkEn << endl;
-        cout << "Data En:           " << dataEn << endl;
-        cout << "Int Trig Period:   " << intTrigPeriod << endl;
-        cout << "Packet Length:     " << pktLen << endl;
-        cout << "FE Clk Duty:       " << feClkDuty << endl;
-        cout << "FE Clk Div:        " << feClkDiv << endl;
-        cout << "ADC Clk Duty:      " << adcClkDuty << endl;
-        cout << "ADC Clk Div:       " << adcClkDiv << endl;
-        cout << "Trig-2-Hold Delay: " << trig2Hold << endl;
-        cout << "IDE1140 Test Port: " << ideTest << endl;
-        cout << "AD7276 Fast Mode:  " << adcFast << endl;
-        cout << "Extended Busy Len: " << busyLen << endl;
-        cout << "ADC delay:         " << adcDelay << endl;
+        cout << "ID:                   " << id << endl;
+        cout << "IP address:           " << ipAddr << endl;
+        cout << "TCP port:             " << tcpPort << endl;
+        cout << "Command Length:       " << cmdLen << endl;
+        cout << "TestUnit cfg:         " << testUnitCfg << endl;
+        cout << "TestUnit En:          " << testUnitEn << endl;
+        cout << "HK En:                " << hkEn << endl;
+        cout << "Data En:              " << dataEn << endl;
+        cout << "Int Trig Period:      " << intTrigPeriod << endl;
+        cout << "Packet Length:        " << pktLen << endl;
+        cout << "FE Clk Duty:          " << feClkDuty << endl;
+        cout << "FE Clk Div:           " << feClkDiv << endl;
+        cout << "ADC Clk Duty:         " << adcClkDuty << endl;
+        cout << "ADC Clk Div:          " << adcClkDiv << endl;
+        cout << "Trig-2-Hold Delay:    " << trig2Hold << endl;
+        cout << "AD7276 Fast Mode:     " << adcFast << endl;
+        cout << "Extended Busy Len:    " << busyLen << endl;
+        cout << "ADC delay:            " << adcDelay << endl;
+        cout << "IDE1140 Test Port:    " << ideTest << endl;
+        cout << "IDE1140 Channel Test: " << chTest << endl;
       }
     };
 
