@@ -2,7 +2,7 @@
 //#include <stdlib.h>
 //#include <string.h>
 #include <unistd.h>
-//#include <pthread.h>
+//#include <thread>
 //#include <netinet/in.h>
 #include <fcntl.h>
 //#include <sys/poll.h>
@@ -12,12 +12,23 @@
 #include "socal/hps.h"
 #include "socal/alt_gpio.h"
 #include <iostream>
+#include <thread>
 
 #include "hps_0.h"
 #include "user_avalon_fifo_regs.h"
+#include "fpgaDriver.h"
+#include "hpsDataServer.h"
 #include "hpsServer.h"
 
-hpsServer* hpsSrv = nullptr;
+fpgaDriver*    fpga           = nullptr;
+hpsDataServer* hpsDataStream  = nullptr;
+hpsServer*     hpsSrv         = nullptr;
+
+void closePapero(){
+  if (hpsDataStream) delete hpsDataStream;
+  if (hpsSrv) delete hpsSrv;
+  if (fpga) delete fpga;
+}
 
 int main(int argc, char *argv[]){
   std::cout<<"hash="<<GIT_HASH<<", time="<<COMPILE_TIME<<", branch="<<GIT_BRANCH<<std::endl;
@@ -26,6 +37,8 @@ int main(int argc, char *argv[]){
     printf("Usage:\n\tPAPERO <socket port> <verbosity level>\n");
     return 0;
   }
+  int sockPort = atoi(argv[1]);
+  int verbosityIn = atoi(argv[2]);
 
   //---- Debug of int/double/bool dimensions -----------------------------------
   /* sleep(3); */
@@ -41,17 +54,28 @@ int main(int argc, char *argv[]){
   /* printf("%d %d\n", *(&pippoint[0]), *((int*)(((char*)&pippoint[0])+1))); */
   //----------------------------------------------------------------------------
   
+  //Instantiate the FPGA driver as a global variable
+  fpga = new fpgaDriver(verbosityIn);
+  uint32_t piumone = 0;
+  fpga->ReadReg(rPIUMONE, &piumone);
+  printf("\n/*--- GateWare SHA: %08x ----------------------*/\n", fpga->getkGwV());
+  printf("/*--- Piumone (it must be 0xC1A0C1A0): %08x ---*/\n\n", piumone);
 
-  //Connect to the socket and loop forever to receive commands
-  printf("Creating a server socket...\n");
-  hpsSrv = new hpsServer(atoi(argv[1]), atoi(argv[2]));
+  //Setup the data-stream socket with consecutive port (wrt to config socket)
+  printf("Creating a TCP Server Socket for Data Stream...\n");
+  hpsDataStream = new hpsDataServer(sockPort+1, verbosityIn);
+
+  //Connect to the configuration socket and loop forever to receive commands
+  printf("Creating a TCP Server Socket for Configuration...\n");
+  hpsSrv = new hpsServer(sockPort, verbosityIn);
 
   //Accept client connections and receive commands, until client is closed
   while (1) {
     hpsSrv->ListenCmd();
   }
-  //Everything done, close the socket
-  if (hpsSrv) delete hpsSrv;
+
+  //Everything done, cleanly close PAPERO
+  closePapero();
 
   return 0;
 }

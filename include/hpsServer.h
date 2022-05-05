@@ -6,6 +6,8 @@
 
 #include "tcpServer.h"
 #include "fpgaDriver.h"
+#include "hpsDataServer.h"
+
 
 class hpsServer: public tcpServer {
 
@@ -17,8 +19,6 @@ private:
   std::chrono::_V2::system_clock::time_point kStartRunTime; //!< Start time of a run
 
 public:
-  fpgaDriver* fpga;
-
   hpsServer(int port, int verb=0);
 
   /*!

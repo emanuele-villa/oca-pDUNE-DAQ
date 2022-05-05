@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include "hwlib.h"
 #include <netinet/in.h>
 //#include <fcntl.h>
@@ -17,6 +16,8 @@
 #include "utility.h"
 #include "hpsServer.h"
 
+extern fpgaDriver*    fpga;
+extern hpsDataServer* hpsDataStream;
 
 hpsServer::hpsServer(int port, int verb):tcpServer(port, verb){
   kVerbosity            = verb;
@@ -35,13 +36,6 @@ hpsServer::hpsServer(int port, int verb):tcpServer(port, verb){
   kCmdLen = 24;
   kEvtCount = 0;
 
-  //Instantiate the FPGA driver
-  fpga = new fpgaDriver(verb);
-  uint32_t piumone = 0;
-  fpga->ReadReg(rPIUMONE, &piumone);
-  printf("\n/*--- GateWare SHA: %08x ----------------------*/\n", fpga->getkGwV());
-  printf("/*--- Piumone (it must be 0xC1A0C1A0): %08x ---*/\n\n", piumone);
-
   //Setup TCP server
   Setup();
 }
@@ -54,11 +48,7 @@ void hpsServer::cmdLenHandshake(){
 }
 
 void* hpsServer::ListenCmd(){
-  // printf("\nRegister array initial content:\n");
-  // for(int j=0; j<32; j++){
-  //   ReadReg(j, &trash);
-  // }
-  // printf("\n");
+  //Accept new connections and set command length
   AcceptConnection();
   cmdLenHandshake();
 
@@ -91,7 +81,6 @@ void* hpsServer::ListenCmd(){
     }
     bzero(msg, sizeof(msg));
   }
-  //pthread_exit(NULL);
   return nullptr;
 }
 
@@ -219,7 +208,6 @@ void hpsServer::ProcessCmdReceived(char* msg){
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if(strcmp(msg, "cmd=getEvent") == 0){
-	  //	printf("%s-%d) Qui!\n", __METHOD_NAME__, __LINE__);
 	  static std::vector<uint32_t> evt;//so that the size (changed inside getEvent) is not changing continuosly
 	  //	std::vector<uint32_t> evt;
 
@@ -240,6 +228,16 @@ void hpsServer::ProcessCmdReceived(char* msg){
       }
     }
       if (kVerbosity > 3) printf("%s) Event sent\n", __METHOD_NAME__);
+  }
+  else if (strcmp(msg, "cmd=runStart") == 0) {
+    //Start the run and enable data sending
+    hpsDataStream -> startRun();
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
+  else if (strcmp(msg, "cmd=runStop") == 0) {
+    //Stop the run and disable data sending
+    hpsDataStream -> stopRun();
+    Tx(&kOkVal, sizeof(kOkVal));
   }
   else if (strcmp(msg, "cmd=setCmdLenght") == 0) {
     cmdLenHandshake();
