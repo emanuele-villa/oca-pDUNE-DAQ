@@ -58,4 +58,3 @@ exe/
 build*
 *.user
 bin/
-data/
