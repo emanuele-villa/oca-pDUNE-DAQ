@@ -417,32 +417,32 @@ int daqserver::recordEvents(FILE* fd) {
   do {
     for (uint32_t ii=0; ii<det.size(); ii++) {
       if(!replied[ii]){
-	det.at(ii)->AskEvent();
+	      det.at(ii)->AskEvent();
       }
     }    
     
     for (uint32_t ii=0; ii<det.size(); ii++) {
       if(!replied[ii]){
-	uint32_t readSingle = (det.at(ii)->GetEvent(evt, evtLen));
-	readRet += readSingle;
-	if(evtLen){
-	  replied[ii] = true;
-	}    
-	evtLen_tot += evtLen;
+	      uint32_t readSingle = (det.at(ii)->GetEvent(evt, evtLen));
+	      readRet += readSingle;
+	      if(evtLen){
+	        replied[ii] = true;
+	      }    
+	      evtLen_tot += evtLen;
 
-	// only write the header when the first board replies
-	if(replied.count() == 1 && !headerWritten){
-	  ++nEvents;
-	  fwrite(&header, 4, 1, fd);	  
-	  headerWritten = true;
-	}
-	writeRet += fwrite(evt.data(), evtLen, 1, fd);
+	      // only write the header when the first board replies
+	      if(replied.count() == 1 && !headerWritten){
+	        ++nEvents;
+	        fwrite(&header, 4, 1, fd);	  
+	        headerWritten = true;
+	      }
+	      writeRet += fwrite(evt.data(), evtLen, 1, fd);
 
-	if (kVerbosity>0) {
-	  printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
-	  printf("  Bytes read: %d/%d\n", readSingle, evtLen);
-	  printf("  Writes performed: %d/%lu\n", writeRet, det.size());
-	}
+	      if (kVerbosity>0) {
+	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
+	        printf("  Bytes read: %d/%d\n", readSingle, evtLen);
+	        printf("  Writes performed: %d/%lu\n", writeRet, det.size());
+	      }
       }
     }
   } while (replied.count() && (replied.count() != det.size()) && kStart);

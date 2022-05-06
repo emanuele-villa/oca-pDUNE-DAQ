@@ -74,9 +74,9 @@ void hpsDataServer::dataReading(){
   kEvtCount = 0;
   
 
-  //Send a 'Start of run' word to the merger
-  uint32_t startMsg = 0xc0cac01a;
-  Tx(&startMsg, sizeof(startMsg));
+  ////Send a 'Start of run' word to the merger
+  //uint32_t startMsg = 0xc0cac01a;
+  //Tx(&startMsg, sizeof(startMsg));
   
   //Enable triggers in FPGA
   fpga->SetMode(0x10);
