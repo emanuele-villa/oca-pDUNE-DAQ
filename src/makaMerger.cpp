@@ -71,7 +71,9 @@ void makaMerger::runStart(){
   kMerger3d = std::thread(&makaMerger::merger, this);
 }
 
-void makaMerger::runStop(){
+void makaMerger::runStop(int _sleep){
+  sleep(_sleep);
+  
   kRunning = false;
 
   //Close clients

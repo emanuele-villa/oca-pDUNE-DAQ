@@ -94,7 +94,7 @@ class makaMerger : public tcpServer {
 
 
   public:
-    makaMerger(int port, int verb=0, bool _net=false);
+    makaMerger(int port, int verb=0, bool _net=true);
     ~makaMerger();
 
     /*
@@ -130,7 +130,7 @@ class makaMerger : public tcpServer {
       Stop thread
       Close clients
     */
-    void runStop();
+    void runStop(int _sleep=0);
 
     /*
       Accept connections

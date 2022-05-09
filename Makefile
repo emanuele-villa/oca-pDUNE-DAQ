@@ -69,7 +69,7 @@ OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqse
 
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
-OBJECTSMAKA=$(OBJ)/tcpclient.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/anyoption.o $(OBJ)/maka.o
+OBJECTSMAKA=$(OBJ)/tcpclient.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/anyoption.o $(OBJ)/maka.o $(OBJ)/makaMerger.o
 
 OBJECTSHPS := $(OBJARM)/papero.o $(OBJARM)/hpsDataServer.o $(OBJARM)/hpsServer.o $(OBJARM)/tcpServer.o $(OBJARM)/utility.o $(OBJARM)/fpgaDriver.o $(OBJARM)/axiFifo.o
 
