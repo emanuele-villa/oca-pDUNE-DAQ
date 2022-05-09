@@ -1,5 +1,5 @@
 /*!
-  @file maka.h
+  @file makaMerger.h
   @brief Header for merger to collect data from remote detectors
   @author Mattia Barbanera (mattia.barbanera@infn.it)
 */
@@ -32,7 +32,7 @@
 
 using namespace std;
 
-class maka : public tcpServer {
+class makaMerger : public tcpServer {
 
   private:
     //Configuration parameters
@@ -94,8 +94,8 @@ class maka : public tcpServer {
 
 
   public:
-    maka(int port, int verb=0, bool _net=false);
-    ~maka();
+    makaMerger(int port, int verb=0, bool _net=false);
+    ~makaMerger();
 
     /*
       Clear detector address and port lists

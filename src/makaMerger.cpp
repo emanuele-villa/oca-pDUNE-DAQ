@@ -1,13 +1,13 @@
 /*!
-  @file maka.cpp
+  @file makaMerger.cpp
   @brief Merger to collect data from remote detectors
   @author Mattia Barbanera (mattia.barbanera@infn.it)
 */
 
-#include "maka.h"
+#include "makaMerger.h"
 #include "utility.h"
 
-maka::maka(int port, int verb, bool _net):tcpServer(port, verb){
+makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   //Initialize parameters
   kNEvts = 0;
   runStop();
@@ -24,7 +24,7 @@ maka::maka(int port, int verb, bool _net):tcpServer(port, verb){
 
 }
 
-maka::~maka(){
+makaMerger::~makaMerger(){
   StopListening();
   runStop();
   clearDetLists();
@@ -33,24 +33,24 @@ maka::~maka(){
 /*------------------------------------------------------------------------------
   Detector list and set-up
 ------------------------------------------------------------------------------*/
-void maka::clearDetLists(){
+void makaMerger::clearDetLists(){
   kDetAddrs.clear();
   kDetPorts.clear();
 }
 
-void maka::addDet(char* _addr, int _port){
+void makaMerger::addDet(char* _addr, int _port){
   kDetAddrs.push_back(_addr);
   kDetPorts.push_back(_port);
 }
 
-void maka::clearDetectors(){
+void makaMerger::clearDetectors(){
   for (uint32_t ii=0; ii<kDet.size(); ii++) {
     if (kDet[ii]) delete kDet[ii];
   }
   kDet.clear();
 }
 
-void maka::setUpDetectors(){
+void makaMerger::setUpDetectors(){
   for (uint32_t ii=0; ii<kDetAddrs.size(); ii++) {
     kDet.push_back(new tcpclient(kDetAddrs[ii], kDetPorts[ii]));
   }
@@ -60,7 +60,7 @@ void maka::setUpDetectors(){
 /*------------------------------------------------------------------------------
   Run managment
 ------------------------------------------------------------------------------*/
-void maka::runStart(){
+void makaMerger::runStart(){
   kNEvts   = 0;
   kRunning = true;
 
@@ -68,10 +68,10 @@ void maka::runStart(){
   setUpDetectors();
 
   //Start thread to merge data
-  kMerger3d = std::thread(&maka::merger, this);
+  kMerger3d = std::thread(&makaMerger::merger, this);
 }
 
-void maka::runStop(){
+void makaMerger::runStop(){
   kRunning = false;
 
   //Close clients
@@ -85,7 +85,7 @@ void maka::runStop(){
 /*------------------------------------------------------------------------------
   Merger, collector
 ------------------------------------------------------------------------------*/
-int maka::fileHeader(FILE* _dataFile){
+int makaMerger::fileHeader(FILE* _dataFile){
   return 0;
 }
 
@@ -114,7 +114,7 @@ auto fileFormatDate = [](uint32_t timel){
   return dateTime;
 };
 
-int maka::merger(){
+int makaMerger::merger(){
   char dataFileName[255];
   unsigned int lastNEvents = 0;
   using clock_type = std::chrono::system_clock;
@@ -161,7 +161,7 @@ int maka::merger(){
 
 }
 
-int maka::collector(FILE* _dataFile){
+int makaMerger::collector(FILE* _dataFile){
   int readRet = 0;
   int writeRet = 0;
   //std::vector<uint32_t*> evts(det.size(), "");
@@ -221,7 +221,7 @@ int maka::collector(FILE* _dataFile){
 }
 
 
-int maka::getEvent(std::vector<uint32_t>& _evt, uint32_t& _evtLen, int _det){
+int makaMerger::getEvent(std::vector<uint32_t>& _evt, uint32_t& _evtLen, int _det){
   //Get the event from HPS and loop here until all data are read
   uint32_t evtRead = 0;
   kDet[_det]->ReceiveInt(_evtLen); //in uint32_t units
@@ -238,9 +238,9 @@ int maka::getEvent(std::vector<uint32_t>& _evt, uint32_t& _evtLen, int _det){
 
 
 /*------------------------------------------------------------------------------
-  MAKA TCP server
+  makaMerger TCP server
 ------------------------------------------------------------------------------*/
-void* maka::listenCmd(){
+void* makaMerger::listenCmd(){
   //Accept new connections and handshake commands length
   AcceptConnection();
   cmdLenHandshake();
@@ -276,14 +276,14 @@ void* maka::listenCmd(){
   return nullptr;
 }
 
-void maka::cmdLenHandshake(){
+void makaMerger::cmdLenHandshake(){
   Rx(&kCmdLen, sizeof(kCmdLen));
   printf("%s) Updating command length to %d\n", __METHOD_NAME__, kCmdLen);
   Tx(&kCmdLen, sizeof(kCmdLen));
   return;
 }
 
-void maka::processCmds(char* msg){
+void makaMerger::processCmds(char* msg){
   if (strcmp(msg, "cmd=setup") == 0) {
     int pktLen = 0; //Packet length in bytes
     int detNum = 0; //Total number of detectors
