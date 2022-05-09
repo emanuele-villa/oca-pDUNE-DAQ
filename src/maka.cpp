@@ -7,24 +7,32 @@
 #include "maka.h"
 #include "utility.h"
 
-maka::maka(int port, int verb):tcpServer(port, verb){
+maka::maka(int port, int verb, bool _net):tcpServer(port, verb){
   //Initialize parameters
   kNEvts = 0;
   runStop();
   clearDetLists();
 
-  //Initialize server and listen for OCA connection 
-
-  //Handshake commands length
+  //Initialize server
+  if (_net){
+    kAddr.sin_family      = AF_INET; //For network communication
+  } else {
+    kAddr.sin_family      = AF_UNIX; //For in-system communication
+  }
+  //kBlocking = true;
+  Setup();
 
 }
 
 maka::~maka(){
+  StopListening();
   runStop();
   clearDetLists();
 }
 
-
+/*------------------------------------------------------------------------------
+  Detector list and set-up
+------------------------------------------------------------------------------*/
 void maka::clearDetLists(){
   kDetAddrs.clear();
   kDetPorts.clear();
@@ -47,8 +55,12 @@ void maka::setUpDetectors(){
     kDet.push_back(new tcpclient(kDetAddrs[ii], kDetPorts[ii]));
   }
 }
+//------------------------------------------------------------------------------
 
-void maka::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){
+/*------------------------------------------------------------------------------
+  Run managment
+------------------------------------------------------------------------------*/
+void maka::runStart(){
   kNEvts   = 0;
   kRunning = true;
 
@@ -56,7 +68,7 @@ void maka::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){
   setUpDetectors();
 
   //Start thread to merge data
-  kMerger3d = std::thread(&maka::merger, this, _runType, _runNum, _runTime);
+  kMerger3d = std::thread(&maka::merger, this);
 }
 
 void maka::runStop(){
@@ -68,9 +80,13 @@ void maka::runStop(){
   //Stop thread
   if (kMerger3d.joinable()) kMerger3d.join();
 }
+//------------------------------------------------------------------------------
 
+/*------------------------------------------------------------------------------
+  Merger, collector
+------------------------------------------------------------------------------*/
 int maka::fileHeader(FILE* _dataFile){
-
+  return 0;
 }
 
 auto fileFormatTime = [](unsigned int val, size_t ndigits) {
@@ -98,7 +114,7 @@ auto fileFormatDate = [](uint32_t timel){
   return dateTime;
 };
 
-int maka::merger(char* _runType, uint32_t _runNum, uint32_t _runTime){
+int maka::merger(){
   char dataFileName[255];
   unsigned int lastNEvents = 0;
   using clock_type = std::chrono::system_clock;
@@ -106,13 +122,13 @@ int maka::merger(char* _runType, uint32_t _runNum, uint32_t _runTime){
   
   //Open a file in the kdataPath folder and name it with UTC
   
-  // // copy _runType and make it all UPPERCASE
-  // std::string _runType_upper{_runType};
-  // std::transform(begin(_runType_upper), end(_runType_upper),
-  //                   begin(_runType_upper), std::toupper);
+  // // copy kRunType and make it all UPPERCASE
+  // std::string kRunType_upper{kRunType};
+  // std::transform(begin(kRunType_upper), end(kRunType_upper),
+  //                   begin(kRunType_upper), std::toupper);
 
-  string humanDate = fileFormatDate(_runTime);
-  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kDataPath.data(), _runNum, _runType, humanDate.c_str());
+  string humanDate = fileFormatDate(kRunTime);
+  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kDataPath.data(), kRunNum, kRunType, humanDate.c_str());
 
   printf("%s) Opening output file: %s\n", __METHOD_NAME__, dataFileName);
   FILE* dataFileD = fopen(dataFileName,"w");
@@ -218,3 +234,102 @@ int maka::getEvent(std::vector<uint32_t>& _evt, uint32_t& _evtLen, int _det){
 
   return evtRead;
 }
+//------------------------------------------------------------------------------
+
+
+/*------------------------------------------------------------------------------
+  MAKA TCP server
+------------------------------------------------------------------------------*/
+void* maka::listenCmd(){
+  //Accept new connections and handshake commands length
+  AcceptConnection();
+  cmdLenHandshake();
+
+  bool listenCmd = true;
+  int bytesRead  = 0;
+  while(listenCmd) {
+    char msg[256]="";
+    bytesRead = 0;
+
+    //Read the command
+    bytesRead = Rx(msg, kCmdLen);
+
+    //Check if the read is ok and process its content
+    if(bytesRead < 0) {
+      if (EAGAIN==errno || EWOULDBLOCK==errno) {
+        printf("%s) errno: %d\n", __METHOD_NAME__, errno);
+      }
+      else {
+        print_error("%s) Read error: (%d)\n", __METHOD_NAME__, errno);
+      }
+    }
+    else if (bytesRead==0) {
+      listenCmd = false;
+      printf("%s) Client closed the connection\n", __METHOD_NAME__);
+    }
+    else {
+      processCmds(msg);
+    }
+    bzero(msg, sizeof(msg));
+  }
+
+  return nullptr;
+}
+
+void maka::cmdLenHandshake(){
+  Rx(&kCmdLen, sizeof(kCmdLen));
+  printf("%s) Updating command length to %d\n", __METHOD_NAME__, kCmdLen);
+  Tx(&kCmdLen, sizeof(kCmdLen));
+  return;
+}
+
+void maka::processCmds(char* msg){
+  if (strcmp(msg, "cmd=setup") == 0) {
+    int pktLen = 0; //Packet length in bytes
+    int detNum = 0; //Total number of detectors
+
+    clearDetLists();
+
+    //Receive configuration elements
+    Rx(&pktLen, sizeof(int));
+    Rx(&detNum, sizeof(int));
+    Rx(&kDataPath, sizeof(char)*128);
+
+    Rx(&kDetPorts, detNum*sizeof(uint32_t));
+    Rx(&kDetAddrs, pktLen-detNum*sizeof(uint32_t));
+
+    printf("Configurations received:\n");
+    printf("File: %s\n", kDataPath.c_str());
+    printf("Detector List: \n");
+    for (int i=0; i<detNum; i++){
+      printf("\t%u: Address: %s - Port: %u\n", i, kDetAddrs[i], kDetPorts[i]);
+    }
+
+  }
+  else if (strcmp(msg, "cmd=runStart") == 0) {
+    //Receive run type, number, and time
+    char buff[17];
+    Rx(&buff, sizeof(char)*17);
+    kRunType = (char*)string(buff).substr(0, 8).c_str();
+    kRunNum  = strtoul(string(buff).substr(8, 4).c_str(), nullptr, 16);
+    kRunTime = strtoul(string(buff).substr(12, 4).c_str(), nullptr, 16);
+
+    //Start run
+    printf("%s) Starting run %u: %s - %u ...\n", __METHOD_NAME__, kRunNum,
+              kRunType, kRunTime);
+    runStart();
+
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
+  else if (strcmp(msg, "cmd=runStop") == 0) {
+    printf("%s) Stop run %u with %u events.\n", __METHOD_NAME__, kRunNum, kNEvts);
+    runStop();
+    Tx(&kOkVal, sizeof(kOkVal));
+  }
+  else {
+    printf("%s) Unknown message: %s\n", __METHOD_NAME__, msg);
+    Tx(&kBadVal, sizeof(kBadVal));
+  }
+}
+
+//------------------------------------------------------------------------------

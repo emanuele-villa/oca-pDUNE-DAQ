@@ -36,6 +36,8 @@ class maka : public tcpServer {
 
   private:
     //Configuration parameters
+    const uint32_t kOkVal  = 0xb01af1ca; //!< OK  answer to client
+    const uint32_t kBadVal = 0x000cacca; //!< NOK Answer to client
     vector<const char*> kDetAddrs; //!<Remote detectors addresses
     vector<int> kDetPorts; //!<Remote detectors ports
     string kDataPath = "./data/"; //!<Folder path where to store data
@@ -44,6 +46,10 @@ class maka : public tcpServer {
     bool kRunning = false; //!<Flag for run state
     uint32_t kNEvts = 0; //!< Events in a run
     //uint32_t kRunTime //!<Run time
+    char* kRunType;     //!<Run information: type
+    uint32_t kRunNum;   //!<Run information: number
+    uint32_t kRunTime;  //!<Run information: start time, in unix time
+
     
     //N clients for remote detectors
     vector<tcpclient*> kDet; //!<Remote detectors clients
@@ -60,7 +66,7 @@ class maka : public tcpServer {
       While kRunning, collect data from clients
       When finished, close file
     */
-    int merger(char* _runType, uint32_t _runNum, uint32_t _runTime);
+    int merger();
 
     /*
       Create a header
@@ -76,9 +82,19 @@ class maka : public tcpServer {
     */
     int getEvent(std::vector<uint32_t>& _evt, uint32_t& _evtLen, int _det);
 
+    /*
+      Handshake command length
+    */
+    void cmdLenHandshake();
+
+    /*
+      Process commands received 
+    */
+    void processCmds(char* msg);
+
 
   public:
-    maka(int port, int verb=0);
+    maka(int port, int verb=0, bool _net=false);
     ~maka();
 
     /*
@@ -107,7 +123,7 @@ class maka : public tcpServer {
       kRunning = true
       Start thread
     */
-    void runStart(char* _runType, uint32_t _runNum, uint32_t _runTime);
+    void runStart();
 
     /*
       kRunning = false
@@ -115,6 +131,12 @@ class maka : public tcpServer {
       Close clients
     */
     void runStop();
+
+    /*
+      Accept connections
+      Loop to listen commands
+    */
+    void* listenCmd();
 
 };
 
