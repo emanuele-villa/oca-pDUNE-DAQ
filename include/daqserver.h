@@ -59,9 +59,14 @@ public:
   }
 
   /*!
-    Create lists for detector IP addresses, ports, and object addresses
+    Create lists for detector IP addresses and ports
   */
   void SetListDetectors();
+
+  /*!
+    Create list for detector objects
+  */
+  void SetDetectors();
 
   void SetDetId(const char* addressde10, uint32_t _detId);
   void SetPacketLen(const char* addressde10, uint32_t _pktLen);

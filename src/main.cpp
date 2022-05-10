@@ -7,11 +7,13 @@
 #include "daqserver.h"
 #include "utility.h"
 #include "daqConfig.h"
+#include "makaClient.h"
 
 //!OCA configurations
 daqConfig::configParams daqConf;
 
 daqserver* daqsrv = nullptr;
+makaClient* maka  = nullptr;
 
 int StatusOn=0;
 void PrintStatus(int dummy) {
@@ -130,7 +132,11 @@ int main(int argc, char *argv[]) {
 
   //Read OCA config file and get the parameters
   daqConfig daqConfig(opt.ocaCfg);
-  daqConf = daqConfig.getParams();  
+  daqConf = daqConfig.getParams();
+
+  //Setup MAKA client side
+  maka = new makaClient(daqConf.makaIpAddr.c_str(), daqConf.makaPort, opt.verbose,
+                          daqConf.makaCmdLen);
 
   //Setup OCA client side
   //This must be done before `signal` handling

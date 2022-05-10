@@ -10,6 +10,7 @@
 makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   //Initialize parameters
   kNEvts = 0;
+  kCmdLen = 24;
   runStop();
   clearDetLists();
 
@@ -19,7 +20,7 @@ makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   } else {
     kAddr.sin_family      = AF_UNIX; //For in-system communication
   }
-  //kBlocking = true;
+  kBlocking = true;
   Setup();
 
 }
@@ -88,6 +89,7 @@ void makaMerger::runStop(int _sleep){
   Merger, collector
 ------------------------------------------------------------------------------*/
 int makaMerger::fileHeader(FILE* _dataFile){
+  //FIXME add values to the beginning of file
   return 0;
 }
 
@@ -271,6 +273,7 @@ void* makaMerger::listenCmd(){
     }
     else {
       processCmds(msg);
+      printf("%d Done processing\n", __LINE__);
     }
     bzero(msg, sizeof(msg));
   }
@@ -279,33 +282,66 @@ void* makaMerger::listenCmd(){
 }
 
 void makaMerger::cmdLenHandshake(){
-  Rx(&kCmdLen, sizeof(kCmdLen));
+  Rx(&kCmdLen, sizeof(int));
   printf("%s) Updating command length to %d\n", __METHOD_NAME__, kCmdLen);
-  Tx(&kCmdLen, sizeof(kCmdLen));
+  Tx(&kCmdLen, sizeof(int));
   return;
 }
 
 void makaMerger::processCmds(char* msg){
   if (strcmp(msg, "cmd=setup") == 0) {
+    //#pragma pack(push,1)
+    #pragma pack(1)
+    struct setupPacket {
+       int pktLen;
+       int pathLen;
+       int detNum;
+       vector<int> ports;
+       vector<const char*> addr;
+       string path;
+    };
+    //#pragma pack(pop)
+    //}__attribute__((packed));
+    struct setupPacket* sp;
     int pktLen = 0; //Packet length in bytes
-    int detNum = 0; //Total number of detectors
+    uint8_t* rxData;
 
     clearDetLists();
 
-    //Receive configuration elements
+    printf("%s) Received setup command\n", __METHOD_NAME__);
+
+    int temp = 0;
+
+    //Receive length and configuration struct
     Rx(&pktLen, sizeof(int));
-    Rx(&detNum, sizeof(int));
-    Rx(&kDataPath, sizeof(char)*128);
+    printf("Length of next configuration packet: %u\n", pktLen);
+    temp = Rx(rxData, pktLen);
+    printf("Configurations received bytes: %u\n", temp);
+    //Convert received data into struct
+    sp = (struct setupPacket*)rxData;
+    printf("Configurations converted\n");
+    
+    printf("Struct pktLen, pathLen, and detNum: %u, %u, %u\n", sp->pktLen, sp->pathLen, sp->detNum);
+    printf("Path:     %s\n", sp->path.c_str());
+    for (uint32_t ii=0; ii<sp->ports.size(); ii++){
+      printf("  Detector Address %u:  %s\n", ii, sp->addr[ii]);
+      printf("  Detector Port %u:     %u\n", ii, sp->ports[ii]);
+    }
 
-    Rx(&kDetPorts, detNum*sizeof(uint32_t));
-    Rx(&kDetAddrs, pktLen-detNum*sizeof(uint32_t));
-
+    kDataPath = sp->path;
+    kDetPorts = sp->ports;
+    kDetAddrs = sp->addr;
+    
     printf("Configurations received:\n");
     printf("File: %s\n", kDataPath.c_str());
-    printf("Detector List: \n");
-    for (int i=0; i<detNum; i++){
+    printf("%u Detector(s): \n", sp->detNum);
+    for (int i=0; i<sp->detNum; i++){
       printf("\t%u: Address: %s - Port: %u\n", i, kDetAddrs[i], kDetPorts[i]);
+      printf("\t%u: Port: %u\n", i, kDetPorts[i]);
     }
+
+    Tx(&kOkVal, sizeof(kOkVal));
+    printf("%d Finished sending\n", __LINE__);
 
   }
   else if (strcmp(msg, "cmd=runStart") == 0) {
@@ -332,6 +368,7 @@ void makaMerger::processCmds(char* msg){
     printf("%s) Unknown message: %s\n", __METHOD_NAME__, msg);
     Tx(&kBadVal, sizeof(kBadVal));
   }
+  printf("%d Finished sending\n", __LINE__);
 }
 
 //------------------------------------------------------------------------------

@@ -41,7 +41,7 @@ class makaMerger : public tcpServer {
     vector<const char*> kDetAddrs; //!<Remote detectors addresses
     vector<int> kDetPorts; //!<Remote detectors ports
     string kDataPath = "./data/"; //!<Folder path where to store data
-    int kCmdLen; //!<Server commands length, handshaken with the client
+    int kCmdLen = 24; //!<Server commands length, handshaken with the client
     thread kMerger3d; //!<Thread that hosts the merger
     bool kRunning = false; //!<Flag for run state
     uint32_t kNEvts = 0; //!< Events in a run

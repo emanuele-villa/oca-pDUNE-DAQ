@@ -10,6 +10,9 @@
 #include <algorithm>
 
 #include "daqserver.h"
+#include "makaClient.h"
+
+extern makaClient* maka;
 
 daqserver::daqserver(int port, int verb, std::string paperoCfgPath):tcpServer(port, verb){
   //Copy configuration file parameters
@@ -28,13 +31,6 @@ daqserver::daqserver(int port, int verb, std::string paperoCfgPath):tcpServer(po
   addressdet.clear();
   portdet.clear();
 
-  //Start the socket
-  SockStart();
-
-  if (kVerbosity>0){
-    printf("%s) DAQ Server Created\n", __METHOD_NAME__);
-  }
-  return;
 }
 
 daqserver::~daqserver(){
@@ -53,7 +49,22 @@ daqserver::~daqserver(){
 }
 
 void daqserver::SetUpConfigClients(){
+  //Setup detector clients
   SetListDetectors();
+
+  //Configure MAKA client
+  maka->setup(daqConf.dataFolder, portdet, addressdet);
+
+  //Start the socket
+  SockStart();
+
+  if (kVerbosity>0){
+    printf("%s) DAQ Server Created\n", __METHOD_NAME__);
+  }
+  return;
+
+  //Configure detectors
+  SetDetectors();
   Init();
 }
 
@@ -65,18 +76,22 @@ void daqserver::SetListDetectors(){
   for (uint32_t ii=0; ii<paperoConfVector.size(); ii++) {
     addressdet.push_back(paperoConfVector[ii]->ipAddr.data());
     portdet.push_back(paperoConfVector[ii]->tcpPort);
+  }
+}
+
+void daqserver::SetDetectors(){
+  det.clear();
+  for (uint32_t ii=0; ii<portdet.size(); ii++) {
     det.push_back(
       new de10_silicon_base(
-        paperoConfVector[ii]->ipAddr.data(),
-        paperoConfVector[ii]->tcpPort,
+        addressdet[ii],
+        portdet[ii],
         paperoConfVector[ii],
         calibmode,
         trigtype,
         kVerbosity)
       );
   }
-
-  return;
 }
 
 void daqserver::SetDetId(const char* addressde10, uint32_t _detId){
