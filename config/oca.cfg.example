@@ -1,2 +1,2 @@
-#Listen TCP client | TCP client port | Data dir | TCP-client commands len | Cal mode | IntTrig En |
-1 8888  ./data/ 64 0 0
+#Listen TCP client | TCP client port | TCP-client commands len | MAKA address | MAKA port | MAKA cmd len | Data dir | Cal mode | IntTrig En |
+1 8888 64 192.168.2.101 5000 24 ./data/ 0 0
