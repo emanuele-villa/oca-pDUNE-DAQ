@@ -7,6 +7,9 @@
 */
 #include "tcpServer.h"
 #include "utility.h"
+#include <cerrno>
+#include <system_error>
+#include <iostream>
 
 tcpServer::tcpServer(int port, int verb){
   kVerbosity            = verb;
@@ -165,6 +168,8 @@ int tcpServer::Tx(const void* msg, uint32_t len){
   n = write(kTcpConn, msg, len);
   if(n < 0){
     fprintf(stderr, "Error in writing to the socket\n");
+    std::error_code ec (errno, std::generic_category());
+    std::cout << "Error: " << ec.value() << ", Message: " << ec.message() << '\n';
     return n;
   }
   if (kVerbosity > 3) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);
@@ -176,6 +181,8 @@ int tcpServer::Rx(void* msg, uint32_t len){
   n = read(kTcpConn, msg, len);
   if (n < 0) {
     fprintf(stderr, "Error in reading the socket\n");
+    std::error_code ec (errno, std::generic_category());
+    std::cout << "Error: " << ec.value() << ", Message: " << ec.message() << '\n';
   }
   return n;
 }
