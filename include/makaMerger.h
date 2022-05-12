@@ -50,6 +50,20 @@ class makaMerger : public tcpServer {
     uint32_t kRunNum;   //!<Run information: number
     uint32_t kRunTime;  //!<Run information: start time, in unix time
 
+    //#pragma pack(push,1)
+    #pragma pack(1)
+    struct setupPacket {
+       int pktLen;
+       int pathLen;
+       int detNum;
+       vector<int> ports;
+       vector<const char*> addr;
+       string path;
+    };
+    //#pragma pack(pop)
+    //}__attribute__((packed));
+    setupPacket* sp;
+
     
     //N clients for remote detectors
     vector<tcpclient*> kDet; //!<Remote detectors clients

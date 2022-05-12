@@ -56,7 +56,7 @@ INCLUDEARM += $(INCLUDE)
 CFLAGS := -Wall -Wextra -pthread #-fsanitize=address
 LDFLAGS := -Wall -Wextra -pthread #-fsanitize=address
 
-CPPFLAGS := $(CFLAGS) -std=c++11 $(INCLUDE)
+CPPFLAGS := $(CFLAGS) -std=c++11 $(INCLUDE) #-g -fsanitize=address -fstack-protector
 CFLAGSARM := $(CFLAGS) $(INCLUDEARM) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
 
 OCAOPTFLAG := -g

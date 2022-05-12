@@ -59,9 +59,9 @@ int makaClient::setup(string _dataPath, vector<int> _detPorts,
 
   //Populate structure fields
   sp.pathLen = _dataPath.length();
+  //sp.pathLen = _dataPath.capacity();
   sp.detNum  = _detPorts.size();
   sp.pktLen  = 3*sizeof(int) + sp.detNum*sizeof(int) + detAddsSize + sp.pathLen;
-  sp.pktLen  = 3*sizeof(int);
   sp.ports   = _detPorts;
   sp.addr    = _detAddrs;
   sp.path    = _dataPath;

@@ -273,7 +273,6 @@ void* makaMerger::listenCmd(){
     }
     else {
       processCmds(msg);
-      printf("%d Done processing\n", __LINE__);
     }
     bzero(msg, sizeof(msg));
   }
@@ -290,38 +289,28 @@ void makaMerger::cmdLenHandshake(){
 
 void makaMerger::processCmds(char* msg){
   if (strcmp(msg, "cmd=setup") == 0) {
-    //#pragma pack(push,1)
-    #pragma pack(1)
-    struct setupPacket {
-       int pktLen;
-       int pathLen;
-       int detNum;
-       vector<int> ports;
-       vector<const char*> addr;
-       string path;
-    };
-    //#pragma pack(pop)
-    //}__attribute__((packed));
-    struct setupPacket* sp;
     int pktLen = 0; //Packet length in bytes
-    uint8_t* rxData;
+    void* rxData;
 
     clearDetLists();
 
     printf("%s) Received setup command\n", __METHOD_NAME__);
 
     int temp = 0;
-
     //Receive length and configuration struct
     Rx(&pktLen, sizeof(int));
     printf("Length of next configuration packet: %u\n", pktLen);
+    rxData = malloc(pktLen);
     temp = Rx(rxData, pktLen);
-    printf("Configurations received bytes: %u\n", temp);
+    printf("Configurations received bytes: %d\n", temp);
     //Convert received data into struct
-    sp = (struct setupPacket*)rxData;
+    sp = (setupPacket*)rxData;
     printf("Configurations converted\n");
-    
-    printf("Struct pktLen, pathLen, and detNum: %u, %u, %u\n", sp->pktLen, sp->pathLen, sp->detNum);
+
+    printf("Size of: sp: %ld - rxData %ld\n", sizeof(sp), sizeof(rxData));
+    printf("Size of: detNum: %ld - pathLen %ld - pktLen %ld\n", sizeof(sp->detNum), sizeof(sp->pathLen), sizeof(sp->pktLen));
+
+    printf("Struct pktLen, pathLen, and detNum: %d, %d, %d\n", sp->pktLen, sp->pathLen, sp->detNum);
     printf("Path:     %s\n", sp->path.c_str());
     for (uint32_t ii=0; ii<sp->ports.size(); ii++){
       printf("  Detector Address %u:  %s\n", ii, sp->addr[ii]);
@@ -341,6 +330,7 @@ void makaMerger::processCmds(char* msg){
     }
 
     Tx(&kOkVal, sizeof(kOkVal));
+    free(rxData);
     printf("%d Finished sending\n", __LINE__);
 
   }
@@ -368,7 +358,6 @@ void makaMerger::processCmds(char* msg){
     printf("%s) Unknown message: %s\n", __METHOD_NAME__, msg);
     Tx(&kBadVal, sizeof(kBadVal));
   }
-  printf("%d Finished sending\n", __LINE__);
 }
 
 //------------------------------------------------------------------------------
