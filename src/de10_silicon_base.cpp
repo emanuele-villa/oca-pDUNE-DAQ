@@ -181,11 +181,13 @@ int de10_silicon_base::SetMode(uint8_t modeIn) {
   mode=(modeIn << 4)&0x00000010;
   if (SendCmd("setMode")>0) {
     SendInt(mode);
+    ReceiveInt(reply);
   }
   else {
+    printf("$s) Error in sending setMode\n", __METHOD_NAME__);
     ret = 1;
   }
-  ReceiveInt(reply);
+  
   if (verbosity>1) {
     printf("%s) Setting Mode. Reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
   }  
@@ -429,6 +431,32 @@ int de10_silicon_base::SetAdcDelay(uint32_t _adcDelay){
   ReceiveInt(reply);
   if (verbosity>0) {
     printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::runStart() {
+  int ret = 0;
+  uint32_t reply = 1;
+  if (SendCmd("runStart")<=0) {
+    ret = 1;
+    ReceiveInt(reply);
+  }
+  if (verbosity>0) {
+    printf("%s) Starting run: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  return ret;
+}
+
+int de10_silicon_base::runStop() {
+  int ret = 0;
+  uint32_t reply = 1;
+  if (SendCmd("runStop")<=0) {
+    ret = 1;
+    ReceiveInt(reply);
+  }
+  if (verbosity>0) {
+    printf("%s) Stopping run: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
   }
   return ret;
 }

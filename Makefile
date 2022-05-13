@@ -53,10 +53,11 @@ ifdef ROOTSYS
 endif
 INCLUDEARM += $(INCLUDE)
 
-CFLAGS := -Wall -Wextra -pthread #-fsanitize=address
-LDFLAGS := -Wall -Wextra -pthread #-fsanitize=address
+DEBUGFLAGS := #-g -fsanitize=address -fstack-protector
+CFLAGS := -Wall -Wextra -pthread -std=c++11 $(DEBUGFLAGS)
+LDFLAGS := -Wall -Wextra -pthread $(DEBUGFLAGS)
 
-CPPFLAGS := $(CFLAGS) -std=c++11 $(INCLUDE) #-g -fsanitize=address -fstack-protector
+CPPFLAGS := $(CFLAGS) $(INCLUDE) 
 CFLAGSARM := $(CFLAGS) $(INCLUDEARM) -I$(HWLIBS_ROOT)/include -I$(HWLIBS_ROOT)/include/$(ALT_DEVICE_FAMILY) -D$(ALT_DEVICE_FAMILY)
 
 OCAOPTFLAG := -g
@@ -80,7 +81,7 @@ OCATEST := $(EXE)/testOCA
 MAKA := $(EXE)/MAKA
 
 # Rules:
-all: clean $(OCADAQ) $(OCATEST) $(PAPERO)
+all: clean $(OCADAQ) $(OCATEST) $(MAKA) $(PAPERO)
 
 oca: cleanoca $(OCADAQ) $(OCATEST) 
 

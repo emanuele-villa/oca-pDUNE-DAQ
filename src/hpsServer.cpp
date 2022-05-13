@@ -230,11 +230,14 @@ void hpsServer::ProcessCmdReceived(char* msg){
       if (kVerbosity > 3) printf("%s) Event sent\n", __METHOD_NAME__);
   }
   else if (strcmp(msg, "cmd=runStart") == 0) {
+    printf("%s) Starting run... \n", __METHOD_NAME__);
     //Start the run and enable data sending
     hpsDataStream -> startRun();
+    //fpga->SetMode(1);
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if (strcmp(msg, "cmd=runStop") == 0) {
+    printf("%s) Stopping run...", __METHOD_NAME__);
     //Stop the run and disable data sending
     hpsDataStream -> stopRun();
     Tx(&kOkVal, sizeof(kOkVal));

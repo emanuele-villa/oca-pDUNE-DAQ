@@ -59,6 +59,10 @@ fpgaDriver::fpgaDriver(int verbose){
     hkFifo->Status();
     dataFifo->Status();
   }
+
+  //Stop triggers (if any) and reset FPGA
+  SetMode(0);
+  ResetFpga();
 };
 
 fpgaDriver::~fpgaDriver(){

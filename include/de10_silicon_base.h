@@ -68,6 +68,8 @@ public:
   int SetAdcFast(uint32_t _adcFast);
   int SetBusyLen(uint32_t _busyLen);
   int SetAdcDelay(uint32_t _adcDelay);
+  int runStart(); //!< Send the runStart command to PAPERO
+  int runStop(); //!< Send the runStop command to PAPERO
 };
 
 #endif

@@ -27,22 +27,29 @@ void hpsDataServer::startRun(){
   kIsRunning = true;
 
   //Await connection from merger
+  printf("%s) Connecting to MAKA\n", __METHOD_NAME__);
   AcceptConnection();
 
-  //Spawn a thread to stream data from FPGA 
+  //Spawn a thread to stream data from FPGA
+  printf("%s) Spawning the thread\n", __METHOD_NAME__);
   kData3d = std::thread(&hpsDataServer::dataReading, this);
 }
 
 void hpsDataServer::stopRun(){
   //Stop the run, if any
+  printf("%s) Stop Run\n", __METHOD_NAME__);
   kIsRunning  = false;
 
+  sleep(2);
+
   //Join the thread, if any
+  printf("%s) Joining the thread\n", __METHOD_NAME__);
   if (kData3d.joinable()){
     kData3d.join();
   }
 
   //Kill connection to merger, if any
+  printf("%s) Kill connection\n", __METHOD_NAME__);
   StopListening();
 }
 
@@ -51,10 +58,12 @@ void hpsDataServer::getSendEvt(vector<uint32_t>& evt){
 
   //Get an event from FPGA
   int evtErr = fpga->getEvent(evt, &evtLen);
-  if (kVerbosity > 4) printf("getEvent result: %d\n", evtErr);
-  
+  if (kVerbosity > 4) printf("getEvent result: %d - length %d\n", evtErr, evtLen);
+
   //Send the event to the socket
-  if (evtLen>0) { //ectLen == 0 if no event available
+  if (evtLen>0) { //evtLen == 0 if no event available
+    Tx(&evtLen, sizeof(int));
+
     Tx(evt.data(), evtLen*sizeof(uint32_t));
     kEvtCount++;
     if (kEvtCount % 1000 == 0) {
@@ -79,19 +88,19 @@ void hpsDataServer::dataReading(){
   //Tx(&startMsg, sizeof(startMsg));
   
   //Enable triggers in FPGA
-  fpga->SetMode(0x10);
+  //fpga->SetMode(0x10);
   
   //While kIsRunning, read events from FPGA and send them to merger
   kStartRunTime = chrono::system_clock::now();
   while (kIsRunning){
     //Free AXI resource available for other users (limit: 10 kHz)
-    //usleep(100);
+    usleep(100);
     
     getSendEvt(evt);
   }
   
   //When kIsRunning=false, disable triggers in FPGA and empty FIFOs
-  fpga->SetMode(0);
+  //fpga->SetMode(0);
   for (int ff=0; ff<100; ff++){
     getSendEvt(evt);
   }

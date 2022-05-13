@@ -61,11 +61,12 @@ void daqserver::SetUpConfigClients(){
   if (kVerbosity>0){
     printf("%s) DAQ Server Created\n", __METHOD_NAME__);
   }
-  return;
-
+  
   //Configure detectors
   SetDetectors();
   Init();
+
+  return;
 }
 
 void daqserver::SetListDetectors(){
@@ -349,9 +350,16 @@ void daqserver::ProcessCmdReceived(char* msg){
         if (kVerbosity>0) {
           printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
         }
+        ResetBoards();
+        runStart();
+        maka->runStart(sruntype, runnum, unixtime);
+
+        printf("%s) Everything started. Enabling triggers...\n", __METHOD_NAME__);
+        SetMode(1);
+
         //Spawn a thread to read events. Stop() will join the thread
         nEvents = 0;
-        _3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
+        //_3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
         ReplyToCmd(msg);
       }
       else if(strcmp(stop,cmdgroup[2])==0) {//stop daq
@@ -557,11 +565,26 @@ void daqserver::Stop() {
     _3d.join();
     printf("...joined\n");
   }
-
   SetMode(0);
+  maka->runStop();
+  runStop();
   sleep(10);
 
   //FIX ME: metterci un while che fa N GetEvent()
   
   if (kVerbosity > 0) printf("%s) Thread stopped succesfully\n", __METHOD_NAME__);
+}
+
+void daqserver::runStart(){
+  printf("%s) Starting run on all detectors...\n", __METHOD_NAME__);
+  for(auto de10 : det){
+    de10->runStart();
+  }
+}
+
+void daqserver::runStop(){
+  printf("%s) Stopping run on all detectors...\n", __METHOD_NAME__);
+  for(auto de10 : det){
+    de10->runStop();
+  }
 }

@@ -98,6 +98,9 @@ public:
   */
   void ListenCmd();
 
+  void runStart(); //!< Send runStart to all detectors
+  void runStop(); //!< Send runStop to all detectors
+
 };
 
 #endif
