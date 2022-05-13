@@ -46,7 +46,7 @@ class makaMerger : public tcpServer {
     bool kRunning = false; //!<Flag for run state
     uint32_t kNEvts = 0; //!< Events in a run
     //uint32_t kRunTime //!<Run time
-    char* kRunType;     //!<Run information: type
+    char kRunType[9];     //!<Run information: type
     uint32_t kRunNum;   //!<Run information: number
     uint32_t kRunTime;  //!<Run information: start time, in unix time
 

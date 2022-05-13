@@ -68,7 +68,7 @@ void hpsDataServer::getSendEvt(vector<uint32_t>& evt){
     kEvtCount++;
     if (kEvtCount % 1000 == 0) {
       auto evt1000 = chrono::system_clock::now();
-      cout << "Event count : " << kEvtCount << " in " << chrono::duration_cast<chrono::milliseconds>(evt1000-kStartRunTime).count() << " s\n";
+      cout << "Event count : " << kEvtCount << " in " << chrono::duration_cast<chrono::milliseconds>(evt1000-kStartRunTime).count() << " ms\n";
     }
   }
   if (kVerbosity > 3) printf("%s) Event sent\n", __METHOD_NAME__);

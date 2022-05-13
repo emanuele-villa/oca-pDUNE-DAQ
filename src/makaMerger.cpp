@@ -65,9 +65,11 @@ void makaMerger::runStart(){
   kNEvts   = 0;
   kRunning = true;
 
+  printf("%s) Setup Detectors\n", __METHOD_NAME__);
   //Start clients
   setUpDetectors();
 
+  printf("%s) Spawn thread\n", __METHOD_NAME__);
   //Start thread to merge data
   kMerger3d = std::thread(&makaMerger::merger, this);
 }
@@ -75,11 +77,14 @@ void makaMerger::runStart(){
 void makaMerger::runStop(int _sleep){
   sleep(_sleep);
   
+  printf("%s) Stop run\n", __METHOD_NAME__);
   kRunning = false;
 
+  printf("%s) Clear detectors\n", __METHOD_NAME__);
   //Close clients
   clearDetectors();
 
+  printf("%s) Stop thread\n", __METHOD_NAME__);
   //Stop thread
   if (kMerger3d.joinable()) kMerger3d.join();
 }
@@ -178,17 +183,16 @@ int makaMerger::collector(FILE* _dataFile){
   
   constexpr uint32_t header = 0xfa4af1ca;//FIX ME: this header must be done properly. In particular the real length (written by this master, not the one in the payload, after the SoP word) 
   bool headerWritten = false;
-
   // FIX ME: replace kRunning with proper timeout
   do {
     for (uint32_t ii=0; ii<kDet.size(); ii++) {
       if(!replied[ii]){
-	      uint32_t readSingle = (getEvent(evt, evtLen, ii));
-	      readRet += readSingle;
-	      if(evtLen){
-	        replied[ii] = true;
-	      }    
-	      evtLen_tot += evtLen;
+        uint32_t readSingle = (getEvent(evt, evtLen, ii));
+        readRet += readSingle;
+        if(evtLen){
+          replied[ii] = true;
+        }
+        evtLen_tot += evtLen;
 
 	      // only write the header when the first board replies
 	      if(replied.count() == 1 && !headerWritten){
@@ -289,61 +293,78 @@ void makaMerger::cmdLenHandshake(){
 
 void makaMerger::processCmds(char* msg){
   if (strcmp(msg, "cmd=setup") == 0) {
-    int pktLen = 0; //Packet length in bytes
-    void* rxData;
 
     clearDetLists();
 
     printf("%s) Received setup command\n", __METHOD_NAME__);
 
-    int temp = 0;
-    //Receive length and configuration struct
-    Rx(&pktLen, sizeof(int));
-    printf("Length of next configuration packet: %u\n", pktLen);
-    rxData = malloc(pktLen);
-    temp = Rx(rxData, pktLen);
-    printf("Configurations received bytes: %d\n", temp);
-    //Convert received data into struct
-    sp = (setupPacket*)rxData;
-    printf("Configurations converted\n");
-
-    printf("Size of: sp: %ld - rxData %ld\n", sizeof(sp), sizeof(rxData));
-    printf("Size of: detNum: %ld - pathLen %ld - pktLen %ld\n", sizeof(sp->detNum), sizeof(sp->pathLen), sizeof(sp->pktLen));
-
-    printf("Struct pktLen, pathLen, and detNum: %d, %d, %d\n", sp->pktLen, sp->pathLen, sp->detNum);
-    printf("Path:     %s\n", sp->path.c_str());
-    for (uint32_t ii=0; ii<sp->ports.size(); ii++){
-      printf("  Detector Address %u:  %s\n", ii, sp->addr[ii]);
-      printf("  Detector Port %u:     %u\n", ii, sp->ports[ii]);
-    }
-
-    kDataPath = sp->path;
-    kDetPorts = sp->ports;
-    kDetAddrs = sp->addr;
-    
-    printf("Configurations received:\n");
-    printf("File: %s\n", kDataPath.c_str());
-    printf("%u Detector(s): \n", sp->detNum);
-    for (int i=0; i<sp->detNum; i++){
-      printf("\t%u: Address: %s - Port: %u\n", i, kDetAddrs[i], kDetPorts[i]);
-      printf("\t%u: Port: %u\n", i, kDetPorts[i]);
-    }
+    addDet("192.168.2.107", 5001);
+    kDataPath = "./data/";
 
     Tx(&kOkVal, sizeof(kOkVal));
-    free(rxData);
-    printf("%d Finished sending\n", __LINE__);
+    
+    //int pktLen = 0; //Packet length in bytes
+    //void* rxData;
+    //
+    //clearDetLists();
+    //
+    //printf("%s) Received setup command\n", __METHOD_NAME__);
+    //
+    //int temp = 0;
+    ////Receive length and configuration struct
+    //Rx(&pktLen, sizeof(int));
+    //printf("Length of next configuration packet: %u\n", pktLen);
+    //rxData = malloc(pktLen);
+    //temp = Rx(rxData, pktLen);
+    //printf("Configurations received bytes: %d\n", temp);
+    ////Convert received data into struct
+    //sp = (setupPacket*)rxData;
+    //printf("Configurations converted\n");
+    //
+    //printf("Size of: sp: %ld - rxData %ld\n", sizeof(sp), sizeof(rxData));
+    //printf("Size of: detNum: %ld - pathLen %ld - pktLen %ld\n", sizeof(sp->detNum), sizeof(sp->pathLen), sizeof(sp->pktLen));
+    //
+    //printf("Struct pktLen, pathLen, and detNum: %d, %d, %d\n", sp->pktLen, sp->pathLen, sp->detNum);
+    //printf("Path:     %s\n", sp->path.c_str());
+    //for (uint32_t ii=0; ii<sp->ports.size(); ii++){
+    //  printf("  Detector Address %u:  %s\n", ii, sp->addr[ii]);
+    //  printf("  Detector Port %u:     %u\n", ii, sp->ports[ii]);
+    //}
+    //
+    //kDataPath = sp->path;
+    //kDetPorts = sp->ports;
+    //kDetAddrs = sp->addr;
+    //
+    //printf("Configurations received:\n");
+    //printf("File: %s\n", kDataPath.c_str());
+    //printf("%u Detector(s): \n", sp->detNum);
+    //for (int i=0; i<sp->detNum; i++){
+    //  printf("\t%u: Address: %s - Port: %u\n", i, kDetAddrs[i], kDetPorts[i]);
+    //  printf("\t%u: Port: %u\n", i, kDetPorts[i]);
+    //}
+    //
+    //Tx(&kOkVal, sizeof(kOkVal));
+    //free(rxData);
+    //printf("%d Finished sending\n", __LINE__);
 
   }
   else if (strcmp(msg, "cmd=runStart") == 0) {
+    printf("%s) Received runStart command\n", __METHOD_NAME__);
+    
     //Receive run type, number, and time
-    char buff[17];
-    Rx(&buff, sizeof(char)*17);
-    kRunType = (char*)string(buff).substr(0, 8).c_str();
-    kRunNum  = strtoul(string(buff).substr(8, 4).c_str(), nullptr, 16);
-    kRunTime = strtoul(string(buff).substr(12, 4).c_str(), nullptr, 16);
+    char buff[25];
+    Rx(&buff, sizeof(char)*25);
+
+    printf("%s) Received from start: |%s|\n", __METHOD_NAME__, buff);
+
+    //kRunType = (char*)string(buff).substr(0, 8).c_str();
+    memcpy(kRunType, buff, 8);
+    kRunType[9] = 0;
+    kRunNum  = strtoul(string(buff).substr(8, 8).c_str(), nullptr, 16);
+    kRunTime = strtoul(string(buff).substr(16, 8).c_str(), nullptr, 16);
 
     //Start run
-    printf("%s) Starting run %u: %s - %u ...\n", __METHOD_NAME__, kRunNum,
+    printf("%s) Starting run %u: %s - %x ...\n", __METHOD_NAME__, kRunNum,
               kRunType, kRunTime);
     runStart();
 
