@@ -10,7 +10,7 @@
 extern fpgaDriver* fpga;
 
 hpsDataServer::hpsDataServer(int port, int verb):tcpServer(port, verb){
-  //kBlocking = true;
+  kBlocking = true;
   kIsRunning  = false;
   kEvtCount   = 0;
   //kData3d     = nullptr;
