@@ -18,6 +18,11 @@ private:
   uint32_t kEvtCount; //!< Event counter of a specific run
   std::chrono::_V2::system_clock::time_point kStartRunTime; //!< Start time of a run
 
+  /*
+    Standard reply procedure to commands
+  */
+  void cmdReply(const char* cmd);
+
 public:
   hpsServer(int port, int verb=0);
 

@@ -36,13 +36,13 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, paperoConfig
   SendInt(cmdlenght);
   ReceiveInt(cmdLenReply);
   //Set cmd lenght with the detector reply (and check if they are the same)
-  if (cmdlenght != cmdLenReply){
+  if ((uint32_t)cmdlenght != cmdLenReply){
     printf("%s) Detector has command length %d (requested: %d)\n",
             __METHOD_NAME__, cmdlenght, cmdLenReply);
     exit(1);
   }
   cmdlenght=cmdLenReply;//in number of char
-  printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, cmdLenReply);  
+  printf("%s) Set Cmd Lenght to %d\n", __METHOD_NAME__, cmdLenReply);  
 
   //
   ConfigureTestUnit(testUnitCfg);
@@ -66,17 +66,29 @@ de10_silicon_base::~de10_silicon_base(){
 
 //--------------------------------------------------------------
 
-void de10_silicon_base::SetCmdLenght(int lenght) {
+int de10_silicon_base::checkReply(const char* msg){
+  uint32_t reply = 0;
   
-  if (SendCmd("setCmdLenght")>0) {
+  ReceiveInt(reply);
+  if (reply!=okVal) {
+    printf("%s) %s: ko\n", __METHOD_NAME__, msg);
+    return 1;
+  }
+  
+  return 0;
+}
+
+void de10_silicon_base::SetCmdLenght(int lenght) {
+  uint32_t reply = 0;
+
+  if (SendCmd("setCmdLength")==0) {
     SendInt((uint32_t)lenght);
   }
 
-  uint32_t reply = 0;
   ReceiveInt(reply);
   //let's set as cmd lenght not the one passed but the one received back (hoping they are equal)
   cmdlenght=reply;//in number of char
-  printf("%s) Set Cmd Lenght to reply: %d\n", __METHOD_NAME__, reply);
+  printf("%s) Set Cmd Lenght to %d\n", __METHOD_NAME__, reply);
 
   return;
 }
@@ -85,7 +97,7 @@ void de10_silicon_base::SetCmdLenght(int lenght) {
 int de10_silicon_base::readReg(int regAddr, uint32_t &regCont){
 
   int ret=0;
-  if (SendCmd("readReg")>0) {
+  if (SendCmd("readReg")==0) {
     SendInt((uint32_t)regAddr);
   }
   else {
@@ -103,16 +115,14 @@ int de10_silicon_base::readReg(int regAddr, uint32_t &regCont){
 
 //FIX ME: use the proper functions or the 2D array to retrieve configurations
 int de10_silicon_base::Init() {
-
   int ret=0;
   uint32_t regContent = 1;
-  uint32_t reply = 1;
 
   if (verbosity>0) {
     printf("%s) initializing (reset everything)\n", __METHOD_NAME__);
   }
   
-  if (SendCmd("init")>0) {
+  if (SendCmd("init")==0) {
     //Register 1
     regContent = (testUnitCfg << 8) | (hkEn << 6) \
       | (testUnitEn << 1) | dataEn;
@@ -150,71 +160,65 @@ int de10_silicon_base::Init() {
     ret = 1;
   }
   
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  ret += checkReply("Initializing");
   
   return ret;
 }
 
 int de10_silicon_base::SetTrig2Hold(uint32_t delayIn){
   int ret=0;
-  uint32_t reply = 1;
   trig2Hold = (delayIn & 0x0000FFFF);
-  if (SendCmd("setDelay")>0) {
+  if (SendCmd("setDelay")==0) {
     SendInt(trig2Hold);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+
+  ret += checkReply("Setting Delay");
+
   return ret;
 }
 
 int de10_silicon_base::SetMode(uint8_t modeIn) {
   int ret=0;
-  uint32_t reply = 1;
   mode=(modeIn << 4)&0x00000010;
-  if (SendCmd("setMode")>0) {
+  if (SendCmd("setMode")==0) {
     SendInt(mode);
-    ReceiveInt(reply);
   }
   else {
-    printf("$s) Error in sending setMode\n", __METHOD_NAME__);
     ret = 1;
   }
   
-  if (verbosity>1) {
-    printf("%s) Setting Mode. Reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }  
+  ret += checkReply("Setting Mode");
   return ret;
 }
 
 int de10_silicon_base::GetEventNumber() {
   int ret=0;
-  if (SendCmd("getEventNumber")<=0) ret = 1;
   uint32_t exttrigcount = 0;
-  ReceiveInt(exttrigcount);
   uint32_t inttrigcount = 0;
-  ReceiveInt(inttrigcount);
+
+  if (SendCmd("getEventNumber")==0) {
+    ReceiveInt(exttrigcount);
+    ReceiveInt(inttrigcount);
+  }
+  else {
+    ret = 1;
+  }
+  
   if (verbosity>0) {
-    printf("%s) event number: %d %d\n", __METHOD_NAME__, exttrigcount, inttrigcount);
+    printf("%s) Event number: %d %d\n", __METHOD_NAME__, exttrigcount, inttrigcount);
   }
   return ret;
 }
 
 int de10_silicon_base::EventReset() {
   int ret = 0;
-  uint32_t reply = 1;
-  if (SendCmd("eventReset")<=0) ret = 1;
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) Resetting events (reinitialize): %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }  
+  if (SendCmd("eventReset")!=0) ret = 1;
+  
+  ret += checkReply("Resetting events (reinitialize)");
+
   return ret;
 }
 
@@ -248,18 +252,16 @@ int de10_silicon_base::GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen){
 //TO DO: there will be another method, in future to really calibrate: put in cal mode, start the trigger, stop the calibration and let the system compute pedestals, sigmas, etc...
 int de10_silicon_base::SetCalibrationMode(uint32_t calEnIn){
   int ret = 0;
-  uint32_t reply = 1;
   calEn = calEnIn & 0x00000001;
-  if (SendCmd("calibrate")>0){
+  if (SendCmd("calibrate")==0){
     SendInt(calEn<<1);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) Resetting events (reinitialize): %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }  
+
+  ret += checkReply("Setting calibration mode");
+  
   return ret;
 }
 
@@ -281,182 +283,159 @@ int de10_silicon_base::SaveCalibrations(){
 
 int de10_silicon_base::SetIntTriggerPeriod(uint32_t intTrigPeriodIn){
   int ret=0;
-  uint32_t reply = 1;
   intTrigPeriod = intTrigPeriodIn & 0xFFFFFFF0;
-  if (SendCmd("intTrigPeriod")>0) {
+  if (SendCmd("intTrigPeriod")==0) {
     SendInt(intTrigPeriod);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+
+  ret += checkReply("Setting Internal Trigger Period");
+
   return ret;
 }
 
 int de10_silicon_base::SelectTrigger(uint32_t intTrigEnIn){
   int ret=0;
-  uint32_t reply = 1;
   intTrigEn = intTrigEnIn & 0x00000001;
-  if (SendCmd("selectTrigger")>0) {
+  if (SendCmd("selectTrigger")==0) {
     SendInt(intTrigEn);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  
+  ret += checkReply("Selecting Trigger");
+
   return ret;
 }
 
 int de10_silicon_base::ConfigureTestUnit(uint32_t testUnitEnIn){
   int ret=0;
-  uint32_t reply = 1;
   testUnitEn = testUnitEnIn & 0x00000001;
-  if (SendCmd("configTestUnit")>0) {
+  if (SendCmd("configTestUnit")==0) {
     SendInt(testUnitEn<<1);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  
+  ret += checkReply("Configuring Test Unit");
+
   return ret;
 }
 
 int de10_silicon_base::SetFeClk(uint32_t _feClkDuty, uint32_t _feClkDiv){
   int ret=0;
-  uint32_t reply = 1;
   feClkDuty = _feClkDuty & 0x0000FFFF;
   feClkDiv  = _feClkDiv  & 0x0000FFFF;
-  if (SendCmd("setFeClk")>0) {
+  if (SendCmd("setFeClk")==0) {
     SendInt((feClkDuty << 16) | feClkDiv);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  
+  ret += checkReply("Setting FE clk");
+
   return ret;
 }
 
 int de10_silicon_base::SetAdcClk(uint32_t _adcClkDuty, uint32_t _adcClkDiv){
   int ret=0;
-  uint32_t reply = 1;
   adcClkDuty = _adcClkDuty & 0x0000FFFF;
   adcClkDiv  = _adcClkDiv  & 0x0000FFFF;
-  if (SendCmd("setAdcClk")>0) {
+  if (SendCmd("setAdcClk")==0) {
     SendInt((adcClkDuty << 16) | adcClkDiv);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  
+  ret += checkReply("Setting ADC clk");
+
   return ret;
 }
 
 int de10_silicon_base::SetIdeTest(uint32_t _ideTest, uint32_t _chTest){
   int ret=0;
-  uint32_t reply = 1;
   ideTest = _ideTest & 0x00000001;
   chTest  = _chTest & 0x000000FF;
-  if (SendCmd("setIdeTest")>0) {
+  if (SendCmd("setIdeTest")==0) {
     SendInt(ideTest << 24 | chTest << 16);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  
+  ret += checkReply("Setting IDE1140 Test Mode");
+
   return ret;
 }
 
 int de10_silicon_base::SetAdcFast(uint32_t _adcFast){
   int ret=0;
-  uint32_t reply = 1;
   adcFast = _adcFast & 0x00000001;
-  if (SendCmd("setAdcFast")>0) {
+  if (SendCmd("setAdcFast")==0) {
     SendInt(adcFast << 31);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  
+  ret += checkReply("Setting ADC Fast Mode");
+
   return ret;
 }
 
 int de10_silicon_base::SetBusyLen(uint32_t _busyLen){
   int ret=0;
-  uint32_t reply = 1;
   busyLen = _busyLen & 0x0000FFFF;
-  if (SendCmd("setBusyLen")>0) {
+  if (SendCmd("setBusyLen")==0) {
     SendInt(busyLen << 16);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  
+  ret += checkReply("Setting Busy Length");
+
   return ret;
 }
 
 int de10_silicon_base::SetAdcDelay(uint32_t _adcDelay){
   int ret=0;
-  uint32_t reply = 1;
   adcDelay = _adcDelay & 0x0000FFFF;
-  if (SendCmd("setAdcDelay")>0) {
+  if (SendCmd("setAdcDelay")==0) {
     SendInt(adcDelay);
   }
   else {
     ret = 1;
   }
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+
+  ret += checkReply("Setting ADC Delay");
+  
   return ret;
 }
 
 int de10_silicon_base::runStart() {
   int ret = 0;
-  uint32_t reply = 1;
-  if (SendCmd("runStart")<=0) {
+  if (SendCmd("runStart")!=0) {
     ret = 1;
-    ReceiveInt(reply);
   }
-  if (verbosity>0) {
-    printf("%s) Starting run: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  ret += checkReply("Starting Run");
   return ret;
 }
 
 int de10_silicon_base::runStop() {
   int ret = 0;
-  uint32_t reply = 1;
-  if (SendCmd("runStop")<=0) {
+
+  if (SendCmd("runStop")!=0) {
     ret = 1;
-    ReceiveInt(reply);
   }
-  if (verbosity>0) {
-    printf("%s) Stopping run: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
-  }
+  
+  ret += checkReply("Stopping Run");
+  
   return ret;
 }

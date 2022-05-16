@@ -38,6 +38,11 @@ class makaClient : public tcpclient {
     */
     void cmdLenHandshake(int _cmdLen);
 
+    /*
+      Check if MAKA performed the required actions of the command sent
+    */
+    int checkReply(const char* msg);
+
 
   public:
     makaClient(const char *_address, int _port, int _verb, int _cmdLen);

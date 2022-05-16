@@ -17,12 +17,14 @@ makaClient* maka  = nullptr;
 
 int StatusOn=0;
 void PrintStatus(int dummy) {
+  printf("%s) Status %d", __METHOD_NAME__, dummy);
   StatusOn=1;
   return;
 }
 
 int ControlOn=1;
 void StopRun(int dummy) {
+  printf("%s) Stopping %d", __METHOD_NAME__, dummy);
   ControlOn=0;
   daqsrv->StopListening();
   return;

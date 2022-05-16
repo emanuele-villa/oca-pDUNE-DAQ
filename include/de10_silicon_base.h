@@ -36,6 +36,11 @@ private:
   uint32_t ideTest;
   uint32_t chTest;
 
+  /*
+    Check if detector performed the required actions of the command sent
+  */
+  int checkReply(const char* msg);
+
 public:
   ~de10_silicon_base();
   de10_silicon_base(const char *address, int port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb=0);

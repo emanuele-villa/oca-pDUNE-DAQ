@@ -2,6 +2,9 @@
 #define TCPCLIENT_H
 
 #include "stdint.h"
+#include <cerrno>
+#include <system_error>
+#include <iostream>
 
 class tcpclient {
 

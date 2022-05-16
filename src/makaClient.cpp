@@ -36,23 +36,17 @@ void makaClient::cmdLenHandshake(int _cmdLen){
 
 int makaClient::setup(string _dataPath, vector<int> _detPorts,
                         vector<const char*> _detAddrs){
-
-  if (SendCmd("setup")>0) {
+  if (SendCmd("setup")==0) {
     printf("%s) Setup sent\n", __METHOD_NAME__);
   }
   else {
+    printf("%s) Error in setup\n", __METHOD_NAME__);
     return 1;
   }
+
+  int ret = checkReply("Setting Up");
   
-  //Receive OkNok
-  uint32_t reply = 1;
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==kOkVal?"ok":"ko");
-    return 1;
-  }
-  
-  return 0;
+  return ret;
 
   ////#pragma pack(push,1)
   //#pragma pack(1)
@@ -99,7 +93,7 @@ int makaClient::setup(string _dataPath, vector<int> _detPorts,
   //}
   //printf("  Size of struct:     %u\n",  sizeof(sp));
   //
-  //if (SendCmd("setup")>0) {
+  //if (SendCmd("setup")==0) {
   //  int temp = 0;
   //  printf("%s) Setup sent\n", __METHOD_NAME__);
   //  //Tx length and configurations
@@ -124,7 +118,6 @@ int makaClient::setup(string _dataPath, vector<int> _detPorts,
 }
 
 int makaClient::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){
-  uint32_t reply = 1;
   char msg[25];
   
   sprintf(msg, "%'- 8s%08x%08x", _runType, _runNum, _runTime);
@@ -133,7 +126,7 @@ int makaClient::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){
   printf("%s) Length: %lu - Message: |%s|\n", __METHOD_NAME__, sizeof(msg), msg);
 
   //Tx command
-  if (SendCmd("runStart")>0) {
+  if (SendCmd("runStart")==0) {
     printf("%s) Starting merger...\n", __METHOD_NAME__);
     //Tx configurations
     Send(msg, sizeof(char)*25);
@@ -142,31 +135,31 @@ int makaClient::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){
     return 1;
   }
   
-  //Receive OkNok
-  ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==kOkVal?"ok":"ko");
-    return 1;
-  }
-
-  return 0;
+  int ret = checkReply("Starting Run");
+  
+  return ret;
 }
 
 int makaClient::runStop(){
-  uint32_t reply = 1;
 
   //Tx command
-  if (SendCmd("runStop")<=0) {
+  if (SendCmd("runStop")!=0) {
     return 1;
   }
   printf("%s) Stopping merger...\n", __METHOD_NAME__);
 
-  //Rx OkNok
+  int ret = checkReply("Stopping Run");
+  
+  return ret;
+}
+
+int makaClient::checkReply(const char* msg){
+  uint32_t reply = 0;
   ReceiveInt(reply);
-  if (verbosity>0) {
-    printf("%s) reply: %s\n", __METHOD_NAME__, reply==kOkVal?"ok":"ko");
+  if (reply!=kOkVal) {
+    printf("%s) %s: ko\n", __METHOD_NAME__, msg);
     return 1;
   }
-
+  
   return 0;
 }

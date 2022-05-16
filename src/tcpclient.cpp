@@ -106,7 +106,8 @@ int tcpclient::client_send(void* buffer, int bytesize) {
 
 int tcpclient::client_receive(void* msg, int bytesize){
 
-  size_t n = 0;
+  //size_t n = 0;
+  int n = 0;
 
   if (verbosity>0) {
     printf("%s) listening on socker number %d\n", __METHOD_NAME__, client_socket);
@@ -125,7 +126,7 @@ int tcpclient::client_receive(void* msg, int bytesize){
   else{
     //msg[n] = '\0';
     if (verbosity>0) {
-      printf("%s) Bytes read: %lu\n", __METHOD_NAME__, n);
+      printf("%s) Bytes read: %u\n", __METHOD_NAME__, n);
       printf("%s) %s\n", __METHOD_NAME__, (char*)msg);
       usleep(100000);
     }
@@ -177,9 +178,30 @@ int tcpclient::Send(const char *buffer) {
 }
  
 int tcpclient::SendCmd(const char *buffer){
-  char c[sizeof(char) * 8 * cmdlenght + 1];
-  sprintf(c, "cmd=%s", buffer);
-  return Send(c);
+  char cmd[sizeof(char) * 8 * cmdlenght + 1];
+  char rcv[sizeof(char) * 8 * cmdlenght + 1];
+  char expected[sizeof(char) * 8 * cmdlenght + 1];
+  sprintf(cmd, "cmd=%s", buffer);
+  sprintf(expected, "rcv=%s", buffer);
+
+  if (Send(cmd)>0) {
+    ReceiveCmdReply(rcv);
+    if(strcmp(rcv, expected) == 0){
+      return 0;
+    }
+    else {
+      fprintf(stderr, "Error in sending command: wrong readback |%s|\n", rcv);
+      std::error_code ec (errno, std::generic_category());
+      std::cout << "Error: " << ec.value() << ", Message: " << ec.message() << '\n';
+      return -1;
+    }
+  }
+  else {
+    fprintf(stderr, "Error in sending command: |%s|\n", cmd);
+    std::error_code ec (errno, std::generic_category());
+    std::cout << "Error: " << ec.value() << ", Message: " << ec.message() << '\n';
+    return -1;
+  }
 }
 
 int tcpclient::SendInt(uint32_t par){

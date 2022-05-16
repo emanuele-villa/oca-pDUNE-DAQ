@@ -293,6 +293,7 @@ void makaMerger::cmdLenHandshake(){
 
 void makaMerger::processCmds(char* msg){
   if (strcmp(msg, "cmd=setup") == 0) {
+    cmdReply("setup");
 
     clearDetLists();
 
@@ -349,6 +350,8 @@ void makaMerger::processCmds(char* msg){
 
   }
   else if (strcmp(msg, "cmd=runStart") == 0) {
+    cmdReply("runStart");
+
     printf("%s) Received runStart command\n", __METHOD_NAME__);
     
     //Receive run type, number, and time
@@ -371,6 +374,8 @@ void makaMerger::processCmds(char* msg){
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if (strcmp(msg, "cmd=runStop") == 0) {
+    cmdReply("runStop");
+
     printf("%s) Stop run %u with %u events.\n", __METHOD_NAME__, kRunNum, kNEvts);
     runStop();
     Tx(&kOkVal, sizeof(kOkVal));
@@ -379,6 +384,12 @@ void makaMerger::processCmds(char* msg){
     printf("%s) Unknown message: %s\n", __METHOD_NAME__, msg);
     Tx(&kBadVal, sizeof(kBadVal));
   }
+}
+
+void makaMerger::cmdReply(const char* cmd){
+  char cmdReadBack[256]="";
+  sprintf(cmdReadBack, "rcv=%s", cmd);
+  Tx(cmdReadBack, kCmdLen);
 }
 
 //------------------------------------------------------------------------------

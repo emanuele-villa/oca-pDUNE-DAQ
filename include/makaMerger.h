@@ -106,6 +106,11 @@ class makaMerger : public tcpServer {
     */
     void processCmds(char* msg);
 
+    /*
+
+    */
+   void cmdReply(const char* cmd);
+
 
   public:
     makaMerger(int port, int verb=0, bool _net=true);
