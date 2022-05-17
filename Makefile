@@ -67,6 +67,8 @@ HPSOPTFLAG := -g
 # Objects and sources:
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/daqConfig.o $(OBJ)/paperoConfig.o $(OBJ)/anyoption.o
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
+OBJECTSSTART=$(OBJ)/mainstart.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
+OBJECTSSTOP=$(OBJ)/mainstop.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
 OBJECTSHPS := $(OBJARM)/papero.o $(OBJARM)/hpsServer.o $(OBJARM)/tcpServer.o $(OBJARM)/utility.o $(OBJARM)/fpgaDriver.o $(OBJARM)/axiFifo.o
 
@@ -74,11 +76,13 @@ OBJECTSHPS := $(OBJARM)/papero.o $(OBJARM)/hpsServer.o $(OBJARM)/tcpServer.o $(O
 PAPERO := $(EXE)/PAPERO
 OCADAQ := $(EXE)/OCA
 OCATEST := $(EXE)/testOCA
+OCASTART := $(EXE)/startOCA
+OCASTOP := $(EXE)/stopOCA
 
 # Rules:
-all: clean $(OCADAQ) $(OCATEST) $(PAPERO)
+all: clean $(OCADAQ) $(OCATEST) $(OCASTART) $(OCASTOP) $(PAPERO)
 
-oca: cleanoca $(OCADAQ) $(OCATEST)
+oca: cleanoca $(OCADAQ) $(OCATEST) $(OCASTART) $(OCASTOP)
 
 papero: cleanpapero $(PAPERO)
 
@@ -95,6 +99,20 @@ $(OCATEST): $(OBJECTSTEST)
 	@mkdir -pv $(BIN)
 	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
 	@cp -v $(OCATEST) $(BIN)/
+
+$(OCASTART): $(OBJECTSSTART)
+	@echo Linking $^ to $@
+	@mkdir -pv $(EXE)
+	@mkdir -pv $(BIN)
+	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
+	@cp -v $(OCASTART) $(BIN)/	
+
+$(OCASTOP): $(OBJECTSSTOP)
+	@echo Linking $^ to $@
+	@mkdir -pv $(EXE)
+	@mkdir -pv $(BIN)
+	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
+	@cp -v $(OCASTOP) $(BIN)/	
 
 $(PAPERO): $(OBJECTSHPS)
 ifeq ($(UNAME_S),Darwin)
