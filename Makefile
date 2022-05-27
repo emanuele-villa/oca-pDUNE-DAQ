@@ -69,6 +69,8 @@ HPSOPTFLAG := -g
 OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/daqConfig.o $(OBJ)/paperoConfig.o $(OBJ)/anyoption.o $(OBJ)/makaClient.o
 
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
+OBJECTSSTART=$(OBJ)/mainstart.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
+OBJECTSSTOP=$(OBJ)/mainstop.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
 OBJECTSMAKA=$(OBJ)/tcpclient.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/anyoption.o $(OBJ)/maka.o $(OBJ)/makaMerger.o
 
@@ -78,14 +80,17 @@ OBJECTSHPS := $(OBJARM)/papero.o $(OBJARM)/hpsDataServer.o $(OBJARM)/hpsServer.o
 PAPERO := $(EXE)/PAPERO
 OCADAQ := $(EXE)/OCA
 OCATEST := $(EXE)/testOCA
+OCASTART := $(EXE)/startOCA
+OCASTOP := $(EXE)/stopOCA
+
 MAKA := $(EXE)/MAKA
 
 # Rules:
-all: clean $(OCADAQ) $(OCATEST) $(MAKA) $(PAPERO)
+all: clean $(OCADAQ) $(OCATEST) $(MAKA) $(PAPERO) $(OCASTART) $(OCASTOP) $(PAPERO)
 
-oca: cleanoca $(OCADAQ) $(OCATEST) 
+oca: cleanoca $(OCADAQ) $(OCATEST)
 
-maka: cleanmaka $(MAKA)
+startstop : $(OCASTART) $(OCASTOP)
 
 papero: cleanpapero $(PAPERO)
 
@@ -104,11 +109,25 @@ $(OCATEST): $(OBJECTSTEST)
 	@cp -v $(OCATEST) $(BIN)/
 
 $(MAKA): $(OBJECTSMAKA)
-	@echo Linking $^ to $@
+  @echo Linking $^ to $@
 	@mkdir -pv $(EXE)
 	@mkdir -pv $(BIN)
 	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
 	@cp -v $(MAKA) $(BIN)/
+	
+$(OCASTART): $(OBJECTSSTART)
+	@echo Linking $^ to $@
+	@mkdir -pv $(EXE)
+	@mkdir -pv $(BIN)
+	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
+	@cp -v $(OCASTART) $(BIN)/	
+
+$(OCASTOP): $(OBJECTSSTOP)
+	@echo Linking $^ to $@
+	@mkdir -pv $(EXE)
+	@mkdir -pv $(BIN)
+	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
+	@cp -v $(OCASTOP) $(BIN)/	
 
 $(PAPERO): $(OBJECTSHPS)
 ifeq ($(UNAME_S),Darwin)
