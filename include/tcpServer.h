@@ -11,10 +11,13 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <arpa/inet.h>
+#include <cerrno>
+#include <system_error>
+#include <iostream>
 
 /*!
   TCP server class

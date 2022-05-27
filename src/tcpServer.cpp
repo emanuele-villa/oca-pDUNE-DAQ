@@ -7,9 +7,6 @@
 */
 #include "tcpServer.h"
 #include "utility.h"
-#include <cerrno>
-#include <system_error>
-#include <iostream>
 
 tcpServer::tcpServer(int port, int verb){
   kVerbosity            = verb;
@@ -40,6 +37,8 @@ tcpServer::~tcpServer(){
 
 void tcpServer::Setup(){
   int optval = 1;
+  unsigned int buff_size = 16700000;
+  socklen_t optLen = sizeof(optval);
 
   exit_if(kListeningOn == true, "%s) Socket already setup", __METHOD_NAME__);
 
@@ -51,11 +50,33 @@ void tcpServer::Setup(){
   //Set socket options
   //SO_REUSEADDR to avoid waiting for addresses already in use
   if (setsockopt(kSockDesc, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval,
-                  sizeof(int)) == -1) {
+                  optLen) == -1) {
+    perror("setsockopt failed...\n");
+    exit(1);
+  }
+  //Set SO_RCVBUF to maximum allowed
+  buff_size = 16700000;
+  if (setsockopt(kSockDesc, SOL_SOCKET, SO_RCVBUF, &buff_size,
+                  optLen) == -1) {
+    perror("setsockopt failed...\n");
+    exit(1);
+  }
+  //Set SO_SNDBUF to maximum allowed
+  buff_size = 16700000;
+  if (setsockopt(kSockDesc, SOL_SOCKET, SO_SNDBUF, &buff_size,
+                  optLen) == -1) {
     perror("setsockopt failed...\n");
     exit(1);
   }
   printf("ok\n");
+
+  buff_size = 0;
+  getsockopt(kSockDesc, SOL_SOCKET, SO_RCVBUF, &buff_size, &optLen);
+  printf("%s) SO_RCVBUF: %u\n", __METHOD_NAME__, buff_size);
+
+  buff_size = 0;
+  getsockopt(kSockDesc, SOL_SOCKET, SO_SNDBUF, &buff_size, &optLen);
+  printf("%s) SO_SNDBUF: %u\n", __METHOD_NAME__, buff_size);
   
   //Binding to port and address
   printf("TCP/IP socket: binding... ");
@@ -170,6 +191,7 @@ int tcpServer::Tx(const void* msg, uint32_t len){
     fprintf(stderr, "Error in writing to the socket\n");
     std::error_code ec (errno, std::generic_category());
     std::cout << "Error: " << ec.value() << ", Message: " << ec.message() << '\n';
+    //exit(1);
     return n;
   }
   if (kVerbosity > 3) printf("%s) Sent %d bytes\n", __METHOD_NAME__, n);

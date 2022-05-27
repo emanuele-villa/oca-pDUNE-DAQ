@@ -33,12 +33,13 @@ void closePapero(){
 int main(int argc, char *argv[]){
   std::cout<<"hash="<<GIT_HASH<<", time="<<COMPILE_TIME<<", branch="<<GIT_BRANCH<<std::endl;
   
-  if (argc < 3) {
-    printf("Usage:\n\tPAPERO <socket port> <verbosity level>\n");
+  if (argc < 4) {
+    printf("Usage:\n\t%s <socket port> <verbosity level> <MAKA connection enable>\n", argv[0]);
     return 0;
   }
   int sockPort = atoi(argv[1]);
   int verbosityIn = atoi(argv[2]);
+  int makaEn = atoi(argv[3]);
 
   //---- Debug of int/double/bool dimensions -----------------------------------
   /* sleep(3); */
@@ -62,8 +63,10 @@ int main(int argc, char *argv[]){
   printf("/*--- Piumone (it must be 0xC1A0C1A0): %08x ---*/\n\n", piumone);
 
   //Setup the data-stream socket with consecutive port (wrt to config socket)
-  printf("Creating a TCP Server Socket for Data Stream...\n");
-  hpsDataStream = new hpsDataServer(sockPort+1, verbosityIn);
+  if (makaEn > 0) {
+    printf("Creating a TCP Server Socket for Data Stream...\n");
+    hpsDataStream = new hpsDataServer(sockPort+1, verbosityIn);
+  }
 
   //Connect to the configuration socket and loop forever to receive commands
   printf("Creating a TCP Server Socket for Configuration...\n");

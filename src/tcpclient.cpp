@@ -1,14 +1,4 @@
-﻿#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-#include <stdio.h>
-#include <unistd.h>
-
-#include <netdb.h>
-
-#include "tcpclient.h"
-
+﻿#include "tcpclient.h"
 #include "utility.h"
 
 tcpclient::tcpclient(const char *address, int port, int verb){
@@ -47,6 +37,30 @@ int tcpclient::client_connect(const char *address, int port) {
       printf("%s) socket created (number %d)\n", __METHOD_NAME__, client_socket);
     }
   }
+
+  unsigned int buff_size = 16700000;
+  socklen_t optLen = sizeof(buff_size);
+  //Set SO_RCVBUF to maximum allowed
+  if (setsockopt(client_socket, SOL_SOCKET, SO_RCVBUF, &buff_size,
+                  optLen) == -1) {
+    perror("setsockopt failed...\n");
+    exit(1);
+  }
+  //Set SO_SNDBUF to maximum allowed
+  buff_size = 16700000;
+  if (setsockopt(client_socket, SOL_SOCKET, SO_SNDBUF, &buff_size,
+                  optLen) == -1) {
+    perror("setsockopt failed...\n");
+    exit(1);
+  }
+
+  buff_size = 0;
+  getsockopt(client_socket, SOL_SOCKET, SO_RCVBUF, &buff_size, &optLen);
+  printf("%s) SO_RCVBUF: %u\n", __METHOD_NAME__, buff_size);
+
+  buff_size = 0;
+  getsockopt(client_socket, SOL_SOCKET, SO_SNDBUF, &buff_size, &optLen);
+  printf("%s) SO_SNDBUF: %u\n", __METHOD_NAME__, buff_size);
 
   server = gethostbyname(address);
   if(server == NULL){

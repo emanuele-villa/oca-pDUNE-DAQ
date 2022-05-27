@@ -2,6 +2,13 @@
 #define TCPCLIENT_H
 
 #include "stdint.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <cerrno>
 #include <system_error>
 #include <iostream>
@@ -12,6 +19,7 @@ protected:
   int verbosity;
   int cmdlenght;
   int client_socket;
+  bool kBlocking; //!< Blocking or non-blocking flag
 
 public:
   virtual ~tcpclient();

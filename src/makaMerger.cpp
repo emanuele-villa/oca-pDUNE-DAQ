@@ -53,7 +53,7 @@ void makaMerger::clearDetectors(){
 
 void makaMerger::setUpDetectors(){
   for (uint32_t ii=0; ii<kDetAddrs.size(); ii++) {
-    kDet.push_back(new tcpclient(kDetAddrs[ii], kDetPorts[ii]));
+    kDet.push_back(new tcpclient(kDetAddrs[ii], kDetPorts[ii], kVerbosity));
   }
 }
 //------------------------------------------------------------------------------
@@ -154,12 +154,13 @@ int makaMerger::merger(){
     collector(dataFileD);
     auto stop = clock_type::now();
 
-    if(kNEvts != lastNEvents){
+    //if(kNEvts != lastNEvents){
+    if(kNEvts%10 == 0){
       std::cout << "\rEvent " << kNEvts << " last recordEvents took " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " us                            " << std::flush;
       lastNEvents = kNEvts;
     }
   }
-  std::cout << '\n';
+  std::cout << std::endl;
   
   //----------------------------------------------------------------------------
   //Close file
@@ -299,7 +300,9 @@ void makaMerger::processCmds(char* msg){
 
     printf("%s) Received setup command\n", __METHOD_NAME__);
 
-    addDet("192.168.2.107", 5001);
+    addDet("192.168.2.101", 5001);
+    addDet("192.168.2.102", 5001);
+    addDet("192.168.2.103", 5001);
     kDataPath = "./data/";
 
     Tx(&kOkVal, sizeof(kOkVal));

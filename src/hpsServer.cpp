@@ -270,7 +270,9 @@ void hpsServer::ProcessCmdReceived(char* msg){
     Tx(&kOkVal, sizeof(kOkVal));
     
     //Start the run and enable data sending
-    hpsDataStream -> startRun();
+    if (hpsDataStream) {
+      hpsDataStream -> startRun();
+    }
     //fpga->SetMode(1);
   }
   else if (strcmp(msg, "cmd=runStop") == 0) {
@@ -278,7 +280,9 @@ void hpsServer::ProcessCmdReceived(char* msg){
     
     printf("%s) Stopping run...", __METHOD_NAME__);
     //Stop the run and disable data sending
-    hpsDataStream -> stopRun();
+    if (hpsDataStream) {
+      hpsDataStream -> stopRun();
+    }
     Tx(&kOkVal, sizeof(kOkVal));
   }
   else if (strcmp(msg, "cmd=setCmdLength") == 0) {
