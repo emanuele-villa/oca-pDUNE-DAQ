@@ -109,7 +109,7 @@ $(OCATEST): $(OBJECTSTEST)
 	@cp -v $(OCATEST) $(BIN)/
 
 $(MAKA): $(OBJECTSMAKA)
-  @echo Linking $^ to $@
+	@echo Linking $^ to $@
 	@mkdir -pv $(EXE)
 	@mkdir -pv $(BIN)
 	$(CXX) $(CPPFLAGS) $^ -o $@ $(ROOTGLIBS)
