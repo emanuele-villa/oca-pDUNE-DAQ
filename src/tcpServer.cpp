@@ -184,6 +184,11 @@ void tcpServer::StopListening(){
   return;
 }
 
+void tcpServer::StartListening(){
+  kListeningOn = true;
+  return;
+}
+
 int tcpServer::Tx(const void* msg, uint32_t len){
   int n;
   n = write(kTcpConn, msg, len);

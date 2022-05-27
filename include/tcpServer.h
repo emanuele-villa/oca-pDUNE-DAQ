@@ -97,6 +97,11 @@ class tcpServer {
     */
     void StopListening();
 
+    /*!
+      Set true kListeningOn
+    */
+    void StartListening();
+
 };
 
 #endif

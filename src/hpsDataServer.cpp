@@ -28,6 +28,7 @@ void hpsDataServer::startRun(){
 
   //Await connection from merger
   printf("%s) Connecting to MAKA\n", __METHOD_NAME__);
+  StartListening();
   AcceptConnection();
 
   //Spawn a thread to stream data from FPGA
@@ -40,7 +41,7 @@ void hpsDataServer::stopRun(){
   printf("%s) Stop Run\n", __METHOD_NAME__);
   kIsRunning  = false;
 
-  sleep(2);
+  sleep(1);
 
   //Join the thread, if any
   printf("%s) Joining the thread\n", __METHOD_NAME__);
