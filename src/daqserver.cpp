@@ -324,10 +324,12 @@ void daqserver::ProcessCmdReceived(char* msg){
 	      if (strcmp(beam,runtype)==0) {
 	        sprintf(sruntype, "BEAM");
 	        SetCalibrationMode(0);
+          SelectTrigger(0);
 	      }
 	      else if (strcmp(cal,runtype)==0) {
 	        sprintf(sruntype, "CAL");
 	        SetCalibrationMode(1);
+          SelectTrigger(1);
 	      }
 	      else {
 	        printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
