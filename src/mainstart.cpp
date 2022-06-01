@@ -13,6 +13,12 @@ const int portdaq = 8888;
 int verbosity=0;
 
 int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    printf("Usage:\n\t%s <0: calibration, 1: beam> \n", argv[0]);
+    return 0;
+  }
+  int beam = atoi(argv[1]);
+
   //------------------------------------------------
   char readBack[LEN]="";
   static const int length=16;
@@ -38,7 +44,8 @@ int main(int argc, char *argv[]) {
 
   //71616b23
   //uint32_t start[4] = {0x080080FF, 0x01001500, 0x010000EE, 0x236B6171};
-  uint32_t start[4] = {0x080080FF, 0x01001500, 0x010000EE, tsReord};
+  uint32_t start[4] = {0x080080FF, 0x00001500, 0x010000EE, tsReord};
+  start[1] = start[1] | ((beam & 0x1) << 24);
   daq->Send((void*)start, 4*sizeof(uint32_t));
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
   hex2string(readBack,length,command_string);

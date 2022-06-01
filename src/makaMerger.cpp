@@ -363,9 +363,18 @@ void makaMerger::processCmds(char* msg){
 
     printf("%s) Received from start: |%s|\n", __METHOD_NAME__, buff);
 
+    char typeRx[9];
+    memcpy(typeRx, buff, 8);
+    //typeRx[9] = 0;
+    if (strcmp(typeRx, "BEAM    ") == 0) {
+      strcpy(kRunType, "BEAM\0\0\0\0\0");
+    } else if (strcmp(typeRx, "CAL     ") == 0) {
+      strcpy(kRunType, "CAL\0\0\0\0\0\0");
+    } else {
+      exit(1);
+    }
+
     //kRunType = (char*)string(buff).substr(0, 8).c_str();
-    memcpy(kRunType, buff, 8);
-    kRunType[9] = 0;
     kRunNum  = strtoul(string(buff).substr(8, 8).c_str(), nullptr, 16);
     kRunTime = strtoul(string(buff).substr(16, 8).c_str(), nullptr, 16);
 
