@@ -10,6 +10,9 @@
 #include <algorithm>
 
 #include "daqserver.h"
+#include "makaClient.h"
+
+extern makaClient* maka;
 
 daqserver::daqserver(int port, int verb, std::string paperoCfgPath):tcpServer(port, verb){
   //Copy configuration file parameters
@@ -28,13 +31,6 @@ daqserver::daqserver(int port, int verb, std::string paperoCfgPath):tcpServer(po
   addressdet.clear();
   portdet.clear();
 
-  //Start the socket
-  SockStart();
-
-  if (kVerbosity>0){
-    printf("%s) DAQ Server Created\n", __METHOD_NAME__);
-  }
-  return;
 }
 
 daqserver::~daqserver(){
@@ -53,8 +49,24 @@ daqserver::~daqserver(){
 }
 
 void daqserver::SetUpConfigClients(){
+  //Setup detector clients
   SetListDetectors();
+
+  //Configure MAKA client
+  maka->setup(daqConf.dataFolder, portdet, addressdet);
+
+  //Start the socket
+  SockStart();
+
+  if (kVerbosity>0){
+    printf("%s) DAQ Server Created\n", __METHOD_NAME__);
+  }
+  
+  //Configure detectors
+  SetDetectors();
   Init();
+
+  return;
 }
 
 void daqserver::SetListDetectors(){
@@ -65,18 +77,22 @@ void daqserver::SetListDetectors(){
   for (uint32_t ii=0; ii<paperoConfVector.size(); ii++) {
     addressdet.push_back(paperoConfVector[ii]->ipAddr.data());
     portdet.push_back(paperoConfVector[ii]->tcpPort);
+  }
+}
+
+void daqserver::SetDetectors(){
+  det.clear();
+  for (uint32_t ii=0; ii<portdet.size(); ii++) {
     det.push_back(
       new de10_silicon_base(
-        paperoConfVector[ii]->ipAddr.data(),
-        paperoConfVector[ii]->tcpPort,
+        addressdet[ii],
+        portdet[ii],
         paperoConfVector[ii],
         calibmode,
         trigtype,
         kVerbosity)
       );
   }
-
-  return;
 }
 
 void daqserver::SetDetId(const char* addressde10, uint32_t _detId){
@@ -308,10 +324,12 @@ void daqserver::ProcessCmdReceived(char* msg){
 	      if (strcmp(beam,runtype)==0) {
 	        sprintf(sruntype, "BEAM");
 	        SetCalibrationMode(0);
+          SelectTrigger(0);
 	      }
 	      else if (strcmp(cal,runtype)==0) {
 	        sprintf(sruntype, "CAL");
 	        SetCalibrationMode(1);
+          SelectTrigger(1);
 	      }
 	      else {
 	        printf("%s) Not a valid run type %s\n", __METHOD_NAME__, runtype);
@@ -334,9 +352,16 @@ void daqserver::ProcessCmdReceived(char* msg){
         if (kVerbosity>0) {
           printf("runtype=%s (-> %s), runnum=%s (%u), unixtime=%u (%s -> %s)\n", runtype, sruntype, srunnum, runnum, unixtime, cmdgroup[3], asctime(localtime(&t)));
         }
+        ResetBoards();
+        runStart();
+        maka->runStart(sruntype, runnum, unixtime);
+
+        printf("%s) Everything started. Enabling triggers...\n", __METHOD_NAME__);
+        SetMode(1);
+
         //Spawn a thread to read events. Stop() will join the thread
         nEvents = 0;
-        _3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
+        //_3d = std::thread(&daqserver::Start, this, sruntype, runnum, unixtime);
         ReplyToCmd(msg);
       }
       else if(strcmp(stop,cmdgroup[2])==0) {//stop daq
@@ -417,32 +442,32 @@ int daqserver::recordEvents(FILE* fd) {
   do {
     for (uint32_t ii=0; ii<det.size(); ii++) {
       if(!replied[ii]){
-	det.at(ii)->AskEvent();
+	      det.at(ii)->AskEvent();
       }
     }    
     
     for (uint32_t ii=0; ii<det.size(); ii++) {
       if(!replied[ii]){
-	uint32_t readSingle = (det.at(ii)->GetEvent(evt, evtLen));
-	readRet += readSingle;
-	if(evtLen){
-	  replied[ii] = true;
-	}    
-	evtLen_tot += evtLen;
+	      uint32_t readSingle = (det.at(ii)->GetEvent(evt, evtLen));
+	      readRet += readSingle;
+	      if(evtLen){
+	        replied[ii] = true;
+	      }    
+	      evtLen_tot += evtLen;
 
-	// only write the header when the first board replies
-	if(replied.count() == 1 && !headerWritten){
-	  ++nEvents;
-	  fwrite(&header, 4, 1, fd);	  
-	  headerWritten = true;
-	}
-	writeRet += fwrite(evt.data(), evtLen, 1, fd);
+	      // only write the header when the first board replies
+	      if(replied.count() == 1 && !headerWritten){
+	        ++nEvents;
+	        fwrite(&header, 4, 1, fd);	  
+	        headerWritten = true;
+	      }
+	      writeRet += fwrite(evt.data(), evtLen, 1, fd);
 
-	if (kVerbosity>0) {
-	  printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
-	  printf("  Bytes read: %d/%d\n", readSingle, evtLen);
-	  printf("  Writes performed: %d/%lu\n", writeRet, det.size());
-	}
+	      if (kVerbosity>0) {
+	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
+	        printf("  Bytes read: %d/%d\n", readSingle, evtLen);
+	        printf("  Writes performed: %d/%lu\n", writeRet, det.size());
+	      }
       }
     }
   } while (replied.count() && (replied.count() != det.size()) && kStart);
@@ -542,11 +567,26 @@ void daqserver::Stop() {
     _3d.join();
     printf("...joined\n");
   }
-
   SetMode(0);
+  maka->runStop();
+  runStop();
   sleep(10);
 
   //FIX ME: metterci un while che fa N GetEvent()
   
   if (kVerbosity > 0) printf("%s) Thread stopped succesfully\n", __METHOD_NAME__);
+}
+
+void daqserver::runStart(){
+  printf("%s) Starting run on all detectors...\n", __METHOD_NAME__);
+  for(auto de10 : det){
+    de10->runStart();
+  }
+}
+
+void daqserver::runStop(){
+  printf("%s) Stopping run on all detectors...\n", __METHOD_NAME__);
+  for(auto de10 : det){
+    de10->runStop();
+  }
 }

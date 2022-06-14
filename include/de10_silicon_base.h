@@ -36,6 +36,11 @@ private:
   uint32_t ideTest;
   uint32_t chTest;
 
+  /*
+    Check if detector performed the required actions of the command sent
+  */
+  int checkReply(const char* msg);
+
 public:
   ~de10_silicon_base();
   de10_silicon_base(const char *address, int port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb=0);
@@ -68,6 +73,8 @@ public:
   int SetAdcFast(uint32_t _adcFast);
   int SetBusyLen(uint32_t _busyLen);
   int SetAdcDelay(uint32_t _adcDelay);
+  int runStart(); //!< Send the runStart command to PAPERO
+  int runStop(); //!< Send the runStop command to PAPERO
 };
 
 #endif

@@ -59,6 +59,10 @@ fpgaDriver::fpgaDriver(int verbose){
     hkFifo->Status();
     dataFifo->Status();
   }
+
+  //Stop triggers (if any) and reset FPGA
+  SetMode(0);
+  ResetFpga();
 };
 
 fpgaDriver::~fpgaDriver(){
@@ -285,8 +289,11 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
       ReadReg(22, &regContent);
       printf("Register 22: %08x\n", regContent);
     }
+    *evtLen = 0;
     return 0;
   }
+
+  //std::cout << "\rDATA FIFO Not A-Empty" << std::flush;
   
   //Read the first word and make sure it's the SoP
   readErr = dataFifo->read(&sopWord);
@@ -308,7 +315,7 @@ int fpgaDriver::getEvent(std::vector<uint32_t>& evt, int* evtLen){
   readErr = dataFifo->readChunk(&packet[2], pktLen - 1, false);
   if (readErr < 0){
     fprintf(stderr, "Error in reading event\n");
-    return -1;
+    return -2;
   }
 
   if (kVerbose > 4){

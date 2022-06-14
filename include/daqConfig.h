@@ -14,6 +14,8 @@
 #include <fstream>
 #include <sstream>
 
+using namespace std;
+
 /*!
   Read configuration parameters from file and populate a struct
 */
@@ -21,8 +23,7 @@ class daqConfig
 {
   
   public:
-    daqConfig(const std::string& filePath){
-      conf = {true, 8888, "./data/", 64, 0, 0};
+    daqConfig(const string& filePath){
       readConfigFromFile(filePath);
     };
 
@@ -30,35 +31,52 @@ class daqConfig
     struct configParams {
       bool listenClient;      //!Listen to external TCP client
       int portClient;         //!TCP server port number
-      std::string dataFolder; //!Data folder
+      string dataFolder; //!Data folder
       int clientCmdLen;       //!Command length w.r.t. TCP client
       bool intTrigEn;         //!Internal trigger enable
       bool calMode;           //!Calibration mode enable
+      string makaIpAddr;      //!MAKA IP address
+      int makaPort;           //!TCP port to connect to MAKA
+      int makaCmdLen;         //!Command length w.r.t. MAKA server
+
+      void dump(){
+        cout << "Listen to TCP client:      " << listenClient << endl;
+        cout << "TCP client port:           " << portClient << endl;
+        cout << "TCP client command length: " << clientCmdLen << endl;
+        cout << "Path to data folder:       " << dataFolder << endl;
+        cout << "Internal Trigger enable:   " << intTrigEn << endl;
+        cout << "Calibration Mode:          " << calMode << endl;
+        cout << "MAKA IP Address:           " << makaIpAddr << endl;
+        cout << "MAKA Port:                 " << makaPort << endl;
+        cout << "MAKA command length:       " << makaCmdLen << endl;
+      }
     };
 
     //! Open configuration file and read it in an istream
-    void readConfigFromFile(const std::string& filePath);
+    void readConfigFromFile(const string& filePath);
 
     //!
-    configParams getParams(){ return conf;};
+    configParams getParams(){return conf;};
 
   private:
     //! Configuration parameters
     configParams conf;
 
     //! Open an input file and get the streamer object
-    void openInputFile(const std::string& filePath,
-                              std::ifstream& inputFile);
+    void openInputFile(const string& filePath,
+                              ifstream& inputFile);
 
     //! Read and apply configuration
-    int config(std::istream& is);
+    int config(istream& is);
 
     //! Generic function to read a single option
     template <typename T>
-    void readOption(T& option, std::istream& is)
-    {
-      if (is.peek() == '\n') exit(1);
-      is >> option;
+    void readOption(T& option, string is)
+    { 
+      if (is.substr(0,2) == "0x")
+        stringstream(is) >> hex >> option;
+      else
+        stringstream(is) >> option;
     }
 
 };

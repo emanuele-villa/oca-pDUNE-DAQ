@@ -3,59 +3,95 @@
   @brief DAQ configuration methods.
 */
 
+#include "utility.h"
 #include "daqConfig.h"
 
-/*!
-  
- */
-void daqConfig::readConfigFromFile(const std::string& filePath)
+void daqConfig::readConfigFromFile(const string& filePath)
 {
-  std::ifstream is;
+  ifstream is;
   openInputFile(filePath, is);
   config(is);
   is.close();
 }
 
-/*!
-  
- */
-void daqConfig::openInputFile(const std::string& filePath, std::ifstream& inFile)
+
+void daqConfig::openInputFile(const string& filePath, ifstream& inFile)
 {
-  std::cout << "From file " << filePath << " read ";
+  cout << "From file " << filePath << " read ";
   inFile.open(filePath);
   if (not(inFile)) {
-    std::cout << " could not open file " << filePath << ". Abort." << std::endl;
+    cout << " could not open file " << filePath << ". Abort." << endl;
     exit(1);
   }
 }
 
-/*!
-  
- */
-int daqConfig::config(std::istream& is)
+
+int daqConfig::config(istream& is)
 {
   int linesRead = 0;
-  while(!is.eof())
-  {
-    char pip = is.peek();
-    // Ignore comment or empty lines
-    while((pip == '#') | (pip == '\n'))
-    {
-      is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      pip = is.peek();
+  int wordsRead = 0;
+  bool discardLine;
+  
+  //Get a complete line (until \n)
+  for (string line; getline(is, line); ) {
+    stringstream ss(line);
+
+    //Check if empty line
+    discardLine = line.length() == 0;
+    //Read line, word by word
+    for (string word; getline(ss, word, ' '); ) {
+      //Ignore comments
+      if ((wordsRead == 0) & (word[0] == '#'))
+      {
+        discardLine = true;
+        break;
+      }
+
+      //Pick the right word
+      switch(wordsRead){
+        case 0:
+          readOption<bool>(conf.listenClient, word);
+          break;
+        case 1:
+          readOption<int>(conf.portClient, word);
+          break;
+        case 2:
+          readOption<int>(conf.clientCmdLen, word);
+          break;
+        case 3:
+          readOption<string>(conf.makaIpAddr, word);
+          break;
+        case 4:
+          readOption<int>(conf.makaPort, word);
+          break;
+        case 5:
+          readOption<int>(conf.makaCmdLen, word);
+          break;
+        case 6:
+          readOption<string>(conf.dataFolder, word);
+          break;
+        case 7:
+          readOption<bool>(conf.calMode, word);
+          break;
+        case 8:
+          readOption<bool>(conf.intTrigEn, word);
+          break;
+        default:
+          cout << __METHOD_NAME__ << ") Too many columns in config file." << endl;
+          exit(1);
+      }
+
+      wordsRead++;
     }
+    //Discard empty or comment lines
+    if (discardLine) continue;
     
-    readOption<bool>(conf.listenClient, is);
-    readOption<int>(conf.portClient, is);
-    readOption<std::string>(conf.dataFolder, is);
-    readOption<int>(conf.clientCmdLen, is);
-    readOption<bool>(conf.intTrigEn, is);
-    readOption<bool>(conf.calMode, is);
+    wordsRead = 0;
     linesRead++;
-    
-    //Ignore newline
-    if (is.peek() == '\n') is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-  };
-  std::cout << linesRead << " configuration lines." << std::endl;
+  }
+
+  cout << linesRead << " line(s)." << endl;
+
   return linesRead;
+
 }
