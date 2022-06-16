@@ -29,6 +29,7 @@
 #include "utility.h"
 #include "tcpServer.h"
 #include "tcpclient.h"
+#include "udpSocket.h"
 
 using namespace std;
 
@@ -49,6 +50,11 @@ class makaMerger : public tcpServer {
     char kRunType[9];     //!<Run information: type
     uint32_t kRunNum;   //!<Run information: number
     uint32_t kRunTime;  //!<Run information: start time, in unix time
+
+    //UDP server to on-line monitor
+    std::string kUdpAddr = "localhost"; //!< UDP Server address (x.x.x.x format)
+    int kUdpPort = 8890;  //!< UDP server port
+    udpServer* omServer;
 
     //#pragma pack(push,1)
     #pragma pack(1)
