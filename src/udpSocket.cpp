@@ -9,7 +9,7 @@
 udpSocket::udpSocket(const std::string &_addr, int _port) {
   kVerbosity = 0;
   kPort = _port;
-  kBlocking = false;
+  kBlocking = true;
   kAddr = _addr;
 
   //Convert int port into C string port
@@ -30,11 +30,9 @@ udpSocket::udpSocket(const std::string &_addr, int _port) {
 
   // Get an address that can be specified in a call to bind
   int ret = -1;
-
-  //FIXME: for client and socket, this address is different! connection and self address
   ret = (getaddrinfo(_addr.c_str(), portString, &hints, &kAddrInfo));
   if(ret != 0 || kAddrInfo == NULL) {
-    printf("Port %s or address %s not valid.\n", portString, _addr);
+    printf("Port %s or address %s not valid.\n", portString, _addr.c_str());
     exit(EXIT_FAILURE);
   }
 
@@ -54,7 +52,7 @@ void udpSocket::setup() {
   socklen_t optLen = sizeof(optval);
 
   //Exit, if already exists
-  if (kSockDesc >=0) {
+  if (kSockDesc >0) {
     freeaddrinfo(kAddrInfo);
     printf("Socket already exists.\n");
     exit(EXIT_FAILURE);
@@ -71,7 +69,7 @@ void udpSocket::setup() {
   }
   if(kSockDesc < 0) {
     freeaddrinfo(kAddrInfo);
-    printf("Socket creation error: Port %d, address %s.\n", kPort, kAddr);
+    printf("Socket creation error: Port %d, address %s.\n", kPort, kAddr.c_str());
     exit(EXIT_FAILURE);
   }
 
@@ -95,6 +93,7 @@ void udpSocket::setup() {
 
 int udpSocket::Tx(const void* _msg, size_t _size) {
   int n;
+  //FIXME: Can UDP fragment packets?
   n = sendto(kSockDesc, _msg, _size, 0,
              kAddrInfo->ai_addr, kAddrInfo->ai_addrlen); //FIXME: who is the destination address?
   if(n < 0){
@@ -111,7 +110,8 @@ int udpSocket::Tx(const void* _msg, size_t _size) {
 int udpSocket::Rx(void* _msg, size_t _maxSize){
   int n;
   n = recvfrom(kSockDesc, _msg, _maxSize, 0, \
-               NULL, 0); //FIXME: should I add the source address?
+               kAddrInfo->ai_addr, &kAddrInfo->ai_addrlen);
+  //n = recv(kSockDesc, _msg, _maxSize, 0);
   if (n < 0) {
     fprintf(stderr, "Error in reading the socket\n");
     std::error_code ec (errno, std::generic_category());
@@ -135,7 +135,7 @@ int udpSocket::RxTimeout(void* _msg, size_t _maxSize, int _maxWaitMs) {
 bool udpSocket::waitForReadEvent(int _timeout) {
   //Initialize readSet and add the listening socket to the set readSet
   fd_set readSet;
-  FD_ZERO(&readSet); //FIXME if kTcpConn already in the list, FD_SET returns no error
+  FD_ZERO(&readSet); //FIXME if kSockDesc already in the list, FD_SET returns no error
   FD_SET(kSockDesc, &readSet);
 
   struct timeval waitTime;
@@ -144,8 +144,8 @@ bool udpSocket::waitForReadEvent(int _timeout) {
 	
   //Wait the socket to be readable
   //pselect for signal capture; poll/ppoll are an upgrade
-	int retSel = select(kTcpConn+1, &readSet, NULL, NULL, &waitTime);
-  //int retSel = select(kTcpConn+1, &readSet, &readSet, &readSet, &waitTime);
+	int retSel = select(kSockDesc+1, &readSet, NULL, NULL, &waitTime);
+  //int retSel = select(kSockDesc+1, &readSet, &readSet, &readSet, &waitTime);
 	if(retSel > 0) {
     //Socket has data
 	  return true;
@@ -162,22 +162,41 @@ bool udpSocket::waitForReadEvent(int _timeout) {
 }
 
 //--- UDP Server ---------------------------------------------------------------
-udpServer::udpServer(const std::string& _addr, int _port) : \ 
+udpServer::udpServer(const std::string& _addr, int _port) :\
             udpSocket::udpSocket(_addr, _port) {
+  char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+  
   int ret = bind(kSockDesc, kAddrInfo->ai_addr, kAddrInfo->ai_addrlen);
   if(ret != 0) {
     freeaddrinfo(kAddrInfo);
     close(kSockDesc);
-    printf("Socket creation error: Port %d, address %s.\n", kPort, kAddr);
+    printf("Socket creation error: Port %d, address %s.\n", kPort, kAddr.c_str());
     exit(EXIT_FAILURE);
   }
 
-  printf("%s) UDP Server created and binded\n", __METHOD_NAME__);
+  if (getnameinfo(kAddrInfo->ai_addr, kAddrInfo->ai_addrlen, hbuf,\
+        sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)\
+      == 0)
+    printf("%s) UDP Server created and binded: host=%s, serv=%s\n",\
+              __METHOD_NAME__, hbuf, sbuf);
+
+  std::cout << kAddrInfo->ai_addr <<std::endl;
 }
 
 //--- UDP Client ---------------------------------------------------------------
-udpClient::udpClient(const std::string& _addr, int _port) : \ 
+udpClient::udpClient(const std::string& _addr, int _port) :\
             udpSocket::udpSocket(_addr, _port) {
-  //FIXME: should I bind also the client?
-  printf("%s) UDP Server created and binded\n", __METHOD_NAME__);
+  char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+  //if (connect(kSockDesc, kAddrInfo->ai_addr, kAddrInfo->ai_addrlen) < 0) {
+  //  printf("%s) Cannot connect client to socket\n", __METHOD_NAME__);
+  //  exit(1);
+  //}
+
+  if (getnameinfo(kAddrInfo->ai_addr, kAddrInfo->ai_addrlen, hbuf,\
+        sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)\
+      == 0)
+    printf("%s) UDP Client created and binded: host=%s, serv=%s\n",\
+              __METHOD_NAME__, hbuf, sbuf);
+
 }
