@@ -15,7 +15,7 @@ makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   clearDetLists();
 
   //On-line monitor with UDP server
-  omServer = new udpServer(kUdpAddr, kUdpPort);
+  omClient = new udpClient(kUdpAddr, kUdpPort);
 
   //Initialize server
   if (_net){
@@ -202,11 +202,11 @@ int makaMerger::collector(FILE* _dataFile){
 	      if(replied.count() == 1 && !headerWritten){
 	        ++kNEvts;
 	        fwrite(&header, 4, 1, _dataFile); //header to file
-          omServer->Tx(&header, 4); //header to OM
+          omClient->Tx(&header, 4); //header to OM
 	        headerWritten = true;
 	      }
 	      writeRet += fwrite(evt.data(), evtLen, 1, _dataFile); //Event to file
-        omServer->Tx(evt.data(), evtLen); //Event to OM
+        omClient->Tx(evt.data(), evtLen); //Event to OM
 
 	      if (kVerbosity>0) {
 	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, kDetAddrs[ii]);

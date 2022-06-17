@@ -54,7 +54,7 @@ class makaMerger : public tcpServer {
     //UDP server to on-line monitor
     std::string kUdpAddr = "localhost"; //!< UDP Server address (x.x.x.x format)
     int kUdpPort = 8890;  //!< UDP server port
-    udpServer* omServer;
+    udpClient* omClient;
 
     //#pragma pack(push,1)
     #pragma pack(1)
