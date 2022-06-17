@@ -6,10 +6,10 @@
 #include "udpSocket.h"
 #include "utility.h"
 
-udpSocket::udpSocket(const std::string &_addr, int _port) {
+udpSocket::udpSocket(const std::string &_addr, int _port, bool _blocking) {
   kVerbosity = 0;
   kPort = _port;
-  kBlocking = true;
+  kBlocking = _blocking;
   kAddr = _addr;
 
   //Convert int port into C string port
@@ -162,8 +162,8 @@ bool udpSocket::waitForReadEvent(int _timeout) {
 }
 
 //--- UDP Server ---------------------------------------------------------------
-udpServer::udpServer(const std::string& _addr, int _port) :\
-            udpSocket::udpSocket(_addr, _port) {
+udpServer::udpServer(const std::string& _addr, int _port, bool _blocking) :\
+            udpSocket::udpSocket(_addr, _port, _blocking) {
   char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
   
   int ret = bind(kSockDesc, kAddrInfo->ai_addr, kAddrInfo->ai_addrlen);
@@ -184,8 +184,8 @@ udpServer::udpServer(const std::string& _addr, int _port) :\
 }
 
 //--- UDP Client ---------------------------------------------------------------
-udpClient::udpClient(const std::string& _addr, int _port) :\
-            udpSocket::udpSocket(_addr, _port) {
+udpClient::udpClient(const std::string& _addr, int _port, bool _blocking) :\
+            udpSocket::udpSocket(_addr, _port, _blocking) {
   char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
   //if (connect(kSockDesc, kAddrInfo->ai_addr, kAddrInfo->ai_addrlen) < 0) {

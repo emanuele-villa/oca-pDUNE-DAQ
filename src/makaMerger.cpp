@@ -15,7 +15,7 @@ makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   clearDetLists();
 
   //On-line monitor with UDP server
-  omClient = new udpClient(kUdpAddr, kUdpPort);
+  omClient = new udpClient(kUdpAddr, kUdpPort, false);
 
   //Initialize server
   if (_net){
