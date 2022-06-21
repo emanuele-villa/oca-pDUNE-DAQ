@@ -11,12 +11,12 @@
 class configPacket {
 
   protected:
-    uint32_t pktLen;
     uint32_t detNum;
     uint32_t pathLen;
     std::vector<uint32_t> addrsSize;
 
   public:
+    uint32_t pktLen;
     std::vector<uint32_t> ports;
     std::vector<std::string> addrs;
     std::string dataPath;
@@ -43,11 +43,13 @@ class configPacket {
       //if (dataPath != nullptr) free(dataPath);
       dataPath.clear();
       if (msg != nullptr) free(msg);
+      msg = nullptr;
     };
 
     //! \brief Serialize all the struct fields into a uint32_t* buffer
     void ser() {
       sizeUpdate();
+      if (msg != nullptr) free(msg);
       msg = (uint32_t*)malloc(pktLen);
       uint32_t* outInt = msg;
       uint32_t jj, mm;

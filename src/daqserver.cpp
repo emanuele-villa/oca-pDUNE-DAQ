@@ -98,7 +98,7 @@ void daqserver::SetDetectors(){
 void daqserver::SetDetId(const char* addressde10, uint32_t _detId){
   
   for (int ii=0; ii<(int)(det.size()); ii++) {
-    if (strcmp(addressde10, addressdet[ii]) == 0){
+    if (strcmp(addressde10, addressdet[ii].c_str()) == 0){
       det[ii]->SetDetId(_detId);
     }
   }
@@ -109,7 +109,7 @@ void daqserver::SetDetId(const char* addressde10, uint32_t _detId){
 void daqserver::SetPacketLen(const char* addressde10, uint32_t _pktLen){
   
   for (int ii=0; ii<(int)(det.size()); ii++) {
-    if (strcmp(addressde10, addressdet[ii]) == 0){
+    if (strcmp(addressde10, addressdet[ii].c_str()) == 0){
       det[ii]->SetPacketLen(_pktLen);
     }
   }
@@ -475,7 +475,7 @@ int daqserver::recordEvents(FILE* fd) {
 	      writeRet += fwrite(evt.data(), evtLen, 1, fd);
 
 	      if (kVerbosity>0) {
-	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii]);
+	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, addressdet[ii].c_str());
 	        printf("  Bytes read: %d/%d\n", readSingle, evtLen);
 	        printf("  Writes performed: %d/%lu\n", writeRet, det.size());
 	      }

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "utility.h"
+#include "makaConfig.h"
 #include "tcpclient.h"
 
 using namespace std;
@@ -52,8 +53,8 @@ class makaClient : public tcpclient {
       Send cmd=setup
       Send configurations
     */
-    int setup(string _dataPath, vector<int> kDetPorts,
-                vector<const char*> _detAddrs);
+    int setup(string _dataPath, vector<uint32_t> kDetPorts,
+                vector<std::string> _detAddrs);
 
     /*
       Send cmd=runStart

@@ -13,6 +13,7 @@ makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   kCmdLen = 24;
   runStop();
   clearDetLists();
+  cpRx = new configPacket();
 
   //On-line monitor with UDP server
   omClient = new udpClient(kUdpAddr, kUdpPort, false);
@@ -32,6 +33,7 @@ makaMerger::~makaMerger(){
   StopListening();
   runStop();
   clearDetLists();
+  delete cpRx;
 }
 
 /*------------------------------------------------------------------------------
@@ -56,7 +58,7 @@ void makaMerger::clearDetectors(){
 
 void makaMerger::setUpDetectors(){
   for (uint32_t ii=0; ii<kDetAddrs.size(); ii++) {
-    kDet.push_back(new tcpclient(kDetAddrs[ii], kDetPorts[ii], kVerbosity));
+    kDet.push_back(new tcpclient(kDetAddrs[ii].c_str(), kDetPorts[ii], kVerbosity));
   }
 }
 //------------------------------------------------------------------------------
@@ -209,7 +211,8 @@ int makaMerger::collector(FILE* _dataFile){
         omClient->Tx(evt.data(), evtLen); //Event to OM
 
 	      if (kVerbosity>0) {
-	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, kDetAddrs[ii]);
+	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__,\
+                    kDetAddrs[ii].c_str());
 	        printf("  Bytes read: %d/%d\n", readSingle, evtLen);
 	        printf("  Writes performed: %d/%lu\n", writeRet, kDet.size());
 	      }
@@ -304,57 +307,31 @@ void makaMerger::processCmds(char* msg){
     clearDetLists();
 
     printf("%s) Received setup command\n", __METHOD_NAME__);
-
-    addDet("192.168.2.101", 5001);
-    addDet("192.168.2.102", 5001);
-    addDet("192.168.2.103", 5001);
-    kDataPath = "./data/";
-
-    Tx(&kOkVal, sizeof(kOkVal));
     
-    //int pktLen = 0; //Packet length in bytes
-    //void* rxData;
-    //
-    //clearDetLists();
-    //
-    //printf("%s) Received setup command\n", __METHOD_NAME__);
-    //
-    //int temp = 0;
-    ////Receive length and configuration struct
-    //Rx(&pktLen, sizeof(int));
-    //printf("Length of next configuration packet: %u\n", pktLen);
-    //rxData = malloc(pktLen);
-    //temp = Rx(rxData, pktLen);
-    //printf("Configurations received bytes: %d\n", temp);
-    ////Convert received data into struct
-    //sp = (setupPacket*)rxData;
-    //printf("Configurations converted\n");
-    //
-    //printf("Size of: sp: %ld - rxData %ld\n", sizeof(sp), sizeof(rxData));
-    //printf("Size of: detNum: %ld - pathLen %ld - pktLen %ld\n", sizeof(sp->detNum), sizeof(sp->pathLen), sizeof(sp->pktLen));
-    //
-    //printf("Struct pktLen, pathLen, and detNum: %d, %d, %d\n", sp->pktLen, sp->pathLen, sp->detNum);
-    //printf("Path:     %s\n", sp->path.c_str());
-    //for (uint32_t ii=0; ii<sp->ports.size(); ii++){
-    //  printf("  Detector Address %u:  %s\n", ii, sp->addr[ii]);
-    //  printf("  Detector Port %u:     %u\n", ii, sp->ports[ii]);
-    //}
-    //
-    //kDataPath = sp->path;
-    //kDetPorts = sp->ports;
-    //kDetAddrs = sp->addr;
-    //
-    //printf("Configurations received:\n");
-    //printf("File: %s\n", kDataPath.c_str());
-    //printf("%u Detector(s): \n", sp->detNum);
-    //for (int i=0; i<sp->detNum; i++){
-    //  printf("\t%u: Address: %s - Port: %u\n", i, kDetAddrs[i], kDetPorts[i]);
-    //  printf("\t%u: Port: %u\n", i, kDetPorts[i]);
-    //}
-    //
-    //Tx(&kOkVal, sizeof(kOkVal));
-    //free(rxData);
-    //printf("%d Finished sending\n", __LINE__);
+    int pktLen = 0; //Packet length in bytes
+    void* rxData;
+    int temp = 0;
+
+    //Receive length and configPacket
+    Rx(&pktLen, sizeof(int));
+    
+    rxData = malloc(pktLen);
+    temp = Rx(rxData, pktLen);
+
+
+    //Deserialize data into configPacket class
+    cpRx->des((uint32_t*)rxData);
+    printf("Configurations received:\n");
+    cpRx->dump();
+    
+    //Copy configuration data
+    kDataPath = cpRx->dataPath;
+    kDetPorts = cpRx->ports;
+    kDetAddrs = cpRx->addrs;
+    
+    free(rxData);
+    
+    Tx(&kOkVal, sizeof(kOkVal));
 
   }
   else if (strcmp(msg, "cmd=runStart") == 0) {

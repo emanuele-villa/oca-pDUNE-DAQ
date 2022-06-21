@@ -34,87 +34,32 @@ void makaClient::cmdLenHandshake(int _cmdLen){
 
 }
 
-int makaClient::setup(string _dataPath, vector<int> _detPorts,
-                        vector<const char*> _detAddrs){
+int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,
+                        vector<string> _detAddrs){
+  configPacket* cp = new configPacket(_detPorts, _detAddrs, _dataPath);
+  
+  printf("%s) Configurations to be sent:\n", __METHOD_NAME__);
+  cp->dump();
+  
+  //Send command and packet
   if (SendCmd("setup")==0) {
+    int temp = 0;
+    SendInt(cp->pktLen);
     printf("%s) Setup sent\n", __METHOD_NAME__);
+    //Tx configurations
+    cp->ser();
+    temp = Send(cp->msg, cp->pktLen);
+    printf("Sent %u bytes\n", temp);
   }
   else {
     printf("%s) Error in setup\n", __METHOD_NAME__);
     return 1;
   }
+  delete cp;
 
   int ret = checkReply("Setting Up");
-  
-  return ret;
 
-  ////#pragma pack(push,1)
-  //#pragma pack(1)
-  //struct setupPacket {
-  //   int pktLen;
-  //   int pathLen;
-  //   int detNum;
-  //   vector<int> ports;
-  //   vector<const char*> addr;
-  //   string path;
-  //};
-  ////#pragma pack(pop)
-  ////}__attribute__((packed));
-  //struct setupPacket sp;
-  //uint32_t reply = 1;
-  //
-  //int detAddsSize = 0;
-  //for (uint32_t ii=0; ii<_detAddrs.size(); ii++){
-  //  detAddsSize += strlen(_detAddrs[ii]); //+1: \0 at the end
-  //  printf("Length %u\n", strlen(_detAddrs[ii]));
-  //}
-  //
-  ////Populate structure fields
-  //sp.pathLen = _dataPath.length();
-  ////sp.pathLen = _dataPath.capacity();
-  //sp.detNum  = _detPorts.size();
-  //sp.pktLen  = 3*sizeof(int) + sp.detNum*sizeof(int) + detAddsSize + sp.pathLen;
-  //sp.ports   = _detPorts;
-  //sp.addr    = _detAddrs;
-  //sp.path    = _dataPath;
-  //
-  //printf("%s) Configurations to be sent:\n", __METHOD_NAME__);
-  //printf("  Packet length:        %u\n",  sp.pktLen);
-  //printf("  Path Length:          %u\n",  sp.pathLen);
-  //printf("  Path:                 %s\n",  sp.path.c_str());
-  //printf("  Number of detectors:  %u\n",  sp.detNum);
-  //printf("  Size of detPorts:     %lu\n", sp.detNum*sizeof(int));
-  //printf("  Size of detAddrs:     %u\n",  detAddsSize);
-  //
-  //
-  //for (uint32_t ii=0; ii<sp.ports.size(); ii++){
-  //  printf("  Detector Address %u:  %s\n", ii, sp.addr[ii]);
-  //  printf("  Detector Port %u:     %u\n", ii, sp.ports[ii]);
-  //}
-  //printf("  Size of struct:     %u\n",  sizeof(sp));
-  //
-  //if (SendCmd("setup")==0) {
-  //  int temp = 0;
-  //  printf("%s) Setup sent\n", __METHOD_NAME__);
-  //  //Tx length and configurations
-  //  SendInt(sp.pktLen);
-  //  temp = Send(&sp, sp.pktLen);
-  //  printf("Sent %u bytes\n", temp);
-  //}
-  //else {
-  //  return 1;
-  //}
-  //
-  ////sprintf(msg, "%04u%04u%'-128s%", pktLen, _detNum, _dataPath);
-  //
-  ////Receive OkNok
-  //ReceiveInt(reply);
-  //if (verbosity>0) {
-  //  printf("%s) reply: %s\n", __METHOD_NAME__, reply==kOkVal?"ok":"ko");
-  //  return 1;
-  //}
-  //
-  //return 0;
+  return ret;
 }
 
 int makaClient::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){

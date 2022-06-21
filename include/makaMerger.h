@@ -30,6 +30,7 @@
 #include "tcpServer.h"
 #include "tcpclient.h"
 #include "udpSocket.h"
+#include "makaConfig.h"
 
 using namespace std;
 
@@ -39,8 +40,8 @@ class makaMerger : public tcpServer {
     //Configuration parameters
     const uint32_t kOkVal  = 0xb01af1ca; //!< OK  answer to client
     const uint32_t kBadVal = 0x000cacca; //!< NOK Answer to client
-    vector<const char*> kDetAddrs; //!<Remote detectors addresses
-    vector<int> kDetPorts; //!<Remote detectors ports
+    vector<std::string> kDetAddrs; //!<Remote detectors addresses
+    vector<uint32_t> kDetPorts; //!<Remote detectors ports
     string kDataPath = "./data/"; //!<Folder path where to store data
     int kCmdLen = 24; //!<Server commands length, handshaken with the client
     thread kMerger3d; //!<Thread that hosts the merger
@@ -50,25 +51,12 @@ class makaMerger : public tcpServer {
     char kRunType[9];     //!<Run information: type
     uint32_t kRunNum;   //!<Run information: number
     uint32_t kRunTime;  //!<Run information: start time, in unix time
+    configPacket* cpRx; //!<Configurations received from OCA
 
     //UDP server to on-line monitor
     std::string kUdpAddr = "localhost"; //!< UDP Server address (x.x.x.x format)
     int kUdpPort = 8890;  //!< UDP server port
     udpClient* omClient;
-
-    //#pragma pack(push,1)
-    #pragma pack(1)
-    struct setupPacket {
-       int pktLen;
-       int pathLen;
-       int detNum;
-       vector<int> ports;
-       vector<const char*> addr;
-       string path;
-    };
-    //#pragma pack(pop)
-    //}__attribute__((packed));
-    setupPacket* sp;
 
     
     //N clients for remote detectors
