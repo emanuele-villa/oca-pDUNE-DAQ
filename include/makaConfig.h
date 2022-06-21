@@ -1,6 +1,6 @@
 /*!
   \file makaConfig.h
-  \brief Class for configuration and (de)serialization
+  \brief Classes for MAKA configuration and start (de)serialization
   \author Mattia Barbanera (mattia.barbanera@infn.it)
 */
 
@@ -8,25 +8,27 @@
 
 //#pragma pack(push,1)
 #pragma pack(1)
+//! \brief Elements and methods for the configuration packet
 class configPacket {
 
   protected:
-    uint32_t detNum;
-    uint32_t pathLen;
-    std::vector<uint32_t> addrsSize;
+    uint32_t detNum;                  //!< Number of detectors
+    uint32_t pathLen;                 //!< Length of the data path string
+    std::vector<uint32_t> addrsSize;  //!< Size of each address
 
   public:
-    uint32_t pktLen;
-    std::vector<uint32_t> ports;
-    std::vector<std::string> addrs;
-    std::string dataPath;
-    uint32_t* msg;
+    uint32_t pktLen;                //!< Total lenght of the packet transmitted
+    std::vector<uint32_t> ports;    //!< Detector ports
+    std::vector<std::string> addrs; //!< Detector addresses
+    std::string dataPath;           //!< Data Path
+    uint32_t* msg;                  //!< Packet to be transmitted
 
     configPacket(std::vector<uint32_t> _ports, std::vector<std::string> _addrs,\
                   std::string _dataPath) {
       ports = _ports;
       addrs = _addrs;
       dataPath = _dataPath;
+      msg = nullptr;
       sizeUpdate();
     };
     
@@ -35,12 +37,10 @@ class configPacket {
       detNum = 0;
       pathLen = 0;
       dataPath.clear();
-      //dataPath = nullptr;
       msg = nullptr;
     };
 
     ~configPacket(){
-      //if (dataPath != nullptr) free(dataPath);
       dataPath.clear();
       if (msg != nullptr) free(msg);
       msg = nullptr;
@@ -131,11 +131,6 @@ class configPacket {
         bzero(addrTmp, sizeof(addrTmp));
         memcpy(addrTmp, inChar, addrsSize[jj]);
         inChar += addrsSize[jj];
-        //bzero(addrTmp, sizeof(addrTmp));
-        //for (mm=0; mm<addrsSize[jj]; mm++){
-        //  addrTmp[mm] = *inChar;
-        //  inChar++;
-        //}
         addrs.push_back(addrTmp);
       }
 
@@ -200,3 +195,120 @@ class configPacket {
 };
 //#pragma pack(pop)
 //}__attribute__((packed));
+
+
+#pragma pack(1)
+//! \brief Elements and methods for the start packet
+class startPacket {
+  protected:
+    uint32_t typeLen;
+
+  public:
+    uint32_t pktLen;
+    std::string type;
+    uint32_t num;
+    uint32_t time;
+    void* msg;
+
+    startPacket(std::string _runType, uint32_t _runNum, uint32_t _runTime) {
+      type = _runType;
+      num  = _runNum;
+      time = _runTime;
+      msg = nullptr;
+      sizeUpdate();
+    };
+    
+    startPacket(){
+      type.clear();
+      num  = 0;
+      time = 0;
+      msg = nullptr;
+    };
+
+    ~startPacket(){
+      type.clear();
+      if (msg != nullptr) free(msg);
+      msg = nullptr;
+    };
+
+    //! \brief Serialize all the struct fields into a void* buffer
+    void ser() {
+      sizeUpdate();
+      if (msg != nullptr) free(msg);
+      msg = (uint32_t*)malloc(pktLen);
+      uint32_t* outInt = (uint32_t*)msg;
+  
+      //Serialize uint32_t
+      *outInt = pktLen;
+      outInt++;
+      *outInt = num;
+      outInt++;
+      *outInt = time;
+      outInt++;
+      *outInt = typeLen;
+      outInt++;
+
+      char* outChar = (char*)outInt;
+      //Serialize data path
+      for (uint32_t mm=0; mm<typeLen; mm++){
+          *outChar = type[mm];
+          outChar++;
+        }
+
+    }
+
+    //! \brief Deserialize a void* buffer into fields of the class
+    void des(void* _in) {
+      uint32_t* inInt = (uint32_t*)_in;
+
+      //Clear type
+      type.clear();
+
+      //Deserialize uint32_t
+      pktLen = *inInt;
+      inInt++;
+      num = *inInt;
+      inInt++;
+      time = *inInt;
+      inInt++;
+      typeLen = *inInt;
+      inInt++;
+
+      //Deserialize type
+      char* inChar = (char*)inInt;
+      char* typeTmp = (char*) malloc(typeLen);
+      memcpy(typeTmp, inChar, typeLen);
+      type = typeTmp;
+      inChar += typeLen;
+    }
+
+    //! \brief Print all the class values
+    void dump() {
+      printf("Start packet:\n");
+      printf("  Packet length:  %u\n",  pktLen);
+      printf("  Run number:     %u\n",  num);
+      printf("  Unix time:      %u\n",  time);
+      printf("  Type Length:    %u\n",  typeLen);
+      printf("  Type:           %s\n",  type.c_str());
+    }
+
+    //! \brief << operator overload for streams
+    friend std::ostream& operator <<(std::ostream& _os, const startPacket & _sp) {
+      _os << "Start packet:  " << std::endl;
+      _os << "  Packet length:  " << _sp.pktLen << std::endl
+          << "  Run number:     " << _sp.num << std::endl
+          << "  Unix time:      " << _sp.time << std::endl
+          << "  Type Length:    " << _sp.typeLen << std::endl
+          << "  Type:           " << _sp.type << std::endl;
+      return _os;
+    }
+
+    //! \brief Update all the size fields
+    void sizeUpdate() {
+      typeLen = type.length();
+
+      pktLen = sizeof(pktLen) + sizeof(num) + sizeof(time)\
+                + sizeof(typeLen) + typeLen;
+
+    }
+};

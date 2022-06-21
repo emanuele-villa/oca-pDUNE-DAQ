@@ -63,18 +63,16 @@ int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,
 }
 
 int makaClient::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){
-  char msg[25];
-  
-  sprintf(msg, "%'- 8s%08x%08x", _runType, _runNum, _runTime);
-
-  printf("%s) Message: |%s|%x|%x|\n", __METHOD_NAME__, _runType, _runNum, _runTime);
-  printf("%s) Length: %lu - Message: |%s|\n", __METHOD_NAME__, sizeof(msg), msg);
+  startPacket* sp = new startPacket(_runType, _runNum, _runTime);
+  printf("%s) Configurations to be sent:\n", __METHOD_NAME__);
+  sp->dump();
 
   //Tx command
   if (SendCmd("runStart")==0) {
     printf("%s) Starting merger...\n", __METHOD_NAME__);
+    SendInt(sp->pktLen);
     //Tx configurations
-    Send(msg, sizeof(char)*25);
+    Send(sp->msg, sp->pktLen);
   }
   else {
     return 1;

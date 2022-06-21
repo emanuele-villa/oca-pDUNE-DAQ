@@ -142,7 +142,7 @@ int makaMerger::merger(){
   //                   begin(kRunType_upper), std::toupper);
 
   string humanDate = fileFormatDate(kRunTime);
-  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kDataPath.data(), kRunNum, kRunType, humanDate.c_str());
+  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kDataPath.data(), kRunNum, kRunType.c_str(), humanDate.c_str());
 
   printf("%s) Opening output file: %s\n", __METHOD_NAME__, dataFileName);
   FILE* dataFileD = fopen(dataFileName,"w");
@@ -310,13 +310,12 @@ void makaMerger::processCmds(char* msg){
     
     int pktLen = 0; //Packet length in bytes
     void* rxData;
-    int temp = 0;
 
     //Receive length and configPacket
     Rx(&pktLen, sizeof(int));
     
     rxData = malloc(pktLen);
-    temp = Rx(rxData, pktLen);
+    Rx(rxData, pktLen);
 
 
     //Deserialize data into configPacket class
@@ -339,30 +338,29 @@ void makaMerger::processCmds(char* msg){
 
     printf("%s) Received runStart command\n", __METHOD_NAME__);
     
-    //Receive run type, number, and time
-    char buff[25];
-    Rx(&buff, sizeof(char)*25);
+    int pktLen = 0; //Packet length in bytes
+    void* rxData;
 
-    printf("%s) Received from start: |%s|\n", __METHOD_NAME__, buff);
+    //Receive length and startPacket
+    Rx(&pktLen, sizeof(int));
+    
+    rxData = malloc(pktLen);
+    Rx(rxData, pktLen);
 
-    char typeRx[9];
-    memcpy(typeRx, buff, 8);
-    //typeRx[9] = 0;
-    if (strcmp(typeRx, "BEAM    ") == 0) {
-      strcpy(kRunType, "BEAM\0\0\0\0\0");
-    } else if (strcmp(typeRx, "CAL     ") == 0) {
-      strcpy(kRunType, "CAL\0\0\0\0\0\0");
-    } else {
-      exit(1);
-    }
 
-    //kRunType = (char*)string(buff).substr(0, 8).c_str();
-    kRunNum  = strtoul(string(buff).substr(8, 8).c_str(), nullptr, 16);
-    kRunTime = strtoul(string(buff).substr(16, 8).c_str(), nullptr, 16);
+    //Deserialize data into configPacket class
+    spRx->des((uint32_t*)rxData);
+    printf("Start configurations received:\n");
+    spRx->dump();
+    
+    //Copy configuration data
+    kRunType = spRx->type;
+    kRunNum  = spRx->num;
+    kRunTime = spRx->time;
 
     //Start run
     printf("%s) Starting run %u: %s - %x ...\n", __METHOD_NAME__, kRunNum,
-              kRunType, kRunTime);
+              kRunType.c_str(), kRunTime);
     runStart();
 
     Tx(&kOkVal, sizeof(kOkVal));

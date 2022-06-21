@@ -48,10 +48,11 @@ class makaMerger : public tcpServer {
     bool kRunning = false; //!<Flag for run state
     uint32_t kNEvts = 0; //!< Events in a run
     //uint32_t kRunTime //!<Run time
-    char kRunType[9];     //!<Run information: type
+    std::string kRunType;     //!<Run information: type
     uint32_t kRunNum;   //!<Run information: number
     uint32_t kRunTime;  //!<Run information: start time, in unix time
     configPacket* cpRx; //!<Configurations received from OCA
+    startPacket*  spRx; //!<Start received from OCA
 
     //UDP server to on-line monitor
     std::string kUdpAddr = "localhost"; //!< UDP Server address (x.x.x.x format)
