@@ -18,12 +18,12 @@ class configPacket {
 
   public:
     std::vector<uint32_t> ports;
-    std::vector<const char*> addrs;
-    char* dataPath;
+    std::vector<std::string> addrs;
+    std::string dataPath;
     uint32_t* msg;
 
-    configPacket(std::vector<uint32_t> _ports, std::vector<const char*> _addrs,\
-                  char* _dataPath) {
+    configPacket(std::vector<uint32_t> _ports, std::vector<std::string> _addrs,\
+                  std::string _dataPath) {
       ports = _ports;
       addrs = _addrs;
       dataPath = _dataPath;
@@ -34,12 +34,14 @@ class configPacket {
       pktLen = 0;
       detNum = 0;
       pathLen = 0;
-      dataPath = nullptr;
+      dataPath.clear();
+      //dataPath = nullptr;
       msg = nullptr;
     };
 
     ~configPacket(){
-      if (dataPath != nullptr) free(dataPath);
+      //if (dataPath != nullptr) free(dataPath);
+      dataPath.clear();
       if (msg != nullptr) free(msg);
     };
 
@@ -93,6 +95,12 @@ class configPacket {
       uint32_t* inInt = _in;
       uint32_t jj;
 
+      //Clear all vectors
+      ports.clear();
+      addrsSize.clear();
+      addrs.clear();
+      dataPath.clear();
+
       //Deserialize uint32_t
       pktLen = *inInt;
       inInt++;
@@ -105,9 +113,6 @@ class configPacket {
         desTemp = *inInt;
         inInt++;
         ports.push_back(desTemp);
-
-        //Debug
-        printf("Ports %d\n", ports[jj]);
       }
 
       for (jj=0; jj<detNum; jj++) {
@@ -115,9 +120,6 @@ class configPacket {
         desTemp = *inInt;
         inInt++;
         addrsSize.push_back(desTemp);
-
-        //Debug
-        printf("AddrsSize %d\n", addrsSize[jj]);
       }
 
       char* inChar = (char*)inInt;
@@ -133,16 +135,13 @@ class configPacket {
         //  inChar++;
         //}
         addrs.push_back(addrTmp);
-
-        //Debug
-        printf("Addresses %s (%d)\n", addrs[jj], addrsSize[jj]);
       }
 
       //Deserialize path
-      dataPath = (char*) malloc(pathLen);
-      memcpy(dataPath, inChar, pathLen);
+      char* dataPathTmp = (char*) malloc(pathLen);
+      memcpy(dataPathTmp, inChar, pathLen);
+      dataPath = dataPathTmp;
       inChar += pathLen;
-
     }
 
     //! \brief Print all the class values
@@ -151,10 +150,10 @@ class configPacket {
       printf("  Packet length:        %u\n",  pktLen);
       printf("  Number of detectors:  %u\n",  detNum);
       printf("  Path Length:          %u\n",  pathLen);
-      printf("  Path:                 %s\n",  dataPath);
+      printf("  Path:                 %s\n",  dataPath.c_str());
       printf("  Detectors:\n");
       for (size_t ii=0; ii<ports.size(); ii++){
-        printf("      %lu:                %s:%u,%u\n", ii, addrs[ii], ports[ii], addrsSize[ii]);
+        printf("      %lu:                %s:%u,%u\n", ii, addrs[ii].c_str(), ports[ii], addrsSize[ii]);
       }
     }
 
@@ -185,11 +184,11 @@ class configPacket {
       addrsSize.clear();
       uint32_t sizeAddrTot = 0;
       for (auto addr : addrs) {
-        addrsSize.push_back(strlen(addr));
-        sizeAddrTot += strlen(addr);
+        addrsSize.push_back(addr.length());
+        sizeAddrTot += addr.length();
       }
 
-      pathLen = strlen(dataPath);
+      pathLen = dataPath.length();
 
       pktLen = sizeof(pktLen) + sizeof(detNum) + sizeof(pathLen) + detNum*(sizeof(ports [0]) + sizeof(addrsSize[0]))\
                  + sizeAddrTot + pathLen;
