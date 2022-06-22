@@ -38,11 +38,17 @@ int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,
                         vector<string> _detAddrs){
   //PAPERO opens the socket on OCAport+1
   vector<uint32_t> makaPorts;
-  for (auto port : _detPorts) {
-    makaPorts.push_back(port+1);
+  vector<string> makaAddrs;
+  //FIXME: Removing trigger board (for the moment, with a fixed IP address)
+  for (int ii=0; ii<_detPorts.size(); ii++) {
+    if (_detAddrs[ii]!="192.168.2.177") {
+      makaPorts.push_back(_detPorts[ii]+1);
+      makaAddrs.push_back(_detAddrs[ii]);
+    }
   }
 
-  configPacket* cp = new configPacket(makaPorts, _detAddrs, _dataPath);
+
+  configPacket* cp = new configPacket(makaPorts, makaAddrs, _dataPath);
   
   printf("%s) Configurations to be sent:\n", __METHOD_NAME__);
   cp->dump();
