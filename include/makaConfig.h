@@ -208,7 +208,7 @@ class startPacket {
     std::string type;
     uint32_t num;
     uint32_t time;
-    void* msg;
+    uint32_t* msg;
 
     startPacket(std::string _runType, uint32_t _runNum, uint32_t _runTime) {
       type = _runType;
@@ -236,7 +236,7 @@ class startPacket {
       sizeUpdate();
       if (msg != nullptr) free(msg);
       msg = (uint32_t*)malloc(pktLen);
-      uint32_t* outInt = (uint32_t*)msg;
+      uint32_t* outInt = msg;
   
       //Serialize uint32_t
       *outInt = pktLen;
@@ -258,7 +258,7 @@ class startPacket {
     }
 
     //! \brief Deserialize a void* buffer into fields of the class
-    void des(void* _in) {
+    void des(uint32_t* _in) {
       uint32_t* inInt = (uint32_t*)_in;
 
       //Clear type
@@ -276,10 +276,10 @@ class startPacket {
 
       //Deserialize type
       char* inChar = (char*)inInt;
-      char* typeTmp = (char*) malloc(typeLen);
+      char* typeTmp = (char*) malloc(typeLen+1);
+      bzero(typeTmp, typeLen+1);
       memcpy(typeTmp, inChar, typeLen);
       type = typeTmp;
-      inChar += typeLen;
     }
 
     //! \brief Print all the class values

@@ -36,7 +36,13 @@ void makaClient::cmdLenHandshake(int _cmdLen){
 
 int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,
                         vector<string> _detAddrs){
-  configPacket* cp = new configPacket(_detPorts, _detAddrs, _dataPath);
+  //PAPERO opens the socket on OCAport+1
+  vector<uint32_t> makaPorts;
+  for (auto port : _detPorts) {
+    makaPorts.push_back(port+1);
+  }
+
+  configPacket* cp = new configPacket(makaPorts, _detAddrs, _dataPath);
   
   printf("%s) Configurations to be sent:\n", __METHOD_NAME__);
   cp->dump();
@@ -62,7 +68,7 @@ int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,
   return ret;
 }
 
-int makaClient::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){
+int makaClient::runStart(std::string _runType, uint32_t _runNum, uint32_t _runTime){
   startPacket* sp = new startPacket(_runType, _runNum, _runTime);
   printf("%s) Configurations to be sent:\n", __METHOD_NAME__);
   sp->dump();
@@ -72,11 +78,14 @@ int makaClient::runStart(char* _runType, uint32_t _runNum, uint32_t _runTime){
     printf("%s) Starting merger...\n", __METHOD_NAME__);
     SendInt(sp->pktLen);
     //Tx configurations
+    sp->ser();
     Send(sp->msg, sp->pktLen);
   }
   else {
     return 1;
+    delete sp;
   }
+  delete sp;
   
   int ret = checkReply("Starting Run");
   

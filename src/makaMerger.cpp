@@ -14,6 +14,7 @@ makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   runStop();
   clearDetLists();
   cpRx = new configPacket();
+  spRx = new startPacket();
 
   //On-line monitor with UDP server
   omClient = new udpClient(kUdpAddr, kUdpPort, false);
@@ -34,6 +35,7 @@ makaMerger::~makaMerger(){
   runStop();
   clearDetLists();
   delete cpRx;
+  delete spRx;
 }
 
 /*------------------------------------------------------------------------------
@@ -58,7 +60,7 @@ void makaMerger::clearDetectors(){
 
 void makaMerger::setUpDetectors(){
   for (uint32_t ii=0; ii<kDetAddrs.size(); ii++) {
-    kDet.push_back(new tcpclient(kDetAddrs[ii].c_str(), kDetPorts[ii], kVerbosity));
+    kDet.push_back(new tcpclient(kDetAddrs[ii].c_str(), (int)kDetPorts[ii], kVerbosity));
   }
 }
 //------------------------------------------------------------------------------
@@ -344,9 +346,8 @@ void makaMerger::processCmds(char* msg){
     //Receive length and startPacket
     Rx(&pktLen, sizeof(int));
     
-    rxData = malloc(pktLen);
+    rxData = (uint32_t*)malloc(pktLen);
     Rx(rxData, pktLen);
-
 
     //Deserialize data into configPacket class
     spRx->des((uint32_t*)rxData);
@@ -362,6 +363,8 @@ void makaMerger::processCmds(char* msg){
     printf("%s) Starting run %u: %s - %x ...\n", __METHOD_NAME__, kRunNum,
               kRunType.c_str(), kRunTime);
     runStart();
+    
+    free(rxData);
 
     Tx(&kOkVal, sizeof(kOkVal));
   }

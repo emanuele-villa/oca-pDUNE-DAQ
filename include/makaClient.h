@@ -60,7 +60,7 @@ class makaClient : public tcpclient {
       Send cmd=runStart
       Send configurations
     */
-    int runStart(char* _runType, uint32_t _runNum, uint32_t _runTime);
+    int runStart(std::string _runType, uint32_t _runNum, uint32_t _runTime);
 
     /*
       Send cmd=runStop
