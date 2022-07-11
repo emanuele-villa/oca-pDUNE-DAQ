@@ -36,14 +36,19 @@ udpSocket::udpSocket(const std::string &_addr, int _port, bool _blocking) {
     exit(EXIT_FAILURE);
   }
 
+  kSockDesc = -1;
   //Setup the socket
   udpSocket::setup();
 
 }
 
 udpSocket::~udpSocket() {
-  freeaddrinfo(kAddrInfo);
-  close(kSockDesc);
+  printf("%s) Deleting UDP socket...\n", __METHOD_NAME__);
+  if (kSockDesc > 0) {
+    freeaddrinfo(kAddrInfo);
+    close(kSockDesc);
+  }
+  kSockDesc = -1;
 }
 
 void udpSocket::setup() {
@@ -52,7 +57,7 @@ void udpSocket::setup() {
   socklen_t optLen = sizeof(optval);
 
   //Exit, if already exists
-  if (kSockDesc >0) {
+  if (kSockDesc>0) {
     freeaddrinfo(kAddrInfo);
     printf("Socket already exists.\n");
     exit(EXIT_FAILURE);

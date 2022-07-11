@@ -16,9 +16,6 @@ makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   cpRx = new configPacket();
   spRx = new startPacket();
 
-  //On-line monitor with UDP server
-  omClient = new udpClient(kUdpAddr, kUdpPort, false);
-
   //Initialize server
   if (_net){
     kAddr.sin_family      = AF_INET; //For network communication
@@ -75,6 +72,8 @@ void makaMerger::runStart(){
   printf("%s) Setup Detectors\n", __METHOD_NAME__);
   //Start clients
   setUpDetectors();
+  //Create UDP server for On-line Monitor
+  omClient = new udpClient(kUdpAddr, kUdpPort, false);
 
   printf("%s) Spawn thread\n", __METHOD_NAME__);
   //Start thread to merge data
@@ -94,6 +93,10 @@ void makaMerger::runStop(int _sleep){
   printf("%s) Stop thread\n", __METHOD_NAME__);
   //Stop thread
   if (kMerger3d.joinable()) kMerger3d.join();
+
+  printf("%s) Delete UDP Server\n", __METHOD_NAME__);
+  //UDP Server for OM
+  delete omClient;
 }
 //------------------------------------------------------------------------------
 
