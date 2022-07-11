@@ -34,8 +34,9 @@ void makaClient::cmdLenHandshake(int _cmdLen){
 
 }
 
-int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,
-                        vector<string> _detAddrs){
+int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,\
+                        vector<string> _detAddrs, bool _dataToFile,\
+                        bool _dataToOm, uint32_t _omPreScale){
   //PAPERO opens the socket on OCAport+1
   vector<uint32_t> makaPorts;
   vector<string> makaAddrs;
@@ -48,7 +49,8 @@ int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,
   }
 
 
-  configPacket* cp = new configPacket(makaPorts, makaAddrs, _dataPath);
+  configPacket* cp = new configPacket(makaPorts, makaAddrs, _dataPath,\
+                                      _dataToFile, _dataToOm, _omPreScale);
   
   printf("%s) Configurations to be sent:\n", __METHOD_NAME__);
   cp->dump();

@@ -21,13 +21,20 @@ class configPacket {
     std::vector<uint32_t> ports;    //!< Detector ports
     std::vector<std::string> addrs; //!< Detector addresses
     std::string dataPath;           //!< Data Path
+    uint32_t omPreScale;           //!< Prescaling factor toward OM
+    bool dataToFile;                //!< If true, write to file
+    bool dataToOm;                  //!< If true, send data to UDP OM
     uint32_t* msg;                  //!< Packet to be transmitted
 
     configPacket(std::vector<uint32_t> _ports, std::vector<std::string> _addrs,\
-                  std::string _dataPath) {
+                  std::string _dataPath, bool _dataToFile = true,\
+                  bool _dataToOm = true, uint32_t _omPreScale = 10) {
       ports = _ports;
       addrs = _addrs;
       dataPath = _dataPath;
+      omPreScale = _omPreScale;
+      dataToFile = _dataToFile;
+      dataToOm = _dataToOm;
       msg = nullptr;
       sizeUpdate();
     };
@@ -37,6 +44,9 @@ class configPacket {
       detNum = 0;
       pathLen = 0;
       dataPath.clear();
+      omPreScale = 10;
+      dataToFile = true;
+      dataToOm = true;
       msg = nullptr;
     };
 
@@ -73,8 +83,19 @@ class configPacket {
         *outInt = addrSize;
         outInt++;
       }
+
+      //Serialize OM pre-scale
+      *outInt = omPreScale;
+      outInt++;
+
+      bool* outBool = (bool*)outInt;
+      //Serialize file and om enablers
+      *outBool = dataToFile;
+      outBool++;
+      *outBool = dataToOm;
+      outBool++;
   
-      char* outChar = (char*)outInt;
+      char* outChar = (char*)outBool;
       //Serialize addresses
       for (jj=0; jj<detNum; jj++) {
         for (mm=0; mm<addrsSize[jj]; mm++){
@@ -124,7 +145,18 @@ class configPacket {
         addrsSize.push_back(desTemp);
       }
 
-      char* inChar = (char*)inInt;
+      //Deserialize OM prescale
+      omPreScale = *inInt;
+      inInt++;
+
+      bool* inBool = (bool*)inInt;
+      //Serialize file and om enablers
+      dataToFile = *inBool;
+      inBool++;
+      dataToOm = *inBool;
+      inBool++;
+
+      char* inChar = (char*)inBool;
       //Deserialize addresses
       for (jj=0; jj<detNum; jj++) {
         char addrTmp[16];
@@ -148,6 +180,9 @@ class configPacket {
       printf("  Number of detectors:  %u\n",  detNum);
       printf("  Path Length:          %u\n",  pathLen);
       printf("  Path:                 %s\n",  dataPath.c_str());
+      printf("  Write to file:        %s\n",  dataToFile?"true":"false");
+      printf("  Send to OM:           %s\n",  dataToOm?"true":"false");
+      printf("  OM Pre-Scale:         %u\n",  omPreScale);
       printf("  Detectors:\n");
       for (size_t ii=0; ii<ports.size(); ii++){
         printf("      %lu:                %s:%u,%u\n", ii, addrs[ii].c_str(), ports[ii], addrsSize[ii]);
@@ -160,7 +195,10 @@ class configPacket {
       _os << "  Packet length:        " << _cp.pktLen << std::endl
           << "  Number of detectors:  " << _cp.detNum << std::endl
           << "  Path Length:          " << _cp.pathLen << std::endl
-          << "  Path:                 " << _cp.dataPath << std::endl;
+          << "  Path:                 " << _cp.dataPath << std::endl
+          << "  Write to file:        " << _cp.dataToFile << std::endl
+          << "  Send to OM:           " << _cp.dataToOm << std::endl
+          << "  OM Pre-Scale:         " << _cp.omPreScale << std::endl;
       _os << "  Detectors:" << std::endl;
       for (size_t ii=0; ii<_cp.ports.size(); ii++){
         _os << "      " << ii << ":                " << _cp.addrs[ii] << ":"
@@ -187,8 +225,10 @@ class configPacket {
 
       pathLen = dataPath.length();
 
-      pktLen = sizeof(pktLen) + sizeof(detNum) + sizeof(pathLen) + detNum*(sizeof(ports [0]) + sizeof(addrsSize[0]))\
-                 + sizeAddrTot + pathLen;
+      pktLen = sizeof(pktLen) + sizeof(detNum) + sizeof(pathLen)\
+                + detNum*(sizeof(ports [0]) + sizeof(addrsSize[0]))\
+                + sizeAddrTot + pathLen + sizeof(omPreScale)\
+                + sizeof(dataToFile) + sizeof(dataToOm);
 
     }
 

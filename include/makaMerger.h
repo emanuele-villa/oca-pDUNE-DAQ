@@ -51,6 +51,9 @@ class makaMerger : public tcpServer {
     std::string kRunType;     //!<Run information: type
     uint32_t kRunNum;   //!<Run information: number
     uint32_t kRunTime;  //!<Run information: start time, in unix time
+    bool kDataToFile; //!< Write data to file
+    bool kDataToOm;   //!< Send data to On-line Monitor
+    uint32_t kOmPreScale; //!< On-line Monitor Prescale factor
     configPacket* cpRx; //!<Configurations received from OCA
     startPacket*  spRx; //!<Start received from OCA
 

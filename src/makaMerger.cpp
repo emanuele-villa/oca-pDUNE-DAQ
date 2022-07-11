@@ -332,6 +332,10 @@ void makaMerger::processCmds(char* msg){
     kDataPath = cpRx->dataPath;
     kDetPorts = cpRx->ports;
     kDetAddrs = cpRx->addrs;
+    kDataToFile = cpRx->dataToFile;
+    kDataToOm = cpRx->dataToOm;
+    kOmPreScale = cpRx->omPreScale;
+
     
     free(rxData);
     

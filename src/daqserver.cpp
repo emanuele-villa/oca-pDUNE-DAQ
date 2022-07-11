@@ -53,7 +53,8 @@ void daqserver::SetUpConfigClients(){
   SetListDetectors();
 
   //Configure MAKA client
-  maka->setup(daqConf.dataFolder, portdet, addressdet);
+  maka->setup(daqConf.dataFolder, portdet, addressdet, daqConf.makaSendToFile,\
+              daqConf.makaSendToOm, daqConf.makaOmPreScale);
 
   //Start the socket
   SockStart();
