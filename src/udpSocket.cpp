@@ -188,6 +188,10 @@ udpServer::udpServer(const std::string& _addr, int _port, bool _blocking) :\
   std::cout << kAddrInfo->ai_addr <<std::endl;
 }
 
+udpServer::~udpServer(){
+  printf("Deleting UDP Server...\n");
+}
+
 //--- UDP Client ---------------------------------------------------------------
 udpClient::udpClient(const std::string& _addr, int _port, bool _blocking) :\
             udpSocket::udpSocket(_addr, _port, _blocking) {
@@ -204,4 +208,8 @@ udpClient::udpClient(const std::string& _addr, int _port, bool _blocking) :\
     printf("%s) UDP Client created and binded: host=%s, serv=%s\n",\
               __METHOD_NAME__, hbuf, sbuf);
 
+}
+
+udpClient::~udpClient(){
+  printf("Deleting UDP Client...\n");
 }
