@@ -40,7 +40,7 @@ int makaClient::setup(string _dataPath, vector<uint32_t> _detPorts,
   vector<uint32_t> makaPorts;
   vector<string> makaAddrs;
   //FIXME: Removing trigger board (for the moment, with a fixed IP address)
-  for (int ii=0; ii<_detPorts.size(); ii++) {
+  for (size_t ii=0; ii<_detPorts.size(); ii++) {
     if (_detAddrs[ii]!="192.168.2.177") {
       makaPorts.push_back(_detPorts[ii]+1);
       makaAddrs.push_back(_detAddrs[ii]);
