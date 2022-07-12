@@ -147,7 +147,10 @@ int makaMerger::merger(){
   //                   begin(kRunType_upper), std::toupper);
 
   string humanDate = fileFormatDate(kRunTime);
-  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kDataPath.data(), kRunNum, kRunType.c_str(), humanDate.c_str());
+  if (kDataToFile)
+    sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kDataPath.data(), kRunNum, kRunType.c_str(), humanDate.c_str());
+  else
+    sprintf(dataFileName,"/dev/null");
 
   printf("%s) Opening output file: %s\n", __METHOD_NAME__, dataFileName);
   FILE* dataFileD = fopen(dataFileName,"w");
@@ -194,6 +197,8 @@ int makaMerger::collector(FILE* _dataFile){
   
   constexpr uint32_t header = 0xfa4af1ca;//FIX ME: this header must be done properly. In particular the real length (written by this master, not the one in the payload, after the SoP word) 
   bool headerWritten = false;
+  bool dataToOm = kDataToOm & (kNEvts%kOmPreScale==0 ? true : false);
+  printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
   // FIX ME: replace kRunning with proper timeout
   do {
     for (uint32_t ii=0; ii<kDet.size(); ii++) {
@@ -209,11 +214,11 @@ int makaMerger::collector(FILE* _dataFile){
 	      if(replied.count() == 1 && !headerWritten){
 	        ++kNEvts;
 	        fwrite(&header, 4, 1, _dataFile); //header to file
-          omClient->Tx(&header, 4); //header to OM
+          if (dataToOm) omClient->Tx(&header, 4); //header to OM
 	        headerWritten = true;
 	      }
 	      writeRet += fwrite(evt.data(), evtLen, 1, _dataFile); //Event to file
-        omClient->Tx(evt.data(), evtLen); //Event to OM
+        if (dataToOm) omClient->Tx(evt.data(), evtLen); //Event to OM
 
 	      if (kVerbosity>0) {
 	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__,\
