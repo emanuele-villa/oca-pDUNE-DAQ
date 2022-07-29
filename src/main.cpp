@@ -64,8 +64,8 @@ int main(int argc, char *argv[]) {
   daqsrv->SetCalibrationMode(1);
   //  daqsrv->SetCalibrationMode(0);
   sleep(1);
-  //daqsrv->SelectTrigger(0);
-    daqsrv->SelectTrigger(1);
+  daqsrv->SelectTrigger(0);
+  //daqsrv->SelectTrigger(1);
     daqsrv->ReadAllRegs();
     std::cout<<"----------Lettura registro 2----------"<<std::endl;
     daqsrv->ReadReg(2);

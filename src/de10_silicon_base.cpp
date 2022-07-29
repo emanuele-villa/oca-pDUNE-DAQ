@@ -21,7 +21,7 @@ de10_silicon_base::de10_silicon_base(const char *address, int port, int _detid, 
   ConfigureTestUnit(0);
   dataEn = 1;
   //  SetIntTriggerPeriod(0x02faf080);
-  SetIntTriggerPeriod(0x002625a0);
+  SetIntTriggerPeriod(0x7a120);
   SetCalibrationMode(0);
   SelectTrigger(0);
   pktLen = 0x0000002A;
@@ -118,7 +118,7 @@ int de10_silicon_base::Init() {
     SendInt(regContent);
     
     //Register 7
-    regContent  = delay | 0x01070000;
+    regContent  = delay | 0x01200000;
     SendInt(regContent);
   }
   else {
