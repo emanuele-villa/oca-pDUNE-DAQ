@@ -198,7 +198,7 @@ int makaMerger::collector(FILE* _dataFile){
   constexpr uint32_t header = 0xfa4af1ca;//FIX ME: this header must be done properly. In particular the real length (written by this master, not the one in the payload, after the SoP word) 
   bool headerWritten = false;
   bool dataToOm = kDataToOm & (kNEvts%kOmPreScale==0 ? true : false);
-  printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
+  //printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
   // FIX ME: replace kRunning with proper timeout
   do {
     for (uint32_t ii=0; ii<kDet.size(); ii++) {
