@@ -338,6 +338,16 @@ void* receiver_comandi(int* sockIn){
 
         sendSocket(openConn, &okVal, sizeof(okVal));
       }
+      else if(strcmp(msg, "cmd=writeReg") == 0){
+        uint32_t regAddr = 0;
+        uint32_t regContent;
+        receiveSocket(openConn, &regAddr, sizeof(regAddr));
+        receiveSocket(openConn, &regContent, sizeof(regContent));
+        
+        singleWriteReg(regAddr, regContent);
+        
+        sendSocket(openConn, &okVal, sizeof(okVal));
+      }
       else if(strcmp(msg, "cmd=readReg") == 0){
         uint32_t regAddr = 0;
         uint32_t regContent;
