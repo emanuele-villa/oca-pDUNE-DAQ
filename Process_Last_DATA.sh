@@ -18,17 +18,17 @@ CAL_NAME_ROOTFILE=${LAST_CAL:18:19}
 BEAM_NUM=${LAST_BEAM:18:19}
 
 #Delete calibration files
-rm -vf $calibPath/$CAL_NAME_ROOTFILE*
+#rm -vf $calibPath/$CAL_NAME_ROOTFILE*
+##
+##Convert and compute calibration
+#$scriptPath/PAPERO_convert --boards 5 $rawPath/$LAST_CAL.dat $comprPath/$LAST_CAL.root
+#$scriptPath/calibration --fast --output $calibPath/$CAL_NAME_ROOTFILE $comprPath/$LAST_CAL.root
 #
-#Convert and compute calibration
-$scriptPath/PAPERO_convert --boards 5 $rawPath/$LAST_CAL.dat $comprPath/$LAST_CAL.root
-$scriptPath/calibration --fast --output $calibPath/$CAL_NAME_ROOTFILE $comprPath/$LAST_CAL.root
-
-#Convert run file
-$scriptPath/PAPERO_convert --boards 5 $rawPath/$LAST_BEAM.dat $comprPath/$LAST_BEAM.root
-
-#Clusterize
-$scriptPath/raw_clusterize --version 2020 --output analysis/PROFILE_$BEAM_NUM --calibration $calibPath/$CAL_NAME_ROOTFILE.cal  $comprPath/$LAST_BEAM.root --max_histo_ADC 1500
+##Convert run file
+#$scriptPath/PAPERO_convert --boards 5 $rawPath/$LAST_BEAM.dat $comprPath/$LAST_BEAM.root
+#
+##Clusterize
+#$scriptPath/raw_clusterize --version 2020 --output analysis/PROFILE_$BEAM_NUM --calibration $calibPath/$CAL_NAME_ROOTFILE.cal  $comprPath/$LAST_BEAM.root --max_histo_ADC 1500
 
 
 #*******AMS*****
@@ -67,6 +67,13 @@ echo "LAST BLOCK: "$INPUT2
 
 DIR=${INPUT:0:4}
 FILE=${INPUT:5:8}
+
+FILE_TO_WRITE="/home/footpg-daq/PG_MSD/Root/analysis/*_withCAL_"$DIR"."$FILE.root 
+FILE_ADDED="/home/footpg-daq/PG_MSD/Root/rawdata_AMS_hacked/AMS_L0_${INPUT1:0:4}"."${INPUT1:5:8}*"
+
+rm -fv $FILE_TO_WRITE
+rm -fv $FILE_ADDED
+
 
 #Calibration (after conversion)
 ./AMS_convert rawdata_AMS/$INPUT compressed/AMS_L0_$DIR"_"$FILE.root
