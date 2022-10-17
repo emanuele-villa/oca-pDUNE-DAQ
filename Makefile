@@ -66,13 +66,13 @@ HPSOPTFLAG := -g
 # HPSOPTFLAG := -O2
 
 # Objects and sources:
-OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/daqConfig.o $(OBJ)/paperoConfig.o $(OBJ)/anyoption.o $(OBJ)/makaClient.o
+OBJECTS=$(OBJ)/main.o $(OBJ)/de10_silicon_base.o $(OBJ)/tcpclient.o $(OBJ)/daqserver.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/daqConfig.o $(OBJ)/paperoConfig.o $(OBJ)/anyoption.o $(OBJ)/makaClient.o $(OBJ)/udpSocket.o
 
 OBJECTSTEST=$(OBJ)/maintest.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 OBJECTSSTART=$(OBJ)/mainstart.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 OBJECTSSTOP=$(OBJ)/mainstop.o $(OBJ)/daqclient.o $(OBJ)/tcpclient.o $(OBJ)/utility.o
 
-OBJECTSMAKA=$(OBJ)/tcpclient.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/anyoption.o $(OBJ)/maka.o $(OBJ)/makaMerger.o
+OBJECTSMAKA=$(OBJ)/tcpclient.o $(OBJ)/tcpServer.o $(OBJ)/utility.o $(OBJ)/anyoption.o $(OBJ)/maka.o $(OBJ)/makaMerger.o $(OBJ)/udpSocket.o
 
 OBJECTSHPS := $(OBJARM)/papero.o $(OBJARM)/hpsDataServer.o $(OBJARM)/hpsServer.o $(OBJARM)/tcpServer.o $(OBJARM)/utility.o $(OBJARM)/fpgaDriver.o $(OBJARM)/axiFifo.o
 
@@ -82,13 +82,14 @@ OCADAQ := $(EXE)/OCA
 OCATEST := $(EXE)/testOCA
 OCASTART := $(EXE)/startOCA
 OCASTOP := $(EXE)/stopOCA
-
 MAKA := $(EXE)/MAKA
 
 # Rules:
 all: clean $(OCADAQ) $(OCATEST) $(MAKA) $(PAPERO) $(OCASTART) $(OCASTOP) $(PAPERO)
 
-oca: cleanoca $(OCADAQ) $(OCATEST)
+oca: $(OCADAQ) $(OCATEST)
+
+maka: $(MAKA)
 
 startstop : $(OCASTART) $(OCASTOP)
 

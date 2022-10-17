@@ -76,6 +76,15 @@ int daqConfig::config(istream& is)
         case 8:
           readOption<bool>(conf.intTrigEn, word);
           break;
+        case 9:
+          readOption<bool>(conf.makaSendToFile, word);
+          break;
+        case 10:
+          readOption<bool>(conf.makaSendToOm, word);
+          break;
+        case 11:
+          readOption<uint32_t>(conf.makaOmPreScale, word);
+          break;
         default:
           cout << __METHOD_NAME__ << ") Too many columns in config file." << endl;
           exit(1);

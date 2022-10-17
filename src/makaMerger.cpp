@@ -13,6 +13,8 @@ makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   kCmdLen = 24;
   runStop();
   clearDetLists();
+  cpRx = new configPacket();
+  spRx = new startPacket();
 
   //Initialize server
   if (_net){
@@ -29,6 +31,8 @@ makaMerger::~makaMerger(){
   StopListening();
   runStop();
   clearDetLists();
+  delete cpRx;
+  delete spRx;
 }
 
 /*------------------------------------------------------------------------------
@@ -53,7 +57,7 @@ void makaMerger::clearDetectors(){
 
 void makaMerger::setUpDetectors(){
   for (uint32_t ii=0; ii<kDetAddrs.size(); ii++) {
-    kDet.push_back(new tcpclient(kDetAddrs[ii], kDetPorts[ii], kVerbosity));
+    kDet.push_back(new tcpclient(kDetAddrs[ii].c_str(), (int)kDetPorts[ii], kVerbosity));
   }
 }
 //------------------------------------------------------------------------------
@@ -68,6 +72,8 @@ void makaMerger::runStart(){
   printf("%s) Setup Detectors\n", __METHOD_NAME__);
   //Start clients
   setUpDetectors();
+  //Create UDP server for On-line Monitor
+  omClient = new udpClient(kUdpAddr, kUdpPort, false);
 
   printf("%s) Spawn thread\n", __METHOD_NAME__);
   //Start thread to merge data
@@ -87,6 +93,10 @@ void makaMerger::runStop(int _sleep){
   printf("%s) Stop thread\n", __METHOD_NAME__);
   //Stop thread
   if (kMerger3d.joinable()) kMerger3d.join();
+
+  printf("%s) Delete UDP Server\n", __METHOD_NAME__);
+  //UDP Server for OM
+  delete omClient;
 }
 //------------------------------------------------------------------------------
 
@@ -137,7 +147,10 @@ int makaMerger::merger(){
   //                   begin(kRunType_upper), std::toupper);
 
   string humanDate = fileFormatDate(kRunTime);
-  sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kDataPath.data(), kRunNum, kRunType, humanDate.c_str());
+  if (kDataToFile)
+    sprintf(dataFileName,"%s/SCD_RUN%05d_%s_%s.dat", kDataPath.data(), kRunNum, kRunType.c_str(), humanDate.c_str());
+  else
+    sprintf(dataFileName,"/dev/null");
 
   printf("%s) Opening output file: %s\n", __METHOD_NAME__, dataFileName);
   FILE* dataFileD = fopen(dataFileName,"w");
@@ -184,6 +197,8 @@ int makaMerger::collector(FILE* _dataFile){
   
   constexpr uint32_t header = 0xfa4af1ca;//FIX ME: this header must be done properly. In particular the real length (written by this master, not the one in the payload, after the SoP word) 
   bool headerWritten = false;
+  bool dataToOm = kDataToOm & (kNEvts%kOmPreScale==0 ? true : false);
+  //printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
   // FIX ME: replace kRunning with proper timeout
   do {
     for (uint32_t ii=0; ii<kDet.size(); ii++) {
@@ -198,13 +213,16 @@ int makaMerger::collector(FILE* _dataFile){
 	      // only write the header when the first board replies
 	      if(replied.count() == 1 && !headerWritten){
 	        ++kNEvts;
-	        fwrite(&header, 4, 1, _dataFile);	  
+	        fwrite(&header, 4, 1, _dataFile); //header to file
+          if (dataToOm) omClient->Tx(&header, 4); //header to OM
 	        headerWritten = true;
 	      }
-	      writeRet += fwrite(evt.data(), evtLen, 1, _dataFile);
+	      writeRet += fwrite(evt.data(), evtLen, 1, _dataFile); //Event to file
+        if (dataToOm) omClient->Tx(evt.data(), evtLen); //Event to OM
 
 	      if (kVerbosity>0) {
-	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__, kDetAddrs[ii]);
+	        printf("%s) Get event from DE10 %s\n", __METHOD_NAME__,\
+                    kDetAddrs[ii].c_str());
 	        printf("  Bytes read: %d/%d\n", readSingle, evtLen);
 	        printf("  Writes performed: %d/%lu\n", writeRet, kDet.size());
 	      }
@@ -299,57 +317,34 @@ void makaMerger::processCmds(char* msg){
     clearDetLists();
 
     printf("%s) Received setup command\n", __METHOD_NAME__);
-
-    addDet("192.168.2.101", 5001);
-    addDet("192.168.2.102", 5001);
-    addDet("192.168.2.103", 5001);
-    kDataPath = "./data/";
-
-    Tx(&kOkVal, sizeof(kOkVal));
     
-    //int pktLen = 0; //Packet length in bytes
-    //void* rxData;
-    //
-    //clearDetLists();
-    //
-    //printf("%s) Received setup command\n", __METHOD_NAME__);
-    //
-    //int temp = 0;
-    ////Receive length and configuration struct
-    //Rx(&pktLen, sizeof(int));
-    //printf("Length of next configuration packet: %u\n", pktLen);
-    //rxData = malloc(pktLen);
-    //temp = Rx(rxData, pktLen);
-    //printf("Configurations received bytes: %d\n", temp);
-    ////Convert received data into struct
-    //sp = (setupPacket*)rxData;
-    //printf("Configurations converted\n");
-    //
-    //printf("Size of: sp: %ld - rxData %ld\n", sizeof(sp), sizeof(rxData));
-    //printf("Size of: detNum: %ld - pathLen %ld - pktLen %ld\n", sizeof(sp->detNum), sizeof(sp->pathLen), sizeof(sp->pktLen));
-    //
-    //printf("Struct pktLen, pathLen, and detNum: %d, %d, %d\n", sp->pktLen, sp->pathLen, sp->detNum);
-    //printf("Path:     %s\n", sp->path.c_str());
-    //for (uint32_t ii=0; ii<sp->ports.size(); ii++){
-    //  printf("  Detector Address %u:  %s\n", ii, sp->addr[ii]);
-    //  printf("  Detector Port %u:     %u\n", ii, sp->ports[ii]);
-    //}
-    //
-    //kDataPath = sp->path;
-    //kDetPorts = sp->ports;
-    //kDetAddrs = sp->addr;
-    //
-    //printf("Configurations received:\n");
-    //printf("File: %s\n", kDataPath.c_str());
-    //printf("%u Detector(s): \n", sp->detNum);
-    //for (int i=0; i<sp->detNum; i++){
-    //  printf("\t%u: Address: %s - Port: %u\n", i, kDetAddrs[i], kDetPorts[i]);
-    //  printf("\t%u: Port: %u\n", i, kDetPorts[i]);
-    //}
-    //
-    //Tx(&kOkVal, sizeof(kOkVal));
-    //free(rxData);
-    //printf("%d Finished sending\n", __LINE__);
+    int pktLen = 0; //Packet length in bytes
+    void* rxData;
+
+    //Receive length and configPacket
+    Rx(&pktLen, sizeof(int));
+    
+    rxData = malloc(pktLen);
+    Rx(rxData, pktLen);
+
+
+    //Deserialize data into configPacket class
+    cpRx->des((uint32_t*)rxData);
+    printf("Configurations received:\n");
+    cpRx->dump();
+    
+    //Copy configuration data
+    kDataPath = cpRx->dataPath;
+    kDetPorts = cpRx->ports;
+    kDetAddrs = cpRx->addrs;
+    kDataToFile = cpRx->dataToFile;
+    kDataToOm = cpRx->dataToOm;
+    kOmPreScale = cpRx->omPreScale;
+
+    
+    free(rxData);
+    
+    Tx(&kOkVal, sizeof(kOkVal));
 
   }
   else if (strcmp(msg, "cmd=runStart") == 0) {
@@ -357,31 +352,31 @@ void makaMerger::processCmds(char* msg){
 
     printf("%s) Received runStart command\n", __METHOD_NAME__);
     
-    //Receive run type, number, and time
-    char buff[25];
-    Rx(&buff, sizeof(char)*25);
+    int pktLen = 0; //Packet length in bytes
+    void* rxData;
 
-    printf("%s) Received from start: |%s|\n", __METHOD_NAME__, buff);
+    //Receive length and startPacket
+    Rx(&pktLen, sizeof(int));
+    
+    rxData = (uint32_t*)malloc(pktLen);
+    Rx(rxData, pktLen);
 
-    char typeRx[9];
-    memcpy(typeRx, buff, 8);
-    //typeRx[9] = 0;
-    if (strcmp(typeRx, "BEAM    ") == 0) {
-      strcpy(kRunType, "BEAM\0\0\0\0\0");
-    } else if (strcmp(typeRx, "CAL     ") == 0) {
-      strcpy(kRunType, "CAL\0\0\0\0\0\0");
-    } else {
-      exit(1);
-    }
-
-    //kRunType = (char*)string(buff).substr(0, 8).c_str();
-    kRunNum  = strtoul(string(buff).substr(8, 8).c_str(), nullptr, 16);
-    kRunTime = strtoul(string(buff).substr(16, 8).c_str(), nullptr, 16);
+    //Deserialize data into configPacket class
+    spRx->des((uint32_t*)rxData);
+    printf("Start configurations received:\n");
+    spRx->dump();
+    
+    //Copy configuration data
+    kRunType = spRx->type;
+    kRunNum  = spRx->num;
+    kRunTime = spRx->time;
 
     //Start run
     printf("%s) Starting run %u: %s - %x ...\n", __METHOD_NAME__, kRunNum,
-              kRunType, kRunTime);
+              kRunType.c_str(), kRunTime);
     runStart();
+    
+    free(rxData);
 
     Tx(&kOkVal, sizeof(kOkVal));
   }

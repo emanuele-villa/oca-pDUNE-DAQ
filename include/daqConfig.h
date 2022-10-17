@@ -38,6 +38,9 @@ class daqConfig
       string makaIpAddr;      //!MAKA IP address
       int makaPort;           //!TCP port to connect to MAKA
       int makaCmdLen;         //!Command length w.r.t. MAKA server
+      bool makaSendToFile;    //!MAKA write data to disk
+      bool makaSendToOm;      //!MAKA send events to On-line Monitor
+      uint32_t makaOmPreScale;//!MAKA pre-scale factor to OM
 
       void dump(){
         cout << "Listen to TCP client:      " << listenClient << endl;
@@ -49,6 +52,9 @@ class daqConfig
         cout << "MAKA IP Address:           " << makaIpAddr << endl;
         cout << "MAKA Port:                 " << makaPort << endl;
         cout << "MAKA command length:       " << makaCmdLen << endl;
+        cout << "MAKA Write to disk:        " << makaSendToFile << endl;
+        cout << "MAKA Send to OM:           " << makaSendToOm << endl;
+        cout << "MAKA OM PreScale:          " << makaOmPreScale << endl;
       }
     };
 

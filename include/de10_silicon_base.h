@@ -43,7 +43,7 @@ private:
 
 public:
   ~de10_silicon_base();
-  de10_silicon_base(const char *address, int port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb=0);
+  de10_silicon_base(const std::string address, uint32_t port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb=0);
 
   // virtual void changeText(const std::string& new_text) {};
   // virtual void sendData(std::vector<double> event) {};

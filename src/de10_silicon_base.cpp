@@ -5,7 +5,7 @@
 uint32_t okVal = 0xb01af1ca;
 uint32_t badVal = 0x000cacca;
 
-de10_silicon_base::de10_silicon_base(const char *address, int port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb):tcpclient(address, port, verb){
+de10_silicon_base::de10_silicon_base(std::string address, uint32_t port, paperoConfig::configParams* params, int _calMode, int _intTrig, int verb):tcpclient(address.c_str(), (int)port, verb){
   uint32_t cmdLenReply = 1;
 
   
