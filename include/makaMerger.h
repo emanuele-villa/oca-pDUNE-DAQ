@@ -47,7 +47,7 @@ class makaMerger : public tcpServer {
     int kCmdLen = 24; //!<Server commands length, handshaken with the client
     thread kMerger3d; //!<Thread that hosts the merger
     bool kRunning = false; //!<Flag for run state
-    uint32_t kNEvts = 0; //!< Events in a run
+    uint32_t kNEvts = 0; //!<Events in a run
     //uint32_t kRunTime //!<Run time
     std::string kRunType;     //!<Run information: type
     uint32_t kRunNum;   //!<Run information: number
@@ -63,14 +63,17 @@ class makaMerger : public tcpServer {
     int kUdpPort = 8890;  //!< UDP server port
     udpClient* omClient;
 
-    
     //N clients for remote detectors
     vector<tcpclient*> kDet; //!<Remote detectors clients
 
-    //1 UDP socket for on-line monitor
-
     /*
-      Write file header
+      Write file header:
+        Known word
+        UNIX time of the run
+        MAKA git hash
+        Type [31:28], Data Version [27:16], # detectors [15:0]
+        Detector ID 0 [31:16], Detector ID 1 [15:0]
+        .......
     */
     int fileHeader(FILE* _dataFile);
 

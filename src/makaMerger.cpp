@@ -106,7 +106,27 @@ void makaMerger::runStop(int _sleep){
   Merger, collector
 ------------------------------------------------------------------------------*/
 int makaMerger::fileHeader(FILE* _dataFile){
-  //FIXME add values to the beginning of file
+  size_t writeRet = 0;
+  uint32_t tempData;
+
+  tempData = 0xb01adeee;
+  writeRet += fwrite(&tempData, 4, 1, _dataFile); //Known word
+  writeRet += fwrite(&kRunTime, 4, 1, _dataFile); //UNIX time of the run
+  writeRet += fwrite(GIT_HASH, 4, 1, _dataFile); //MAKA git hash
+
+  uint8_t type = 0x01;
+  uint16_t version = 0x0200;
+  tempData =  ((type & 0x0f) << 28)
+            | ((version & 0x0fff) << 16)
+            | (kDetAddrs.size() & 0xffff);
+  writeRet += fwrite(&tempData, 4, 1, _dataFile); //Type, Data Version, # detectors
+
+  writeRet += fwrite(&kDetIds, sizeof(kDetIds[0]), kDetAddrs.size(), _dataFile);
+  //for (uint32_t ii=0; ii<kDetAddrs.size(); ii++) {
+  //  tempData = ((kDetIds[ii+1]&0x0000ffff)<<16) | (kDetIds[ii]&0x0000ffff);
+  //  writeRet += fwrite(&tempData, 4, 1, _dataFile); //Detector IDs...
+  //}
+
   return 0;
 }
 
@@ -160,6 +180,8 @@ int makaMerger::merger(){
     printf("%s) Error: file %s could not be created. Do the data dir %s exist?\n", __METHOD_NAME__, dataFileName, kDataPath.data());
     return -1;
   }
+  //Write header to data file
+  fileHeader(dataFileD);
 
   //----------------------------------------------------------------------------
   //Collect data from clients
