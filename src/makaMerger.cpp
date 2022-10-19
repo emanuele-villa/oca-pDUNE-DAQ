@@ -39,11 +39,13 @@ makaMerger::~makaMerger(){
   Detector list and set-up
 ------------------------------------------------------------------------------*/
 void makaMerger::clearDetLists(){
+  kDetIds.clear();
   kDetAddrs.clear();
   kDetPorts.clear();
 }
 
-void makaMerger::addDet(char* _addr, int _port){
+void makaMerger::addDet(uint32_t _id, char* _addr, int _port){
+  kDetIds.push_back(_id);
   kDetAddrs.push_back(_addr);
   kDetPorts.push_back(_port);
 }
@@ -335,6 +337,7 @@ void makaMerger::processCmds(char* msg){
     
     //Copy configuration data
     kDataPath = cpRx->dataPath;
+    kDetIds   = cpRx->ids;
     kDetPorts = cpRx->ports;
     kDetAddrs = cpRx->addrs;
     kDataToFile = cpRx->dataToFile;

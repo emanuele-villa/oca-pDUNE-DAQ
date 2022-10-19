@@ -40,6 +40,7 @@ class makaMerger : public tcpServer {
     //Configuration parameters
     const uint32_t kOkVal  = 0xb01af1ca; //!< OK  answer to client
     const uint32_t kBadVal = 0x000cacca; //!< NOK Answer to client
+    vector<uint32_t> kDetIds; //!<Remote detectors ports
     vector<std::string> kDetAddrs; //!<Remote detectors addresses
     vector<uint32_t> kDetPorts; //!<Remote detectors ports
     string kDataPath = "./data/"; //!<Folder path where to store data
@@ -122,7 +123,7 @@ class makaMerger : public tcpServer {
     /*
       Add detector address and port to lists
     */
-    void addDet(char* _addr, int _port);
+    void addDet(uint32_t _id, char* _addr, int _port);
 
     /*
       Close clients for the remote detectors

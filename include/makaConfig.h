@@ -18,17 +18,20 @@ class configPacket {
 
   public:
     uint32_t pktLen;                //!< Total lenght of the packet transmitted
+    std::vector<uint32_t> ids;      //!< Detector IDs
     std::vector<uint32_t> ports;    //!< Detector ports
     std::vector<std::string> addrs; //!< Detector addresses
     std::string dataPath;           //!< Data Path
-    uint32_t omPreScale;           //!< Prescaling factor toward OM
+    uint32_t omPreScale;            //!< Prescaling factor toward OM
     bool dataToFile;                //!< If true, write to file
     bool dataToOm;                  //!< If true, send data to UDP OM
     uint32_t* msg;                  //!< Packet to be transmitted
 
-    configPacket(std::vector<uint32_t> _ports, std::vector<std::string> _addrs,\
-                  std::string _dataPath, bool _dataToFile = true,\
-                  bool _dataToOm = true, uint32_t _omPreScale = 10) {
+    configPacket(std::vector<uint32_t> _ids, std::vector<uint32_t> _ports,\
+                  std::vector<std::string> _addrs, std::string _dataPath,\
+                   bool _dataToFile = true, bool _dataToOm = true,\
+                   uint32_t _omPreScale = 10) {
+      ids = _ids;
       ports = _ports;
       addrs = _addrs;
       dataPath = _dataPath;
@@ -72,6 +75,12 @@ class configPacket {
       *outInt = pathLen;
       outInt++;
   
+      //Serialize ids
+      for (auto id : ids) {
+        *outInt = id;
+        outInt++;
+      }
+
       //Serialize ports
       for (auto port : ports) {
         *outInt = port;
@@ -119,6 +128,7 @@ class configPacket {
       uint32_t jj;
 
       //Clear all vectors
+      ids.clear();
       ports.clear();
       addrsSize.clear();
       addrs.clear();
@@ -131,6 +141,14 @@ class configPacket {
       inInt++;
       pathLen = *inInt;
       inInt++;
+
+      for (jj=0; jj<detNum; jj++) {
+        //Deserialize ids
+        desTemp = *inInt;
+        inInt++;
+        ids.push_back(desTemp);
+      }
+
       for (jj=0; jj<detNum; jj++) {
         //Deserialize port
         desTemp = *inInt;
@@ -185,7 +203,8 @@ class configPacket {
       printf("  OM Pre-Scale:         %u\n",  omPreScale);
       printf("  Detectors:\n");
       for (size_t ii=0; ii<ports.size(); ii++){
-        printf("      %lu:                %s:%u,%u\n", ii, addrs[ii].c_str(), ports[ii], addrsSize[ii]);
+        printf("      %lu-%u:                %s:%u,%u\n", ii, ids[ii],\
+                                  addrs[ii].c_str(), ports[ii], addrsSize[ii]);
       }
     }
 
@@ -201,16 +220,16 @@ class configPacket {
           << "  OM Pre-Scale:         " << _cp.omPreScale << std::endl;
       _os << "  Detectors:" << std::endl;
       for (size_t ii=0; ii<_cp.ports.size(); ii++){
-        _os << "      " << ii << ":                " << _cp.addrs[ii] << ":"
-            << _cp.ports[ii] << ", " << _cp.addrsSize[ii] << std::endl;
+        _os <<"      "<<ii<<"-" <<_cp.ids[ii]<<":                "<<
+          _cp.addrs[ii]<<":"<<_cp.ports[ii]<<", "<<_cp.addrsSize[ii]<<std::endl;
       }
       return _os;
     }
 
     //! \brief Update all the size fields
     void sizeUpdate() {
-      if (ports.size() != addrs.size()) {
-        printf("Error: Port and address sizes mismatch\n");
+      if ((ports.size() != addrs.size()) | (ports.size() != ids.size())) {
+        printf("Error: ID, port, or address sizes mismatch\n");
         exit(1);
       }
 
@@ -226,7 +245,7 @@ class configPacket {
       pathLen = dataPath.length();
 
       pktLen = sizeof(pktLen) + sizeof(detNum) + sizeof(pathLen)\
-                + detNum*(sizeof(ports [0]) + sizeof(addrsSize[0]))\
+                + detNum*(sizeof(ports[0]) + sizeof(addrsSize[0]) + sizeof(ids[0]))\
                 + sizeAddrTot + pathLen + sizeof(omPreScale)\
                 + sizeof(dataToFile) + sizeof(dataToOm);
 
