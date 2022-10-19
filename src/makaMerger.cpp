@@ -222,7 +222,8 @@ int makaMerger::collector(FILE* _dataFile){
   // FIX ME: at most 64 detectors
   std::bitset<64> replied{0};
   
-  constexpr uint32_t header = 0xfa4af1ca;//FIX ME: this header must be done properly. In particular the real length (written by this master, not the one in the payload, after the SoP word) 
+  uint32_t evtHeader;
+  uint32_t evtLenHeader = sizeof(uint32_t)*(kDet.size() * 652 + 4);
   bool headerWritten = false;
   bool dataToOm = kDataToOm & (kNEvts%kOmPreScale==0 ? true : false);
   //printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
@@ -239,9 +240,23 @@ int makaMerger::collector(FILE* _dataFile){
 
 	      // only write the header when the first board replies
 	      if(replied.count() == 1 && !headerWritten){
-	        ++kNEvts;
-	        fwrite(&header, 4, 1, _dataFile); //header to file
-          if (dataToOm) omClient->Tx(&header, 4); //header to OM
+          evtHeader = 0xfa4af1ca;
+	        fwrite(&evtHeader, 4, 1, _dataFile); //Known word
+          if (dataToOm) omClient->Tx(&evtHeader, 4);
+          
+          //FIX ME: Use real lenght of the event, not this pre-computed one
+          fwrite(&evtLenHeader, 4, 1, _dataFile); //Event length
+          if (dataToOm) omClient->Tx(&evtLenHeader, 4);
+          
+          fwrite(&kNEvts, 4, 1, _dataFile); //Event number
+          if (dataToOm) omClient->Tx(&kNEvts, 4);
+
+          //FIX ME: Use real type of the event, not this pre-computed one
+          evtHeader =  0x10000000 | (kDetAddrs.size() & 0xffff);
+          fwrite(&evtHeader, 4, 1, _dataFile); //
+          if (dataToOm) omClient->Tx(&evtHeader, 4);
+          
+          ++kNEvts;
 	        headerWritten = true;
 	      }
 	      writeRet += fwrite(evt.data(), evtLen, 1, _dataFile); //Event to file
