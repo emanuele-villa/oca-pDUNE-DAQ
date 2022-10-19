@@ -121,11 +121,14 @@ int makaMerger::fileHeader(FILE* _dataFile){
             | (kDetAddrs.size() & 0xffff);
   writeRet += fwrite(&tempData, 4, 1, _dataFile); //Type, Data Version, # detectors
 
-  writeRet += fwrite(&kDetIds, sizeof(kDetIds[0]), kDetAddrs.size(), _dataFile);
-  //for (uint32_t ii=0; ii<kDetAddrs.size(); ii++) {
-  //  tempData = ((kDetIds[ii+1]&0x0000ffff)<<16) | (kDetIds[ii]&0x0000ffff);
-  //  writeRet += fwrite(&tempData, 4, 1, _dataFile); //Detector IDs...
-  //}
+  for (auto id : kDetIds){
+    writeRet += fwrite(&id, 2, 1, _dataFile); //Detector ID[n]
+  }
+  //0 padding to 32 bits
+  if (kDetAddrs.size()%2 == 1){
+    tempData = 0;
+    writeRet += fwrite(&tempData, 2, 1, _dataFile); //0 Padding
+  }
 
   return 0;
 }
@@ -365,7 +368,6 @@ void makaMerger::processCmds(char* msg){
     kDataToFile = cpRx->dataToFile;
     kDataToOm = cpRx->dataToOm;
     kOmPreScale = cpRx->omPreScale;
-
     
     free(rxData);
     
