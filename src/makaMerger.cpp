@@ -223,7 +223,7 @@ int makaMerger::collector(FILE* _dataFile){
   std::bitset<64> replied{0};
   
   uint32_t evtHeader;
-  uint32_t evtLenHeader = sizeof(uint32_t)*(kDet.size() * 652 + 4);
+  uint32_t evtLenHeader = sizeof(uint32_t)*(kDet.size() * 651 + 3);
   bool headerWritten = false;
   bool dataToOm = kDataToOm & (kNEvts%kOmPreScale==0 ? true : false);
   //printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
