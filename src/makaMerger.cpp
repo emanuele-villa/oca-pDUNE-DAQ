@@ -39,11 +39,13 @@ makaMerger::~makaMerger(){
   Detector list and set-up
 ------------------------------------------------------------------------------*/
 void makaMerger::clearDetLists(){
+  kDetIds.clear();
   kDetAddrs.clear();
   kDetPorts.clear();
 }
 
-void makaMerger::addDet(char* _addr, int _port){
+void makaMerger::addDet(uint32_t _id, char* _addr, int _port){
+  kDetIds.push_back(_id);
   kDetAddrs.push_back(_addr);
   kDetPorts.push_back(_port);
 }
@@ -104,7 +106,30 @@ void makaMerger::runStop(int _sleep){
   Merger, collector
 ------------------------------------------------------------------------------*/
 int makaMerger::fileHeader(FILE* _dataFile){
-  //FIXME add values to the beginning of file
+  size_t writeRet = 0;
+  uint32_t tempData;
+
+  tempData = 0xb01adeee;
+  writeRet += fwrite(&tempData, 4, 1, _dataFile); //Known word
+  writeRet += fwrite(&kRunTime, 4, 1, _dataFile); //UNIX time of the run
+  writeRet += fwrite(GIT_HASH, 4, 1, _dataFile); //MAKA git hash
+
+  uint8_t type = 0x01;
+  uint16_t version = 0x0200;
+  tempData =  ((type & 0x0f) << 28)
+            | ((version & 0x0fff) << 16)
+            | (kDetAddrs.size() & 0xffff);
+  writeRet += fwrite(&tempData, 4, 1, _dataFile); //Type, Data Version, # detectors
+
+  for (auto id : kDetIds){
+    writeRet += fwrite(&id, 2, 1, _dataFile); //Detector ID[n]
+  }
+  //0 padding to 32 bits
+  if (kDetAddrs.size()%2 == 1){
+    tempData = 0;
+    writeRet += fwrite(&tempData, 2, 1, _dataFile); //0 Padding
+  }
+
   return 0;
 }
 
@@ -158,6 +183,8 @@ int makaMerger::merger(){
     printf("%s) Error: file %s could not be created. Do the data dir %s exist?\n", __METHOD_NAME__, dataFileName, kDataPath.data());
     return -1;
   }
+  //Write header to data file
+  fileHeader(dataFileD);
 
   //----------------------------------------------------------------------------
   //Collect data from clients
@@ -195,7 +222,8 @@ int makaMerger::collector(FILE* _dataFile){
   // FIX ME: at most 64 detectors
   std::bitset<64> replied{0};
   
-  constexpr uint32_t header = 0xfa4af1ca;//FIX ME: this header must be done properly. In particular the real length (written by this master, not the one in the payload, after the SoP word) 
+  uint32_t evtHeader;
+  uint32_t evtLenHeader = sizeof(uint32_t)*(kDet.size() * 651 + 3);
   bool headerWritten = false;
   bool dataToOm = kDataToOm & (kNEvts%kOmPreScale==0 ? true : false);
   //printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
@@ -212,9 +240,23 @@ int makaMerger::collector(FILE* _dataFile){
 
 	      // only write the header when the first board replies
 	      if(replied.count() == 1 && !headerWritten){
-	        ++kNEvts;
-	        fwrite(&header, 4, 1, _dataFile); //header to file
-          if (dataToOm) omClient->Tx(&header, 4); //header to OM
+          evtHeader = 0xfa4af1ca;
+	        fwrite(&evtHeader, 4, 1, _dataFile); //Known word
+          if (dataToOm) omClient->Tx(&evtHeader, 4);
+          
+          //FIX ME: Use real lenght of the event, not this pre-computed one
+          fwrite(&evtLenHeader, 4, 1, _dataFile); //Event length
+          if (dataToOm) omClient->Tx(&evtLenHeader, 4);
+          
+          fwrite(&kNEvts, 4, 1, _dataFile); //Event number
+          if (dataToOm) omClient->Tx(&kNEvts, 4);
+
+          //FIX ME: Use real type of the event, not this pre-computed one
+          evtHeader =  0x10000000 | (kDetAddrs.size() & 0xffff);
+          fwrite(&evtHeader, 4, 1, _dataFile); //
+          if (dataToOm) omClient->Tx(&evtHeader, 4);
+          
+          ++kNEvts;
 	        headerWritten = true;
 	      }
 	      writeRet += fwrite(evt.data(), evtLen, 1, _dataFile); //Event to file
@@ -335,12 +377,12 @@ void makaMerger::processCmds(char* msg){
     
     //Copy configuration data
     kDataPath = cpRx->dataPath;
+    kDetIds   = cpRx->ids;
     kDetPorts = cpRx->ports;
     kDetAddrs = cpRx->addrs;
     kDataToFile = cpRx->dataToFile;
     kDataToOm = cpRx->dataToOm;
     kOmPreScale = cpRx->omPreScale;
-
     
     free(rxData);
     
