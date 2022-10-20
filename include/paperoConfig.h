@@ -54,7 +54,7 @@ class paperoConfig
       uint16_t busyLen; //!Duration of extended busy
       uint16_t adcDelay; //!ADC delay (in clock cycles)
       bool ideTest; //!Test port of IDE1140
-      uint8_t chTest; //!IDE1140 channel connected to CAL port
+      uint16_t chTest; //!IDE1140 channel connected to CAL port
 
       void dump()
       {
