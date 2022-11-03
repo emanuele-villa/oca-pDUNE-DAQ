@@ -30,6 +30,7 @@ daqserver::daqserver(int port, int verb, std::string paperoCfgPath):tcpServer(po
   mode    = 0;
   addressdet.clear();
   portdet.clear();
+  makaEn.clear();
 
 }
 
@@ -53,7 +54,7 @@ void daqserver::SetUpConfigClients(){
   SetListDetectors();
 
   //Configure MAKA client
-  maka->setup(daqConf.dataFolder, iddet, portdet, addressdet, \
+  maka->setup(daqConf.dataFolder, makaEn, iddet, portdet, addressdet, \
               daqConf.makaSendToFile, daqConf.makaSendToOm, \
               daqConf.makaOmPreScale);
 
@@ -72,15 +73,16 @@ void daqserver::SetUpConfigClients(){
 }
 
 void daqserver::SetListDetectors(){
-
   iddet.clear();
   addressdet.clear();
   portdet.clear();
+  makaEn.clear();
 
   for (uint32_t ii=0; ii<paperoConfVector.size(); ii++) {
     iddet.push_back(paperoConfVector[ii]->id);
     addressdet.push_back(paperoConfVector[ii]->ipAddr.data());
     portdet.push_back(paperoConfVector[ii]->tcpPort);
+    makaEn.push_back(paperoConfVector[ii]->makaEnable);
   }
 }
 

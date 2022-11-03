@@ -77,60 +77,63 @@ int paperoConfig::config(istream& is)
           readOption<uint32_t>(tempBuffer->id, word);
           break;
         case 1:
-          readOption<string>(tempBuffer->ipAddr, word);
+          readOption<bool>(tempBuffer->makaEnable, word);
           break;
         case 2:
-          readOption<int>(tempBuffer->tcpPort, word);
+          readOption<string>(tempBuffer->ipAddr, word);
           break;
         case 3:
-          readOption<int>(tempBuffer->cmdLen, word);
+          readOption<int>(tempBuffer->tcpPort, word);
           break;
         case 4:
-          readOption<uint8_t>(tempBuffer->testUnitCfg, word);
+          readOption<int>(tempBuffer->cmdLen, word);
           break;
         case 5:
-          readOption<bool>(tempBuffer->testUnitEn, word);
+          readOption<uint8_t>(tempBuffer->testUnitCfg, word);
           break;
         case 6:
-          readOption<bool>(tempBuffer->hkEn, word);
+          readOption<bool>(tempBuffer->testUnitEn, word);
           break;
         case 7:
-          readOption<bool>(tempBuffer->dataEn, word);
+          readOption<bool>(tempBuffer->hkEn, word);
           break;
         case 8:
-          readOption<uint32_t>(tempBuffer->intTrigPeriod, word);
+          readOption<bool>(tempBuffer->dataEn, word);
           break;
         case 9:
-          readOption<uint32_t>(tempBuffer->pktLen, word);
+          readOption<uint32_t>(tempBuffer->intTrigPeriod, word);
           break;
         case 10:
-          readOption<uint16_t>(tempBuffer->feClkDiv, word);
+          readOption<uint32_t>(tempBuffer->pktLen, word);
           break;
         case 11:
-          readOption<uint16_t>(tempBuffer->feClkDuty, word);
+          readOption<uint16_t>(tempBuffer->feClkDiv, word);
           break;
         case 12:
-          readOption<uint16_t>(tempBuffer->adcClkDiv, word);
+          readOption<uint16_t>(tempBuffer->feClkDuty, word);
           break;
         case 13:
-          readOption<uint16_t>(tempBuffer->adcClkDuty, word);
+          readOption<uint16_t>(tempBuffer->adcClkDiv, word);
           break;
         case 14:
-          readOption<uint16_t>(tempBuffer->trig2Hold, word);
+          readOption<uint16_t>(tempBuffer->adcClkDuty, word);
           break;
         case 15:
-          readOption<bool>(tempBuffer->adcFast, word);
+          readOption<uint16_t>(tempBuffer->trig2Hold, word);
           break;
         case 16:
-          readOption<uint16_t>(tempBuffer->busyLen, word);
+          readOption<bool>(tempBuffer->adcFast, word);
           break;
         case 17:
-          readOption<uint16_t>(tempBuffer->adcDelay, word);
+          readOption<uint16_t>(tempBuffer->busyLen, word);
           break;
         case 18:
-          readOption<bool>(tempBuffer->ideTest, word);
+          readOption<uint16_t>(tempBuffer->adcDelay, word);
           break;
         case 19:
+          readOption<bool>(tempBuffer->ideTest, word);
+          break;
+        case 20:
           readOption<uint16_t>(tempBuffer->chTest, word);
           break;
         default:

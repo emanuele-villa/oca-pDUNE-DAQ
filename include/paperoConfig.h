@@ -36,6 +36,7 @@ class paperoConfig
     //! Struct containing the configuration parameters
     struct configParams {
       uint32_t id; //!Detector ID
+      bool makaEnable; //!Send line to MAKA
       string ipAddr; //!IP address
       int tcpPort; //!TCP client port to connect to HPS
       int cmdLen; //!Command length
@@ -59,6 +60,7 @@ class paperoConfig
       void dump()
       {
         cout << "ID:                   " << id << endl;
+        cout << "Send to MAKA:         " << makaEnable << endl;
         cout << "IP address:           " << ipAddr << endl;
         cout << "TCP port:             " << tcpPort << endl;
         cout << "Command Length:       " << cmdLen << endl;

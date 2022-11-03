@@ -21,6 +21,7 @@ private:
   std::vector<std::string> addressdet;
   std::vector<uint32_t> portdet;
   std::vector<uint32_t> iddet;
+  std::vector<bool> makaEn;
   std::vector<de10_silicon_base*> det;
   std::string kdataPath = "./data/"; //!< Data file path
   volatile bool kStart; //!< Start event recording

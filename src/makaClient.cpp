@@ -34,16 +34,15 @@ void makaClient::cmdLenHandshake(int _cmdLen){
 
 }
 
-int makaClient::setup(string _dataPath, vector<uint32_t> _detIds,\
+int makaClient::setup(string _dataPath, vector<bool> _makaEn, vector<uint32_t> _detIds,\
                         vector<uint32_t> _detPorts, vector<string> _detAddrs,\
                         bool _dataToFile, bool _dataToOm, uint32_t _omPreScale){
   //PAPERO opens the socket on OCAport+1
   vector<uint32_t> makaIds;
   vector<uint32_t> makaPorts;
   vector<string> makaAddrs;
-  //FIXME: Removing trigger board (for the moment, with a fixed IP address)
   for (size_t ii=0; ii<_detPorts.size(); ii++) {
-    if (_detAddrs[ii]!="192.168.2.177") {
+    if (_makaEn[ii]) {
       makaIds.push_back(_detIds[ii]);
       makaPorts.push_back(_detPorts[ii]+1);
       makaAddrs.push_back(_detAddrs[ii]);

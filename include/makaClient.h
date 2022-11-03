@@ -53,7 +53,7 @@ class makaClient : public tcpclient {
       Send cmd=setup
       Send configurations
     */
-    int setup(string _dataPath, vector<uint32_t> _detIds,\
+    int setup(string _dataPath, vector<bool> _makaEn, vector<uint32_t> _detIds,\
                 vector<uint32_t> _detPorts, vector<std::string> _detAddrs,\
                 bool _dataToFile, bool _dataToOm, uint32_t _omPreScale);
 
