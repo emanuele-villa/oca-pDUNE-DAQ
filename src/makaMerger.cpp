@@ -225,6 +225,9 @@ int makaMerger::collector(FILE* _dataFile){
   uint32_t evtHeader;
   uint32_t evtLenHeader = sizeof(uint32_t)*(kDet.size() * 651 + 3);
   bool headerWritten = false;
+  struct timespec utc_time;
+  //long long sec;
+  //long nsec;
   bool dataToOm = kDataToOm & (kNEvts%kOmPreScale==0 ? true : false);
   //printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
   // FIX ME: replace kRunning with proper timeout
@@ -244,6 +247,12 @@ int makaMerger::collector(FILE* _dataFile){
 	        fwrite(&evtHeader, 4, 1, _dataFile); //Known word
           if (dataToOm) omClient->Tx(&evtHeader, 4);
           
+          //UTC time for synchronization
+          clock_gettime(CLOCK_REALTIME, &utc_time);
+          fwrite(&utc_time, sizeof(utc_time), 1, _dataFile);
+          //sec  = utc_time.tv_sec;
+          //nsec = utc_time.tv_nsec;
+
           //FIX ME: Use real lenght of the event, not this pre-computed one
           fwrite(&evtLenHeader, 4, 1, _dataFile); //Event length
           if (dataToOm) omClient->Tx(&evtLenHeader, 4);
