@@ -8,7 +8,7 @@
 #include "utility.h"
 
 const char* addressdaq = "localhost";
-const int portdaq = 8888;
+const int portdaq = 10000;
 
 int verbosity=0;
 

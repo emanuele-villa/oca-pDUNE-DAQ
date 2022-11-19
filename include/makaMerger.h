@@ -59,7 +59,7 @@ class makaMerger : public tcpServer {
     startPacket*  spRx; //!<Start received from OCA
 
     //UDP server to on-line monitor
-    std::string kUdpAddr = "localhost"; //!< UDP Server address (x.x.x.x format)
+    std::string kUdpAddr = "127.0.0.1"; //!< UDP Server address (x.x.x.x format)
     int kUdpPort = 8890;  //!< UDP server port
     udpClient* omClient;
 
