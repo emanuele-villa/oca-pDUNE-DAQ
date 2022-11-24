@@ -42,8 +42,6 @@ private:
   */
   void ProcessCmdReceived(char* msg);
   
-  int recordEvents(FILE* fd);
-  
 public:
   ~daqserver();
   daqserver(int port, int verb, std::string paperoCfgPath);
@@ -92,7 +90,6 @@ public:
   
   int ReadReg(uint32_t regAddr);
   int Init();
-  void Start(char* runtype, uint32_t runnum, uint32_t unixtime);
   void Stop();
 
   /*!

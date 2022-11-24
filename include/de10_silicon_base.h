@@ -59,8 +59,6 @@ public:
   int SetMode(uint8_t modeIn);
   int GetEventNumber();
   int EventReset();
-  void AskEvent();
-  int GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen);
   int SetCalibrationMode(uint32_t calEnIn);
   int WriteCalibPar();
   int SaveCalibrations();

@@ -222,33 +222,6 @@ int de10_silicon_base::EventReset() {
   return ret;
 }
 
-void de10_silicon_base::AskEvent(){
-  SendCmd("getEvent");
-}
-
-//FIX ME: this doesn't reply as the others (i.e. 0=OK), but with the size it did read 
-int de10_silicon_base::GetEvent(std::vector<uint32_t>& evt, uint32_t& evtLen){
-  //Get the event from HPS and loop here until all data are read
-  uint32_t evtRead = 0;
-  ReceiveInt(evtLen);//in int units
-  //  printf("%s) Event Lenght = %u\n", __METHOD_NAME__, evtLen);
-  if (evt.size()<evtLen) evt.resize(evtLen);
-  evtLen*=sizeof(uint32_t);//in byte units
-  while (evtRead < evtLen) {
-    //    printf("%s) %d %d %d\n", __METHOD_NAME__, evtRead/sizeof(uint32_t), evtLen, evtRead);
-    evtRead += Receive(&evt[evtRead/sizeof(uint32_t)], evtLen-evtRead);
-  }
-
-  // if (evtLen) {
-  //   printf("%s) %d %d %d\n", __METHOD_NAME__, evtRead/sizeof(uint32_t), evtLen, evtRead);
-  //   printf("%s) Length: %d\n",__METHOD_NAME__, evtLen);
-  //   for (uint32_t jj=0; jj<(evtLen/4); jj++) {
-  //     printf("%s)******%d %08x\n",__METHOD_NAME__, jj, evt[jj]);
-  //   }
-  //  }
-  return evtRead;
-}
-
 //TO DO: there will be another method, in future to really calibrate: put in cal mode, start the trigger, stop the calibration and let the system compute pedestals, sigmas, etc...
 int de10_silicon_base::SetCalibrationMode(uint32_t calEnIn){
   int ret = 0;
