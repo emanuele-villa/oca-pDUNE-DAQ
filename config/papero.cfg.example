@@ -1,5 +1,12 @@
 #ID | MAKA enable | IPaddr | Port | cmd Len | TestUnitCfg | TestUnit en | HK en | data en | IntTrig Period | Pkt Len | FeClk period | FeClk duty | AdcClk period | AdcClk duty | Trig2Hold | AD7276 FastMode | Busy Len | ADC delay | IDE Test | Test Channel |
-0 1 192.168.2.101 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 325 1 0x170C 29 0 0x7f
-1 1 192.168.2.102 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 325 1 0x170C 29 0 0x7f
-2 1 192.168.2.103 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 325 1 0x170C 29 0 0x7f
-77 0 192.168.2.177 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 325 1 0x170C 29 0 0x7f
+0 1 192.168.2.101 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 400 1 3125 29 0 0x7f
+1 1 192.168.2.102 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 400 1 3125 29 0 0x7f
+2 1 192.168.2.103 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 400 1 3125 29 0 0x7f
+3 1 192.168.2.104 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 400 1 3125 29 0 0x7f
+4 1 192.168.2.105 5000 24 0 0 0 1 0x0002faf0 650 34 8 2 1 400 1 3125 29 0 0x7f
+#                                 8:Run mode, 4:I2C, 0:Internal
+77 0 192.168.2.177 5000 24 0 0 0 1 0x0002faf0 0x100 34 8 2 1 400 1 3125 29 0 0x7f
+#                                               840
+#
+######## I2C TRIGGER ##################################################################
+# To enable the HERD I2C trigger, enable it for the detectors (bit 3 of IntTrig Period) and for trigger board (bit 4 of PktLen)
