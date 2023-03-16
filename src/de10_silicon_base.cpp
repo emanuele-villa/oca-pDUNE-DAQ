@@ -80,6 +80,25 @@ int de10_silicon_base::readReg(int regAddr, uint32_t &regCont){
   return ret;
 }
 
+int de10_silicon_base::writeReg(int regAddr, uint32_t regContent) {
+  int ret=0;
+  uint32_t reply = 1;
+  if (SendCmd("writeReg")>0) {
+    SendInt((uint32_t)regAddr);
+    SendInt(regContent);
+  }
+  else {
+    ret = 1;
+  }
+  
+  ReceiveInt(reply);
+  if (verbosity>0) {
+    printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");
+  }
+  
+  return ret;
+}
+
 //FIX ME: use the proper functions or the 2D array to retrieve configurations
 int de10_silicon_base::Init() {
 
@@ -118,13 +137,13 @@ int de10_silicon_base::Init() {
     SendInt(regContent);
     
     //Register 7
-    regContent  = delay | 0x01200000;
+    regContent  = 0x01750000 | (delay&0x0000FFFF);
     SendInt(regContent);
   }
   else {
     ret = 1;
   }
-  
+
   ReceiveInt(reply);
   if (verbosity>0) {
     printf("%s) reply: %s\n", __METHOD_NAME__, reply==okVal?"ok":"ko");

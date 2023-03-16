@@ -221,14 +221,14 @@ void daqserver::ProcessCmdReceived(char* msg){
 	//	}
       }
       else if(strcmp(stop,cmdgroup[2])==0) {//stop daq
-	printf("%s) Stop()\n", __METHOD_NAME__);
-	Stop();
-	ReplyToCmd(msg);
+	      printf("%s) Stop()\n", __METHOD_NAME__);
+	      Stop();
+	      ReplyToCmd(msg);
       }
       else {
-	printf("%s) not a valid sub-command: %s (%s)\n\n", __METHOD_NAME__, cmdgroup[2], command_string);
-	sprintf(msg, "NOT-A-VALID-SUBCMD");
-	ReplyToCmd(msg);
+	      printf("%s) not a valid sub-command: %s (%s)\n\n", __METHOD_NAME__, cmdgroup[2], command_string);
+	      sprintf(msg, "NOT-A-VALID-SUBCMD");
+	      ReplyToCmd(msg);
       }
     }
     else {
@@ -261,6 +261,15 @@ int daqserver::ReadReg(uint32_t regAddr) {
     if (kVerbosity>-1) {
       printf("%s) Read from DE10 %d: %08x\n", __METHOD_NAME__, ii, regCont);
     }
+  }
+  return ret;
+}
+
+int daqserver::WriteReg(int regAddr, uint32_t regContent) {
+  int ret=0;
+
+  for (uint32_t ii=0; ii<det.size(); ii++) {
+    ret |= (det.at(ii)->writeReg(regAddr, regContent)<<ii);
   }
   return ret;
 }

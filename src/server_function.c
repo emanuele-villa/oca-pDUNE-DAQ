@@ -324,12 +324,12 @@ void* receiver_comandi(int* sockIn){
     else {
       if(strcmp(msg, "cmd=init") == 0){
         uint32_t regsContent[14];
-	uint32_t singleReg = 0;
+        uint32_t singleReg = 0;
 
         if (baseAddr.verbose > 1) printf("%s) Starting init...\n", __METHOD_NAME__);
         //Receive the whole content (apart from reg rGOTO_STATE)
         for(int ii = 0; ii < 7; ii++){
-	  receiveSocket(openConn, &singleReg, sizeof(singleReg));
+          receiveSocket(openConn, &singleReg, sizeof(singleReg));
           regsContent[ii*2]   = singleReg;
           regsContent[ii*2+1] = (uint32_t)ii+1;
         }

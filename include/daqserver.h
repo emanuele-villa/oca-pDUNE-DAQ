@@ -43,6 +43,7 @@ public:
 
   void ReadAllRegs();
   
+  int WriteReg(int regAddr, uint32_t regContent);
   int ReadReg(uint32_t regAddr);
   int Init();
   void Start(char* runtype, uint32_t runnum, uint32_t unixtime);

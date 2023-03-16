@@ -58,6 +58,14 @@ int main(int argc, char *argv[]) {
   daqsrv->SetPacketLen("192.168.2.103", 0x18A);
 
   daqsrv->Init();
+  //FIXME Temporarily enable test pulse
+  daqsrv->WriteReg(1, 0x00011001);
+  daqsrv->WriteReg(10, 0x00000000);
+  daqsrv->WriteReg(11, 0x00000000);
+  daqsrv->WriteReg(12, 0x00200000);
+  daqsrv->WriteReg(13, 0x00200000);
+  daqsrv->WriteReg(14, 0xFFFFFFFF);
+  daqsrv->WriteReg(15, 0xFFFFFFFF);
 
   sleep(5);
   
