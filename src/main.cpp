@@ -58,26 +58,38 @@ int main(int argc, char *argv[]) {
   daqsrv->SetPacketLen("192.168.2.103", 0x18A);
 
   daqsrv->Init();
-  //FIXME Temporarily enable test pulse
-  daqsrv->WriteReg(1, 0x00011001);
+  //FIXME Set configurations for ASTRA local configurations
+  //chmask
   daqsrv->WriteReg(10, 0x00000000);
   daqsrv->WriteReg(11, 0x00000000);
+  //tpenable
   daqsrv->WriteReg(12, 0x00200000);
   daqsrv->WriteReg(13, 0x00200000);
+  //dsc
   daqsrv->WriteReg(14, 0xFFFFFFFF);
   daqsrv->WriteReg(15, 0xFFFFFFFF);
+
+  //FIXME Temporary ASTRA PRG handling with register 1
+  //  bit 16: Test pulse globalenable
+  //  bit 13: ASTRA PRG Reset
+  //  bit 12: PRG write (rising-edge sensitive)
+  daqsrv->WriteReg(1, 0x00002001);  //Reset
+  daqsrv->WriteReg(1, 0x00010001);  //Remove reset and enable TP
+  daqsrv->WriteReg(1, 0x00011001);  //Write configurations (enable TP)
+  daqsrv->WriteReg(1, 0x00010001);  //Remove write configurations (enable TP)
 
   sleep(5);
   
   daqsrv->SetCalibrationMode(1);
   //  daqsrv->SetCalibrationMode(0);
-  sleep(1);
-  daqsrv->SelectTrigger(0);
-  //daqsrv->SelectTrigger(1);
-    daqsrv->ReadAllRegs();
-    std::cout<<"----------Lettura registro 2----------"<<std::endl;
-    daqsrv->ReadReg(2);
-    std::cout<<"----------Lettura registro 2----------"<<std::endl;
+  
+  daqsrv->SelectTrigger(0);   //External trigger
+  //daqsrv->SelectTrigger(1); //Internal trigger
+
+  daqsrv->ReadAllRegs();
+  std::cout<<"----------Lettura registro 2----------"<<std::endl;
+  daqsrv->ReadReg(2);
+  std::cout<<"----------Lettura registro 2----------"<<std::endl;
 
   //is not really working, for now: it is killed as a standard CTRL-C
   //the param sent to StopRun is SIGTERM itself and we need that StopRun accepts a param even if cannot use it
