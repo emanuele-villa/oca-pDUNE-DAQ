@@ -195,10 +195,10 @@ int makaMerger::merger(){
     auto stop = clock_type::now();
 
     //if(kNEvts != lastNEvents){
-    if(kNEvts%10 == 0){
+    //    if(kNEvts%10 == 0){
       std::cout << "\rEvent " << kNEvts << " last recordEvents took " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " us                            " << std::flush;
       lastNEvents = kNEvts;
-    }
+      //    }
   }
   std::cout << std::endl;
   
