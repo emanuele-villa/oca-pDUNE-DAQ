@@ -10,6 +10,9 @@
 makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   //Initialize parameters
   kNEvts = 0;
+  kNEvtsCal = 0;
+  kNEvtsBeam = 0;
+
   kCmdLen = 24;
   runStop();
   clearDetLists();
@@ -69,6 +72,8 @@ void makaMerger::setUpDetectors(){
 ------------------------------------------------------------------------------*/
 void makaMerger::runStart(){
   kNEvts   = 0;
+  kNEvtsCal = 0;
+  kNEvtsBeam = 0;
   kRunning = true;
 
   printf("%s) Setup Detectors\n", __METHOD_NAME__);
@@ -196,8 +201,9 @@ int makaMerger::merger(){
 
     //if(kNEvts != lastNEvents){
     //    if(kNEvts%10 == 0){
-      std::cout << "\rEvent " << kNEvts << " last recordEvents took " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " us                            " << std::flush;
-      lastNEvents = kNEvts;
+      std::cout << "\rEvent " << kNEvts << " (Cal: " << kNEvtsCal << " - Phys: "\
+                << kNEvtsBeam << " ) last recordEvents took " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " us                            " << std::flush;
+      //lastNEvents = kNEvts;
       //    }
   }
   std::cout << std::endl;
@@ -265,6 +271,14 @@ int makaMerger::collector(FILE* _dataFile){
           fwrite(&evtHeader, 4, 1, _dataFile); //
           if (dataToOm) omClient->Tx(&evtHeader, 4);
           
+          //Separate cal and physics event counters
+          uint32_t i2cWord = evt[6];
+          bool i2cType = i2cWord & 0x1;
+          //printf("%s) I2C word: %08x - Trigger Type: %d\n", __METHOD_NAME__, i2cWord, i2cType);
+
+          kNEvtsCal += !i2cType;
+          kNEvtsBeam += i2cType;
+
           ++kNEvts;
 	        headerWritten = true;
 	      }

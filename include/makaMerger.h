@@ -49,6 +49,8 @@ class makaMerger : public tcpServer {
     thread kMerger3d; //!<Thread that hosts the merger
     bool kRunning = false; //!<Flag for run state
     uint32_t kNEvts = 0; //!<Events in a run
+    uint32_t kNEvtsCal = 0; //!<Calibration events in a run
+    uint32_t kNEvtsBeam = 0; //!<Physics events in a run
     //uint32_t kRunTime //!<Run time
     std::string kRunType;     //!<Run information: type
     uint32_t kRunNum;   //!<Run information: number
