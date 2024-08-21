@@ -17,7 +17,7 @@ de10_silicon_base::de10_silicon_base(std::string address, uint32_t port, paperoC
   hkEn          = (uint32_t)params->hkEn & 0x00000001;
   dataEn        = (uint32_t)params->dataEn & 0x00000001;
   pktLen        = params->pktLen;
-  intTrigPeriod = params->intTrigPeriod & 0xFFFFFFF0;
+  intTrigPeriod = params->intTrigPeriod & 0xFFFFFFF8;
   feClkDuty     = (uint32_t)params->feClkDuty & 0x0000FFFF;
   feClkDiv      = (uint32_t)params->feClkDiv & 0x0000FFFF;
   adcClkDuty    = (uint32_t)params->adcClkDuty & 0x0000FFFF;
@@ -283,7 +283,7 @@ int de10_silicon_base::SaveCalibrations(){
 
 int de10_silicon_base::SetIntTriggerPeriod(uint32_t intTrigPeriodIn){
   int ret=0;
-  intTrigPeriod = intTrigPeriodIn & 0xFFFFFFF0;
+  intTrigPeriod = intTrigPeriodIn & 0xFFFFFFF8;
   if (SendCmd("intTrigPeriod")==0) {
     SendInt(intTrigPeriod);
   }

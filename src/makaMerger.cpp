@@ -10,6 +10,9 @@
 makaMerger::makaMerger(int port, int verb, bool _net):tcpServer(port, verb){
   //Initialize parameters
   kNEvts = 0;
+  kNEvtsCal = 0;
+  kNEvtsBeam = 0;
+
   kCmdLen = 24;
   runStop();
   clearDetLists();
@@ -69,6 +72,8 @@ void makaMerger::setUpDetectors(){
 ------------------------------------------------------------------------------*/
 void makaMerger::runStart(){
   kNEvts   = 0;
+  kNEvtsCal = 0;
+  kNEvtsBeam = 0;
   kRunning = true;
 
   printf("%s) Setup Detectors\n", __METHOD_NAME__);
@@ -195,10 +200,11 @@ int makaMerger::merger(){
     auto stop = clock_type::now();
 
     //if(kNEvts != lastNEvents){
-    if(kNEvts%10 == 0){
-      std::cout << "\rEvent " << kNEvts << " last recordEvents took " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " us                            " << std::flush;
-      lastNEvents = kNEvts;
-    }
+    //    if(kNEvts%10 == 0){
+      std::cout << "\rEvent " << kNEvts << " (Cal: " << kNEvtsCal << " - Phys: "\
+                << kNEvtsBeam << " ) last recordEvents took " << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count() << " us                            " << std::flush;
+      //lastNEvents = kNEvts;
+      //    }
   }
   std::cout << std::endl;
   
@@ -225,6 +231,9 @@ int makaMerger::collector(FILE* _dataFile){
   uint32_t evtHeader;
   uint32_t evtLenHeader = sizeof(uint32_t)*(kDet.size() * 651 + 3);
   bool headerWritten = false;
+  struct timespec utc_time;
+  //long long sec;
+  //long nsec;
   bool dataToOm = kDataToOm & (kNEvts%kOmPreScale==0 ? true : false);
   //printf("%s) dataToOm value: %s", __METHOD_NAME__, dataToOm?"true":"false");
   // FIX ME: replace kRunning with proper timeout
@@ -244,6 +253,12 @@ int makaMerger::collector(FILE* _dataFile){
 	        fwrite(&evtHeader, 4, 1, _dataFile); //Known word
           if (dataToOm) omClient->Tx(&evtHeader, 4);
           
+          //UTC time for synchronization
+          clock_gettime(CLOCK_REALTIME, &utc_time);
+          fwrite(&utc_time, sizeof(utc_time), 1, _dataFile);
+          //sec  = utc_time.tv_sec;
+          //nsec = utc_time.tv_nsec;
+
           //FIX ME: Use real lenght of the event, not this pre-computed one
           fwrite(&evtLenHeader, 4, 1, _dataFile); //Event length
           if (dataToOm) omClient->Tx(&evtLenHeader, 4);
@@ -256,6 +271,14 @@ int makaMerger::collector(FILE* _dataFile){
           fwrite(&evtHeader, 4, 1, _dataFile); //
           if (dataToOm) omClient->Tx(&evtHeader, 4);
           
+          //Separate cal and physics event counters
+          uint32_t i2cWord = evt[6];
+          bool i2cType = i2cWord & 0x1;
+          //printf("%s) I2C word: %08x - Trigger Type: %d\n", __METHOD_NAME__, i2cWord, i2cType);
+
+          kNEvtsCal += !i2cType;
+          kNEvtsBeam += i2cType;
+
           ++kNEvts;
 	        headerWritten = true;
 	      }

@@ -158,9 +158,10 @@ void daqserver::SelectTrigger(uint32_t trig){
 
   trigtype = trig;
   
-  for (int ii=0; ii<(int)(det.size()); ii++) {
-    det[ii]->SelectTrigger(trigtype);
-  }
+  det[portdet.size()-1]->SelectTrigger(trigtype);
+  //for (int ii=0; ii<(int)(det.size()); ii++) {
+  //  det[ii]->SelectTrigger(trigtype);
+  //}
 
   return;
 }
@@ -303,8 +304,10 @@ void daqserver::ProcessCmdReceived(char* msg){
     static const char* btcmd ="FF800008";
     static const char* start ="EE000001";
     static const char* stop  ="EE000000";
-    static const char* beam  ="0001";
-    static const char* cal   ="0000";
+    static const char* beam  ="0002";
+    static const char* cal   ="0004"; //10Hz
+    static const char* calOffSpill   ="0000"; //10Hz
+    static const char* mix   ="0001";
 
     static const int length=16;
     char command_string[2*length+1] = "";
@@ -341,8 +344,13 @@ void daqserver::ProcessCmdReceived(char* msg){
 	        SetCalibrationMode(0);
           SelectTrigger(0);
 	      }
-	      else if (strcmp(cal,runtype)==0) {
+	      else if (strcmp(cal,runtype)==0 | strcmp(calOffSpill,runtype)==0) {
 	        sprintf(sruntype, "CAL");
+	        SetCalibrationMode(1);
+          SelectTrigger(1);
+	      }
+        else if (strcmp(mix,runtype)==0) {
+	        sprintf(sruntype, "MIX");
 	        SetCalibrationMode(1);
           SelectTrigger(1);
 	      }

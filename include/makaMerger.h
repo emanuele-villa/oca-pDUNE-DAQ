@@ -20,6 +20,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <time.h>
 
 //#include <netinet/in.h>
 //#include <arpa/inet.h>
@@ -48,6 +49,8 @@ class makaMerger : public tcpServer {
     thread kMerger3d; //!<Thread that hosts the merger
     bool kRunning = false; //!<Flag for run state
     uint32_t kNEvts = 0; //!<Events in a run
+    uint32_t kNEvtsCal = 0; //!<Calibration events in a run
+    uint32_t kNEvtsBeam = 0; //!<Physics events in a run
     //uint32_t kRunTime //!<Run time
     std::string kRunType;     //!<Run information: type
     uint32_t kRunNum;   //!<Run information: number
@@ -59,7 +62,7 @@ class makaMerger : public tcpServer {
     startPacket*  spRx; //!<Start received from OCA
 
     //UDP server to on-line monitor
-    std::string kUdpAddr = "localhost"; //!< UDP Server address (x.x.x.x format)
+    std::string kUdpAddr = "127.0.0.1"; //!< UDP Server address (x.x.x.x format)
     int kUdpPort = 8890;  //!< UDP server port
     udpClient* omClient;
 
