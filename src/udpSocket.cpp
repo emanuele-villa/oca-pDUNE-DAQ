@@ -5,6 +5,9 @@
 */
 #include "udpSocket.h"
 #include "utility.h"
+#ifdef __APPLE__
+#include <fcntl.h>
+#endif
 
 udpSocket::udpSocket(const std::string &_addr, int _port, bool _blocking) {
   kVerbosity = 0;
@@ -66,11 +69,34 @@ void udpSocket::setup() {
   //Create a new socket
   printf("UDP socket: Opening... ");
   if (kBlocking) {
+
+#ifdef __APPLE__
+    int kSockDesc = socket(kAddrInfo->ai_family, SOCK_DGRAM, IPPROTO_UDP);
+    if (kSockDesc != -1) {
+      // CLOEXEC
+      fcntl(kSockDesc, F_SETFD, fcntl(kSockDesc, F_GETFD) | FD_CLOEXEC);
+
+      // SO_REUSEADDR
+      int reuse = 1;
+      setsockopt(kSockDesc, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+    }
+#else
     kSockDesc = socket(kAddrInfo->ai_family, SOCK_DGRAM | SOCK_CLOEXEC | \
                                               SO_REUSEADDR, IPPROTO_UDP);
+#endif
   } else {
+#ifdef __APPLE__
+    kSockDesc = socket(kAddrInfo->ai_family, SOCK_DGRAM, IPPROTO_UDP);
+    if (kSockDesc != -1) {
+      // CLOEXEC
+      fcntl(kSockDesc, F_SETFD, fcntl(kSockDesc, F_GETFD) | FD_CLOEXEC);
+      // NONBLOCK
+      fcntl(kSockDesc, F_SETFL, fcntl(kSockDesc, F_GETFL) | O_NONBLOCK);
+    }
+#else
     kSockDesc = socket(kAddrInfo->ai_family, SOCK_DGRAM | SOCK_CLOEXEC | \
                                      SO_REUSEADDR | SOCK_NONBLOCK, IPPROTO_UDP);
+#endif
   }
   if(kSockDesc < 0) {
     freeaddrinfo(kAddrInfo);
