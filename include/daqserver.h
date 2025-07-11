@@ -23,7 +23,7 @@ private:
   std::vector<uint32_t> iddet;
   std::vector<bool> makaEn;
   std::vector<de10_silicon_base*> det;
-  std::string kdataPath = "./data/"; //!< Data file path
+  std::string kdataPath = "/data3/np02-beam-monitor-data/"; //!< Data file path
   volatile bool kStart; //!< Start event recording
   std::thread _3d;//!< Thread handle
   int calibmode;  //!< Calibration enable
