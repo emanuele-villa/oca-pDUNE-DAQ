@@ -54,21 +54,26 @@ int main(int argc, char *argv[]) {
 
   //71616b23
   //uint32_t start[4] = {0x080080FF, 0x01001500, 0x010000EE, 0x236B6171};
-  // Goal: DAQ server forms hex_string (little-endian bytes). It then takes cmdgroup[1]=hex[8:16] and runnum = first 4 chars.
-  // Original 8-bit case: start[1]=0x01001500 -> bytes LE: 00 15 00 01 -> cmdgroup[1]="00150001" -> runnum hex "0015".
-  // We want for arbitrary 16-bit runnum R (0..65535): cmdgroup[1][:4] == R as 4-hex (zero padded).
-  // Let runnum bytes: hi = (R>>8)&0xFF, lo = R & 0xFF.
-  // Need LE bytes b0 b1 b2 b3 such that cmdgroup[1] = b0 b1 b2 b3 hex and b0b1 == hi lo (big-endian 16-bit hex representation).
-  // Therefore choose b0=hi, b1=lo. We must also set bit24 (0x01000000) => this is byte b3 having bit0x01.
-  // Keep original layout leaving b2=0x00 (reserved), b3=0x01 plus beam bit later at bit25.
-  // LE bytes -> word = (b3<<24)|(b2<<16)|(b1<<8)|b0 = 0x01000000 | (lo<<8) | hi.
-  // After beam OR: adds (beam&1)<<25.
+  // Encoding layout (little-endian bytes of start[1]):
+  //   byte0 = run_hi (bits 15..8 of run number)
+  //   byte1 = run_lo (bits 7..0 of run number)
+  //   byte2 = 0x00 (reserved)
+  //   byte3 = run type code:
+  //           0x02 -> "0002" (BEAM)
+  //           0x04 -> "0004" (CAL)
+  // Server builds cmdgroup[1] = b0 b1 b2 b3 (hex), then:
+  //   runnum  = first 4 hex chars (b0 b1) -> big-endian 16-bit
+  //   runtype = last 4 hex chars  (b2 b3)
+  // This replaces earlier misuse of bit24. Beam bit25 OR kept for backward compatibility (has no effect for 0x02 / 0x04).
   uint8_t run_hi = (runnum >> 8) & 0xFF;
   uint8_t run_lo = runnum & 0xFF;
-  uint32_t start_word1 = 0x01000000 | (uint32_t(run_lo) << 8) | uint32_t(run_hi);
+  uint8_t run_type_code = (beam ? 0x02 : 0x04); // 1->BEAM, 0->CAL
+  uint32_t start_word1 = (uint32_t)run_type_code << 24 | (uint32_t)0x00 << 16 | (uint32_t)run_lo << 8 | run_hi;
+  // Preserve previous beam-bit behavior (bit25) if firmware expects it
   start_word1 |= ((beam & 0x1) << 25);
   uint32_t start[4] = {0x080080FF, start_word1, 0x010000EE, tsReord};
-  // Debug (optional): printf("Encoded run %u -> word1 0x%08X (hi=%02X lo=%02X)\n", runnum, start_word1, run_hi, run_lo);
+  // Debug (uncomment if needed):
+  // printf("Encoded run=%u type=%s word1=0x%08X (hi=%02X lo=%02X)\n", runnum, beam?"BEAM":"CAL", start_word1, run_hi, run_lo);
   daq->Send((void*)start, 4*sizeof(uint32_t));
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
   hex2string(readBack,length,command_string);
