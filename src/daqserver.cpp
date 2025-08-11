@@ -363,6 +363,7 @@ void daqserver::ProcessCmdReceived(char* msg){
         strncpy(srunnum,  &cmdgroup[1][0], 4);
         char* ptr;
         uint32_t runnum = strtol(srunnum, &ptr, 16);
+	std::cout << "Run number read from command line is: " << runnum << std::endl;
         uint32_t unixtime = strtol(cmdgroup[3], &ptr, 16);
         std::time_t t = unixtime;
         if (kVerbosity>0) {

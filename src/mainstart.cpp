@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   int beam = atoi(argv[1]);
-  unsigned int runnum = 21;
+  unsigned int runnum = 0;
   if (argc == 3) {
     runnum = atoi(argv[2]);
     printf("%d\n", runnum);
