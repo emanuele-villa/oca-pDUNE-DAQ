@@ -23,6 +23,10 @@ int main(int argc, char *argv[]) {
   if (argc == 3) {
     runnum = atoi(argv[2]);
     printf("%d\n", runnum);
+    if (runnum > 65535) {
+      printf("Error: Run number %d exceeds maximum value of 65535 (16-bit limit)\n", runnum);
+      return 1;
+    }
   }
 
   //------------------------------------------------
@@ -50,7 +54,8 @@ int main(int argc, char *argv[]) {
 
   //71616b23
   //uint32_t start[4] = {0x080080FF, 0x01001500, 0x010000EE, 0x236B6171};
-  uint32_t start[4] = {0x080080FF, runnum << 8, 0x010000EE, tsReord};
+  // Extended run number from 8 bits to 16 bits (bits 8-23), preserving bit 24
+  uint32_t start[4] = {0x080080FF, ((runnum & 0xFFFF) << 8) | 0x01000000, 0x010000EE, tsReord};
   start[1] = start[1] | ((beam & 0x1) << 25);
   daq->Send((void*)start, 4*sizeof(uint32_t));
   daq->ReceiveCmdReply(readBack);//is blocking and this is wanted
